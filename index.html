@@ -50,11 +50,11 @@
       align-items: center; justify-content: center; padding: 40px 24px;
     }
     .login-logo {
-      width: 72px; height: 72px; background: var(--primary);
-      border-radius: 20px; display: flex; align-items: center; justify-content: center;
-      margin-bottom: 24px; box-shadow: 0 8px 32px rgba(37,99,235,0.4);
+      width: 150px; height: 150px; background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
     }
-    .login-logo svg { width: 38px; height: 38px; fill: white; }
+    .login-logo svg { width: 150px; height: 150px; }
     .login-title { color: white; font-size: 26px; font-weight: 700; margin-bottom: 8px; text-align: center; }
     .login-sub { color: rgba(255,255,255,0.55); font-size: 15px; text-align: center; margin-bottom: 48px; }
     .btn-signin {
@@ -77,6 +77,7 @@
       padding-top: calc(16px + env(safe-area-inset-top));
     }
     .header-title { font-size: 18px; font-weight: 700; color: var(--text); }
+    .header-logo { height: 32px; width: auto; display: block; }
     .header-user {
       width: 36px; height: 36px; background: var(--primary);
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -210,7 +211,7 @@
     .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
     .btn-primary svg { width: 20px; height: 20px; fill: white; }
 
-    /* ─── History Screen ───────────────────────────────────────── */
+    /* ─── History Screen ──────────────────────────────────────── */
     #screen-history { background: var(--bg); }
     .history-content { flex: 1; overflow-y: auto; padding: 20px; }
     .history-item {
@@ -260,29 +261,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
-<body>
-
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 1 — LOGIN
-═══════════════════════════════════════════════════════════ -->
-<div id="screen-login" class="screen active">
-  <div class="login-logo">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
-    </svg>
-  </div>
-  <h1 class="login-title">Field Merchandiser</h1>
-  <p class="login-sub">Sign in with your company account to continue</p>
-  <button class="btn-signin" id="btn-signin">
-    <!-- Microsoft logo -->
-    <svg viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
-      <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
-      <path fill="#f35325" d="M1 1h10v10H1z"/>
-      <path fill="#81bc06" d="M12 1h10v10H12z"/>
-      <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-      <path fill="#ffba08" d="M12 12h10v10H12z"/>
-    </svg>
-    Sign in with Microsoft
+<body>  Sign in with Microsoft
   </button>
 </div>
 
@@ -291,9 +270,21 @@
 ═══════════════════════════════════════════════════════════ -->
 <div id="screen-home" class="screen">
   <div class="app-header">
-    <div>
-      <div class="header-title">Field App</div>
-    </div>
+    <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+      <defs><style>.hgg1{fill:none;stroke:#1a1a2e;stroke-miterlimit:10;stroke-width:3px}.hgg2{fill:#1a1a2e}</style></defs>
+      <path d="M991.47,531.06c0,249.34-202.13,451.47-451.47,451.47S88.53,780.41,88.53,531.06,290.66,79.59,540,79.59s451.47,202.12,451.47,451.47"/>
+      <path class="hgg2" d="M539.86,586.79c-69.41,0-118.24-39.92-136.62-107.78l31.34-7.34c16.42,43.75,52.89,69.48,105.28,69.48s89.17-25.73,105.88-69.48l31.06,7.34c-18.37,67.86-67.21,107.78-136.94,107.78"/>
+      <path class="hgg2" d="M405.37,307.24c0-85.56,25.59-124.88,63.32-124.88s62.97,39.32,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.35-26.01,122.68-62.96,122.68s-62.67-39.21-63.32-122.38c0-1.06,0-30.64,0-31.73m84.42,0c0-66.61-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.88,0,32.03,.29,63.99,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.64c.02-2.11,.03-32.78,.03-34.98"/>
+      <path class="hgg2" d="M256.2,671.45c0-84.46,34.95-131.06,84.83-131.06,13.47,0,33.89,7.52,41.89,17.69v48.4c-7.28-10.91-25.13-22.41-36.77-22.41-28.41,0-44.78,30.6-44.78,87.02,0,68.44,19.27,89.19,37.13,89.19,1.83,0,2.17,0,4.37-.37v-78.63h-3.63c-6.2,0-12.77,1.09-18.21,3.62l3.64-42.22h58.25v138.7c-11.64,14.56-28.78,21.1-46.25,21.1-43.69,0-80.46-39.66-80.46-131.05"/>
+      <path class="hgg2" d="M737.51,544.05h-40.39v232.62c.3,7.51,.39,14.94,0,22.19v.02h40.39c54.96,0,86.29-46.23,86.29-128.14s-31.33-126.69-86.29-126.69m4.37,214.05h-1.46v-173.28h1.46c20.39,0,38.23,22.21,38.23,85.91s-17.84,87.36-38.23,87.36"/>
+      <path class="hgg2" d="M737.51,258.96h-40.39v232.62c.3,7.51,.39,14.94,0,22.19v.02h40.39c54.96,0,86.29-46.23,86.29-128.14s-31.33-126.69-86.29-126.69m4.37,214.05h-1.46v-173.28h1.46c20.39,0,38.23,22.21,38.23,85.92s-17.84,87.36-38.23,87.36"/>
+      <path class="hgg2" d="M548.37,307.24c0-85.56,25.59-124.88,63.32-124.88s62.97,39.32,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.35-26.01,122.68-62.96,122.68s-62.67-39.21-63.32-122.38c0-1.06,0-30.64,0-31.73m84.42,0c0-66.61-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.88,0,32.03,.29,63.99,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.64c.02-2.11,.03-32.78,.03-34.98"/>
+      <path class="hgg2" d="M405.37,725.19c0-85.57,25.59-124.88,63.32-124.88s62.97,39.31,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.34-26.01,122.66-62.96,122.66s-62.67-39.2-63.32-122.37c0-1.07,0-30.66,0-31.73m84.42,0c0-66.62-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.87,0,32.03,.29,63.98,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.65c.02-2.11,.03-32.77,.03-34.97"/>
+      <path class="hgg2" d="M548.37,725.19c0-85.57,25.59-124.88,63.32-124.88s62.97,39.31,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.34-26.01,122.66-62.96,122.66s-62.67-39.2-63.32-122.37c0-1.07,0-30.66,0-31.73m84.42,0c0-66.62-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.87,0,32.03,.29,63.98,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.65c.02-2.11,.03-32.77,.03-34.97"/>
+      <path class="hgg2" d="M256.2,386.73c0-84.46,34.95-131.05,84.83-131.05,13.47,0,33.89,7.52,41.89,17.69v48.39c-7.28-10.9-25.13-22.41-36.77-22.41-28.41,0-44.78,30.61-44.78,87.03,0,68.44,19.27,89.2,37.13,89.2,1.83,0,2.17,0,4.37-.38v-78.63h-3.63c-6.2,0-12.77,1.09-18.21,3.63l3.64-42.22h58.25v138.7c-11.64,14.56-28.78,21.11-46.25,21.11-43.69,0-80.46-39.66-80.46-131.06"/>
+      <path class="hgg2" d="M849.18,530.03v-9.81h7.46c3.66,0,5.9,1.66,5.9,4.87v.1c0,2.87-2.1,4.83-5.76,4.83h-7.61Zm-7.5,17.54h7.5v-10.92h5.9l7.31,10.92h8.77l-8.33-12.18c4.34-1.61,7.31-5.07,7.31-10.58v-.1c0-3.22-1.02-5.9-2.92-7.8-2.24-2.24-5.61-3.46-9.94-3.46h-15.59v34.11Z"/>
+      <circle class="hgg1" cx="853.94" cy="531.06" r="30.26"/>
+    </svg>
     <div class="header-user" id="user-avatar" title="Sign out">?</div>
   </div>
   <div class="home-content">
@@ -577,6 +568,106 @@ function getLocalVisits() {
 async function graphPost(url, body, token) {
   const r = await fetch("https://graph.microsoft.com/v1.0" + url, {
     method: "POST",
+    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" token, "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function graphUpload(url, blob, token) {
+  const r = await fetch("https://graph.microsoft.com/v1.0" + url, {
+    method: "PUT",
+    headers: { "Authorization": "Bearer " + token, "Content-Type": blob.type || "image/jpeg" },
+    body: blob
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function getSiteId(token) {
+  const siteHost = new URL(CONFIG.spSiteUrl).hostname;
+  const sitePath = new URL(CONFIG.spSiteUrl).pathname;
+  const r = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteHost}:${sitePath}�═════════════════════
+// TOAST & OVERLAY
+// ═══════════════════════════════════════════════════════════════
+function toast(msg, type = "") {
+  const t = document.getElementById("toast");
+  document.getElementById("toast-msg").textContent = msg;
+  t.className = "toast show " + type;
+  setTimeout(() => t.className = "toast", 3000);
+}
+function overlay(show, msg = "Saving to SharePoint...") {
+  document.getElementById("overlay-text").textContent = msg;
+  document.getElementById("overlay").className = show ? "overlay show" : "overlay";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MSAL AUTH
+// ═══════════════════════════════════════════════════════════════
+async function signIn() {
+  try {
+    const resp = await msalInstance.loginPopup({ scopes: SCOPES });
+    currentUser = resp.account;
+    msalInstance.setActiveAccount(currentUser);
+    onSignedIn();
+  } catch(e) {
+    console.error(e);
+    toast("Sign-in failed: " + e.message, "error");
+  }
+}
+
+async function getToken() {
+  try {
+    const resp = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account: currentUser });
+    return resp.accessToken;
+  } catch(e) {
+    const resp = await msalInstance.acquireTokenPopup({ scopes: SCOPES });
+    return resp.accessToken;
+  }
+}
+
+function onSignedIn() {
+  const name = currentUser.name || currentUser.username;
+  const initials = name.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2);
+  document.getElementById("user-avatar").textContent = initials;
+  document.getElementById("user-avatar").title = name + " (tap to sign out)";
+
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  document.getElementById("greeting-name").textContent = greet + ", " + name.split(" ")[0] + " 👋";
+  document.getElementById("greeting-date").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
+
+  loadRecentVisits();
+  showScreen("screen-home");
+}
+
+// Sign out
+document.getElementById("user-avatar").addEventListener("click", async () => {
+  if (!confirm("Sign out?")) return;
+  await msalInstance.logoutPopup();
+  currentUser = null;
+  showScreen("screen-login");
+});
+
+// ═══════════════════════════════════════════════════════════════
+// LOCAL STORAGE (visits cache for offline resilience)
+// ═══════════════════════════════════════════════════════════════
+function saveLocalVisit(visit) {
+  const visits = JSON.parse(localStorage.getItem("field_visits") || "[]");
+  visits.unshift(visit);
+  localStorage.setItem("field_visits", JSON.stringify(visits.slice(0, 100)));
+}
+function getLocalVisits() {
+  return JSON.parse(localStorage.getItem("field_visits") || "[]");
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GRAPH API HELPERS
+// ═══════════════════════════════════════════════════════════════
+async function graphPost(url, body, token) {
+  const r = await fetch("https://graph.microsoft.com/v1.0" + url, {
+    method: "POST",
     headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
     body: JSON.stringify(body)
   });
@@ -636,6 +727,7 @@ async function submitVisit() {
 
   // Save locally immediately
   saveLocalVisit(visit);
+
   overlay(true, "Saving to SharePoint...");
   document.getElementById("btn-submit").disabled = true;
 
@@ -646,7 +738,7 @@ async function submitVisit() {
 
     // Create list item
     const item = await graphPost(`/sites/${siteId}/lists/${listId}/items`, {
-      fields: { 
+      fields: {
         Title:            visit.storeName,
         SetType:          visit.storeType,
         FieldNotes:       visit.notes,
