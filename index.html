@@ -417,6 +417,15 @@
     </div>
 
     <div class="form-section">
+      <h3>Location</h3>
+      <div class="location-bar" id="location-bar">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
+        <span id="location-text">Detecting location…</span>
+        <button id="btn-location">Refresh</button>
+      </div>
+    </div>
+
+    <div class="form-section">
       <h3>Store Details</h3>
       <div class="form-group">
         <label for="store-name">Store Name *</label>
@@ -436,15 +445,6 @@
           <option>Sprouts</option>
           <option>Other</option>
         </select>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <h3>Location</h3>
-      <div class="location-bar" id="location-bar">
-        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
-        <span id="location-text">Tap to detect location</span>
-        <button id="btn-location">Get GPS</button>
       </div>
     </div>
 
@@ -600,11 +600,12 @@ function getLocation() {
   txt.textContent = 'Detecting location…';
 
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    async (pos) => {
       gpsCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) };
       txt.textContent = `${gpsCoords.lat}, ${gpsCoords.lng}`;
       bar.className = 'location-bar';
       document.getElementById('btn-location').textContent = 'Refresh';
+      await suggestStoreName(gpsCoords.lat, gpsCoords.lng);
     },
     (err) => {
       txt.textContent = 'Could not get location — enter manually if needed';
@@ -613,6 +614,45 @@ function getLocation() {
     },
     { enableHighAccuracy: true, timeout: 10000 }
   );
+}
+
+async function suggestStoreName(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      { headers: { 'Accept-Language': 'en', 'User-Agent': 'GoodGood-FieldMerchandiser/1.0' } }
+    );
+    const data = await res.json();
+
+    // Update location bar text with human-readable address
+    const addr = data.address || {};
+    const road = addr.road || addr.pedestrian || addr.retail || '';
+    const city = addr.city || addr.town || addr.village || addr.suburb || '';
+    const txt = document.getElementById('location-text');
+    const coordLine = `${lat}, ${lng}`;
+    if (road || city) {
+      txt.textContent = [road, city].filter(Boolean).join(', ') + ' · ' + coordLine;
+    }
+
+    // If Nominatim returns a named place (shop, building, etc.), suggest it
+    if (data.name && data.name.trim()) {
+      const nameField = document.getElementById('store-name');
+      if (!nameField.value.trim()) {
+        nameField.value = data.name.trim();
+        // Try to auto-match store type
+        const n = data.name.toLowerCase();
+        const typeSelect = document.getElementById('store-type');
+        if (!typeSelect.value) {
+          const types = ['Walmart','Target','Costco','HEB','Whole Foods','Kroger','Publix','Sprouts'];
+          for (const t of types) {
+            if (n.includes(t.toLowerCase())) { typeSelect.value = t; break; }
+          }
+        }
+      }
+    }
+  } catch(e) {
+    // Silent fail — GPS coords are still captured
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -669,7 +709,7 @@ function renderPhotoGrid() {
   count.textContent = photoData.length > 0 ? `${photoData.length} photo${photoData.length > 1 ? 's' : ''} selected` : '';
 }
 
-async function handlePhotoInput(files) {
+arync function handlePhotoInput(files) {
   const remaining = 10 - photoData.length;
   const toProcess = Array.from(files).slice(0, remaining);
   if (toProcess.length === 0) { showToast('Maximum 10 photos per visit', 'error'); return; }
@@ -865,9 +905,9 @@ function resetForm() {
   document.getElementById('store-type').value = '';
   document.getElementById('visit-notes').value = '';
   document.getElementById('visit-outcome').value = '';
-  document.getElementById('location-bar').className = 'location-bar';
-  document.getElementById('location-text').textContent = 'Tap to detect location';
-  document.getElementById('btn-location').textContent = 'Get GPS';
+  document.getElementById('location-bar').className = 'location-bar loading';
+  document.getElementById('location-text').textContent = 'Detecting location…';
+  document.getElementById('btn-location').textContent = 'Refresh';
   document.getElementById('photo-grid').innerHTML = '';
   document.getElementById('photo-count').textContent = '';
   document.getElementById('photo-input').value = '';
@@ -883,6 +923,8 @@ function goToForm() {
   // Show config notice if not set up
   document.getElementById('config-notice').className = 'config-notice' + (CONFIGURED ? '' : ' show');
   showScreen('screen-log');
+  // Auto-detect GPS and suggest store name
+  getLocation();
 }
 
 // ═══════════════════════════════════════════════════════════════
