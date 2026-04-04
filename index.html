@@ -11,9 +11,6 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Field Merchandiser</title>
 
-  <!-- MSAL.js for Microsoft authentication -->
-  <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.14.0/lib/msal-browser.min.js"></script>
-
   <style>
     /* ─── Reset & Base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,48 +41,47 @@
     .screen { display: none; min-height: 100vh; flex-direction: column; }
     .screen.active { display: flex; }
 
-    /* ─── Login Screen ─────────────────────────────────────────── */
-    #screen-login {
+    /* ─── Landing Screen ───────────────────────────────────────── */
+    #screen-landing {
       background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
       align-items: center; justify-content: center; padding: 40px 24px;
     }
-    .login-logo {
-      width: 72px; height: 72px; background: var(--primary);
-      border-radius: 20px; display: flex; align-items: center; justify-content: center;
-      margin-bottom: 24px; box-shadow: 0 8px 32px rgba(37,99,235,0.4);
+    .landing-logo {
+      width: 150px; height: 150px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
     }
-    .login-logo svg { width: 38px; height: 38px; fill: white; }
-    .login-title { color: white; font-size: 26px; font-weight: 700; margin-bottom: 8px; text-align: center; }
-    .login-sub { color: rgba(255,255,255,0.55); font-size: 15px; text-align: center; margin-bottom: 48px; }
-    .btn-signin {
+    .landing-logo svg { width: 150px; height: 150px; }
+    .landing-title { color: white; font-size: 26px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+    .landing-sub { color: rgba(255,255,255,0.55); font-size: 15px; text-align: center; margin-bottom: 48px; }
+    .btn-start {
       display: flex; align-items: center; gap: 10px;
       background: white; color: #1a1a2e;
-      border: none; border-radius: var(--radius); padding: 15px 28px;
-      font-size: 16px; font-weight: 600; cursor: pointer;
+      border: none; border-radius: var(--radius); padding: 15px 36px;
+      font-size: 17px; font-weight: 700; cursor: pointer;
       box-shadow: 0 4px 20px rgba(0,0,0,0.2);
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .btn-signin:active { transform: scale(0.97); }
-    .btn-signin svg { width: 22px; height: 22px; }
+    .btn-start:active { transform: scale(0.97); }
+    .btn-start svg { width: 22px; height: 22px; fill: var(--primary); }
 
     /* ─── Header ───────────────────────────────────────────────── */
     .app-header {
       background: white; border-bottom: 1px solid var(--border);
       padding: 16px 20px; display: flex; align-items: center;
       justify-content: space-between; position: sticky; top: 0; z-index: 100;
-      /* iOS safe area */
       padding-top: calc(16px + env(safe-area-inset-top));
     }
+    .header-logo { height: 32px; width: auto; display: block; }
     .header-title { font-size: 18px; font-weight: 700; color: var(--text); }
-    .header-user {
-      width: 36px; height: 36px; background: var(--primary);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 700; font-size: 14px; cursor: pointer;
-    }
     .header-back {
       background: none; border: none; cursor: pointer; padding: 4px;
       color: var(--primary); font-size: 15px; font-weight: 600;
       display: flex; align-items: center; gap: 4px;
+    }
+    .header-action {
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: var(--primary); font-size: 14px; font-weight: 600;
     }
 
     /* ─── Home / Dashboard ─────────────────────────────────────── */
@@ -96,12 +92,11 @@
     .section-label { font-size: 12px; font-weight: 700; color: var(--muted);
       letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
 
-    /* Big action cards */
     .action-cards { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
     .action-card {
       background: var(--card); border-radius: var(--radius); padding: 20px;
       display: flex; align-items: center; gap: 16px;
-      box-shadow: var(--shadow); cursor: pointer; text-decoration: none;
+      box-shadow: var(--shadow); cursor: pointer;
       border: 1px solid var(--border); transition: transform 0.15s, box-shadow 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
@@ -117,9 +112,8 @@
     .action-icon.green svg { fill: var(--accent); }
     .action-text h3 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
     .action-text p { font-size: 13px; color: var(--muted); }
-    .action-arrow { margin-left: auto; color: var(--muted); font-size: 18px; }
+    .action-arrow { margin-left: auto; color: var(--muted); font-size: 20px; }
 
-    /* Recent visits mini list */
     .visits-list { display: flex; flex-direction: column; gap: 10px; }
     .visit-item {
       background: var(--card); border-radius: var(--radius); padding: 14px 16px;
@@ -127,6 +121,7 @@
     }
     .visit-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
     .visit-dot.pending { background: #f59e0b; }
+    .visit-dot.failed { background: var(--danger); }
     .visit-info h4 { font-size: 14px; font-weight: 600; }
     .visit-info p { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .visit-time { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
@@ -145,28 +140,37 @@
     .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
     .form-group input, .form-group textarea, .form-group select {
       width: 100%; padding: 13px 14px; border: 1.5px solid var(--border);
-      border-radius: 10px; font-size: 16px; /* prevent iOS zoom */
+      border-radius: 10px; font-size: 16px;
       background: white; color: var(--text); outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s; appearance: none; -webkit-appearance: none;
+    }
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+      padding-right: 36px;
     }
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
       border-color: var(--primary);
     }
     .form-group textarea { resize: none; height: 90px; }
 
-    /* Location bar */
     .location-bar {
       background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px;
       padding: 12px 14px; display: flex; align-items: center; gap: 10px;
     }
+    .location-bar.loading { background: #fefce8; border-color: #fde68a; }
+    .location-bar.error { background: #fef2f2; border-color: #fecaca; }
     .location-bar svg { width: 18px; height: 18px; fill: var(--accent); flex-shrink: 0; }
+    .location-bar.loading svg { fill: #d97706; }
+    .location-bar.error svg { fill: var(--danger); }
     .location-bar span { font-size: 13px; color: #166534; flex: 1; }
+    .location-bar.loading span { color: #92400e; }
+    .location-bar.error span { color: #991b1b; }
     .location-bar button {
       background: none; border: none; font-size: 12px; color: var(--primary);
       font-weight: 600; cursor: pointer; white-space: nowrap;
     }
 
-    /* Photo capture area */
     .photo-area {
       border: 2px dashed var(--border); border-radius: var(--radius);
       padding: 20px; text-align: center; cursor: pointer;
@@ -179,11 +183,11 @@
     #photo-input { display: none; }
 
     .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+    .photo-thumb-wrap { position: relative; aspect-ratio: 1; }
     .photo-thumb {
-      aspect-ratio: 1; border-radius: 8px; object-fit: cover;
-      border: 2px solid var(--border); position: relative;
+      width: 100%; height: 100%; border-radius: 8px; object-fit: cover;
+      border: 2px solid var(--border);
     }
-    .photo-thumb-wrap { position: relative; }
     .photo-remove {
       position: absolute; top: -6px; right: -6px;
       width: 22px; height: 22px; background: var(--danger);
@@ -192,6 +196,7 @@
       cursor: pointer; z-index: 2;
     }
     .photo-remove svg { width: 10px; height: 10px; fill: white; }
+    .photo-count { font-size: 12px; color: var(--muted); margin-top: 8px; text-align: center; }
 
     /* Submit button */
     .submit-bar {
@@ -210,6 +215,28 @@
     .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
     .btn-primary svg { width: 20px; height: 20px; fill: white; }
 
+    /* ─── Success Screen ───────────────────────────────────────── */
+    #screen-success {
+      background: var(--bg); align-items: center; justify-content: center;
+      padding: 40px 24px; text-align: center;
+    }
+    .success-icon {
+      width: 80px; height: 80px; background: #d1fae5;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .success-icon svg { width: 40px; height: 40px; fill: var(--accent); }
+    .success-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .success-sub { color: var(--muted); font-size: 15px; margin-bottom: 36px; }
+    .success-btns { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
+    .btn-secondary {
+      width: 100%; padding: 14px; background: white; color: var(--primary);
+      border: 2px solid var(--primary); border-radius: var(--radius);
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-secondary:active { background: #eff6ff; }
+
     /* ─── History Screen ───────────────────────────────────────── */
     #screen-history { background: var(--bg); }
     .history-content { flex: 1; overflow-y: auto; padding: 20px; }
@@ -218,18 +245,22 @@
       margin-bottom: 12px; border: 1px solid var(--border); box-shadow: var(--shadow);
     }
     .history-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-    .history-item h3 { font-size: 16px; font-weight: 700; }
+    .history-item h3 { font-size: 16px; font-weight: 700; flex: 1; margin-right: 8px; }
     .badge {
       font-size: 11px; font-weight: 700; padding: 3px 8px;
-      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; flex-shrink: 0;
     }
     .badge.synced { background: #d1fae5; color: #065f46; }
     .badge.pending { background: #fef3c7; color: #92400e; }
+    .badge.failed { background: #fee2e2; color: #991b1b; }
     .history-meta { font-size: 13px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
-    .history-meta span { display: flex; align-items: center; gap: 4px; }
-    .history-meta svg { width: 13px; height: 13px; fill: var(--muted); }
     .history-notes { font-size: 13px; color: var(--text); margin-top: 8px;
       padding-top: 8px; border-top: 1px solid var(--border); }
+    .retry-btn {
+      margin-top: 10px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+      color: var(--primary); background: #eff6ff; border: none;
+      border-radius: 8px; cursor: pointer;
+    }
 
     /* ─── Toast ────────────────────────────────────────────────── */
     .toast {
@@ -246,43 +277,57 @@
 
     /* ─── Loading overlay ──────────────────────────────────────── */
     .overlay {
-      position: fixed; inset: 0; background: rgba(255,255,255,0.9);
+      position: fixed; inset: 0; background: rgba(255,255,255,0.92);
       display: none; align-items: center; justify-content: center;
       flex-direction: column; z-index: 500; gap: 16px;
     }
     .overlay.show { display: flex; }
     .spinner {
-      width: 40px; height: 40px; border: 4px solid var(--border);
+      width: 44px; height: 44px; border: 4px solid var(--border);
       border-top-color: var(--primary); border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    .overlay p { color: var(--muted); font-size: 15px; }
+    .overlay p { color: var(--muted); font-size: 15px; font-weight: 500; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Config notice ────────────────────────────────────────── */
+    .config-notice {
+      background: #fef3c7; border: 1.5px solid #fde68a;
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
+      font-size: 13px; color: #92400e; display: none;
+    }
+    .config-notice.show { display: block; }
   </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SCREEN 1 — LOGIN
+     SCREEN 1 — LANDING
 ═══════════════════════════════════════════════════════════ -->
-<div id="screen-login" class="screen active">
-  <div class="login-logo">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+<div id="screen-landing" class="screen active">
+  <div class="landing-logo">
+    <!-- GOOD GOOD logo (white version) -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+      <defs><style>.gg-cls1{fill:none;stroke:#fff;stroke-miterlimit:10;stroke-width:3px}.gg-cls2{fill:#fff}</style></defs>
+      <path d="M991.47,531.06c0,249.34-202.13,451.47-451.47,451.47S88.53,780.41,88.53,531.06,290.66,79.59,540,79.59s451.47,202.12,451.47,451.47"/>
+      <path class="gg-cls2" d="M539.86,586.79c-69.41,0-118.24-39.92-136.62-107.78l31.34-7.34c16.42,43.75,52.89,69.48,105.28,69.48s89.17-25.73,105.88-69.48l31.06,7.34c-18.37,67.86-67.21,107.78-136.94,107.78"/>
+      <path class="gg-cls2" d="M405.37,307.24c0-85.56,25.59-124.88,63.32-124.88s62.97,39.32,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.35-26.01,122.68-62.96,122.68s-62.67-39.21-63.32-122.38c0-1.06,0-30.64,0-31.73m84.42,0c0-66.61-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.88,0,32.03,.29,63.99,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.64c.02-2.11,.03-32.78,.03-34.98"/>
+      <path class="gg-cls2" d="M256.2,671.45c0-84.46,34.95-131.06,84.83-131.06,13.47,0,33.89,7.52,41.89,17.69v48.4c-7.28-10.91-25.13-22.41-36.77-22.41-28.41,0-44.78,30.6-44.78,87.02,0,68.44,19.27,89.19,37.13,89.19,1.83,0,2.17,0,4.37-.37v-78.63h-3.63c-6.2,0-12.77,1.09-18.21,3.62l3.64-42.22h58.25v138.7c-11.64,14.56-28.78,21.1-46.25,21.1-43.69,0-80.46-39.66-80.46-131.05"/>
+      <path class="gg-cls2" d="M737.51,544.05h-40.39v232.62c.3,7.51,.39,14.94,0,22.19v.02h40.39c54.96,0,86.29-46.23,86.29-128.14s-31.33-126.69-86.29-126.69m4.37,214.05h-1.46v-173.28h1.46c20.39,0,38.23,22.21,38.23,85.91s-17.84,87.36-38.23,87.36"/>
+      <path class="gg-cls2" d="M737.51,258.96h-40.39v232.62c.3,7.51,.39,14.94,0,22.19v.02h40.39c54.96,0,86.29-46.23,86.29-128.14s-31.33-126.69-86.29-126.69m4.37,214.05h-1.46v-173.28h1.46c20.39,0,38.23,22.21,38.23,85.92s-17.84,87.36-38.23,87.36"/>
+      <path class="gg-cls2" d="M548.37,307.24c0-85.56,25.59-124.88,63.32-124.88s62.97,39.32,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.35-26.01,122.68-62.96,122.68s-62.67-39.21-63.32-122.38c0-1.06,0-30.64,0-31.73m84.42,0c0-66.61-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.88,0,32.03,.29,63.99,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.64c.02-2.11,.03-32.78,.03-34.98"/>
+      <path class="gg-cls2" d="M405.37,725.19c0-85.57,25.59-124.88,63.32-124.88s62.97,39.31,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.34-26.01,122.66-62.96,122.66s-62.67-39.2-63.32-122.37c0-1.07,0-30.66,0-31.73m84.42,0c0-66.62-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.87,0,32.03,.29,63.98,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.65c.02-2.11,.03-32.77,.03-34.97"/>
+      <path class="gg-cls2" d="M548.37,725.19c0-85.57,25.59-124.88,63.32-124.88s62.97,39.31,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.34-26.01,122.66-62.96,122.66s-62.67-39.2-63.32-122.37c0-1.07,0-30.66,0-31.73m84.42,0c0-66.62-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.87,0,32.03,.29,63.98,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.65c.02-2.11,.03-32.77,.03-34.97"/>
+      <path class="gg-cls2" d="M256.2,386.73c0-84.46,34.95-131.05,84.83-131.05,13.47,0,33.89,7.52,41.89,17.69v48.39c-7.28-10.9-25.13-22.41-36.77-22.41-28.41,0-44.78,30.61-44.78,87.03,0,68.44,19.27,89.2,37.13,89.2,1.83,0,2.17,0,4.37-.38v-78.63h-3.63c-6.2,0-12.77,1.09-18.21,3.63l3.64-42.22h58.25v138.7c-11.64,14.56-28.78,21.11-46.25,21.11-43.69,0-80.46-39.66-80.46-131.06"/>
+      <path class="gg-cls2" d="M849.18,530.03v-9.81h7.46c3.66,0,5.9,1.66,5.9,4.87v.1c0,2.87-2.1,4.83-5.76,4.83h-7.61Zm-7.5,17.54h7.5v-10.92h5.9l7.31,10.92h8.77l-8.33-12.18c4.34-1.61,7.31-5.07,7.31-10.58v-.1c0-3.22-1.02-5.9-2.92-7.8-2.24-2.24-5.61-3.46-9.94-3.46h-15.59v34.11Z"/>
+      <circle class="gg-cls1" cx="853.94" cy="531.06" r="30.26"/>
     </svg>
   </div>
-  <h1 class="login-title">Field Merchandiser</h1>
-  <p class="login-sub">Sign in with your company account to continue</p>
-  <button class="btn-signin" id="btn-signin">
-    <!-- Microsoft logo -->
-    <svg viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
-      <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
-      <path fill="#f35325" d="M1 1h10v10H1z"/>
-      <path fill="#81bc06" d="M12 1h10v10H12z"/>
-      <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-      <path fill="#ffba08" d="M12 12h10v10H12z"/>
-    </svg>
-    Sign in with Microsoft
+  <h1 class="landing-title">Field Merchandiser</h1>
+  <p class="landing-sub">Log store visits, notes & photos</p>
+  <button class="btn-start" id="btn-start">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    Log a Store Visit
   </button>
 </div>
 
@@ -291,14 +336,27 @@
 ═══════════════════════════════════════════════════════════ -->
 <div id="screen-home" class="screen">
   <div class="app-header">
-    <div>
-      <div class="header-title">Field App</div>
-    </div>
-    <div class="header-user" id="user-avatar" title="Sign out">?</div>
+    <!-- GOOD GOOD logo (dark version) -->
+    <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+      <defs><style>.hgg1{fill:none;stroke:#1a1a2e;stroke-miterlimit:10;stroke-width:3px}.hgg2{fill:#1a1a2e}</style></defs>
+      <path d="M991.47,531.06c0,249.34-202.13,451.47-451.47,451.47S88.53,780.41,88.53,531.06,290.66,79.59,540,79.59s451.47,202.12,451.47,451.47"/>
+      <path class="hgg2" d="M539.86,586.79c-69.41,0-118.24-39.92-136.62-107.78l31.34-7.34c16.42,43.75,52.89,69.48,105.28,69.48s89.17-25.73,105.88-69.48l31.06,7.34c-18.37,67.86-67.21,107.78-136.94,107.78"/>
+      <path class="hgg2" d="M405.37,307.24c0-85.56,25.59-124.88,63.32-124.88s62.97,39.32,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.35-26.01,122.68-62.96,122.68s-62.67-39.21-63.32-122.38c0-1.06,0-30.64,0-31.73m84.42,0c0-66.61-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.88,0,32.03,.29,63.99,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.64c.02-2.11,.03-32.78,.03-34.98"/>
+      <path class="hgg2" d="M256.2,671.45c0-84.46,34.95-131.06,84.83-131.06,13.47,0,33.89,7.52,41.89,17.69v48.4c-7.28-10.91-25.13-22.41-36.77-22.41-28.41,0-44.78,30.6-44.78,87.02,0,68.44,19.27,89.19,37.13,89.19,1.83,0,2.17,0,4.37-.37v-78.63h-3.63c-6.2,0-12.77,1.09-18.21,3.62l3.64-42.22h58.25v138.7c-11.64,14.56-28.78,21.1-46.25,21.1-43.69,0-80.46-39.66-80.46-131.05"/>
+      <path class="hgg2" d="M737.51,544.05h-40.39v232.62c.3,7.51,.39,14.94,0,22.19v.02h40.39c54.96,0,86.29-46.23,86.29-128.14s-31.33-126.69-86.29-126.69m4.37,214.05h-1.46v-173.28h1.46c20.39,0,38.23,22.21,38.23,85.91s-17.84,87.36-38.23,87.36"/>
+      <path class="hgg2" d="M737.51,258.96h-40.39v232.62c.3,7.51,.39,14.94,0,22.19v.02h40.39c54.96,0,86.29-46.23,86.29-128.14s-31.33-126.69-86.29-126.69m4.37,214.05h-1.46v-173.28h1.46c20.39,0,38.23,22.21,38.23,85.92s-17.84,87.36-38.23,87.36"/>
+      <path class="hgg2" d="M548.37,307.24c0-85.56,25.59-124.88,63.32-124.88s62.97,39.32,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.35-26.01,122.68-62.96,122.68s-62.67-39.21-63.32-122.38c0-1.06,0-30.64,0-31.73m84.42,0c0-66.61-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.88,0,32.03,.29,63.99,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.64c.02-2.11,.03-32.78,.03-34.98"/>
+      <path class="hgg2" d="M405.37,725.19c0-85.57,25.59-124.88,63.32-124.88s62.97,39.31,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.34-26.01,122.66-62.96,122.66s-62.67-39.2-63.32-122.37c0-1.07,0-30.66,0-31.73m84.42,0c0-66.62-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.87,0,32.03,.29,63.98,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.65c.02-2.11,.03-32.77,.03-34.97"/>
+      <path class="hgg2" d="M548.37,725.19c0-85.57,25.59-124.88,63.32-124.88s62.97,39.31,62.97,124.88c0,.98,0,30.47-.01,31.44-.58,83.34-26.01,122.66-62.96,122.66s-62.67-39.2-63.32-122.37c0-1.07,0-30.66,0-31.73m84.42,0c0-66.62-8.64-83.76-21.09-83.76s-21.11,17.14-21.11,83.76c0,1.18,0,30.87,0,32.03,.29,63.98,8.52,80.59,21.11,80.59s20.51-15.86,21.06-77.65c.02-2.11,.03-32.77,.03-34.97"/>
+      <path class="hgg2" d="M256.2,386.73c0-84.46,34.95-131.05,84.83-131.05,13.47,0,33.89,7.52,41.89,17.69v48.39c-7.28-10.9-25.13-22.41-36.77-22.41-28.41,0-44.78,30.61-44.78,87.03,0,68.44,19.27,89.2,37.13,89.2,1.83,0,2.17,0,4.37-.38v-78.63h-3.63c-6.2,0-12.77,1.09-18.21,3.63l3.64-42.22h58.25v138.7c/11.64,14.56-28.78,21.11-46.25,21.11-43.69,0-80.46-39.66-80.46-131.06"/>
+      <path class="hgg2" d="M849.18,530.03v-9.81h7.46c3.66,0,5.9,1.66,5.9,4.87v.1c0,2.87-2.1,4.83-5.76,4.83h-7.61Zm-7.5,17.54h7.5v-10.92h5.9l7.31,10.92h8.77l-8.33-12.18c4.34-1.61,7.31-5.07,7.31-10.58v-.1c0-3.22-1.02-5.9-2.92-7.8-2.24-2.24-5.61-3.46-9.94-3.46h-15.59v34.11Z"/>
+      <circle class="hgg1" cx="853.94" cy="531.06" r="30.26"/>
+    </svg>
+    <button class="header-action" id="btn-go-history-hdr">History</button>
   </div>
   <div class="home-content">
-    <div class="greeting" id="greeting-name">Good morning</div>
-    <div class="greeting-sub" id="greeting-date">Loading...</div>
+    <div class="greeting" id="greeting-name">Good morning!</div>
+    <div class="greeting-sub" id="greeting-date">Ready to log a visit?</div>
 
     <div class="section-label">Actions</div>
     <div class="action-cards">
@@ -318,15 +376,15 @@
         </div>
         <div class="action-text">
           <h3>Visit History</h3>
-          <p>View your past store visits</p>
+          <p>View past store visits on this device</p>
         </div>
         <span class="action-arrow">›</span>
       </div>
     </div>
 
-    <div class="section-label">Recent Activity</div>
+    <div class="section-label">Recent</div>
     <div id="recent-visits" class="visits-list">
-      <div class="empty-state">No visits logged yet.<br>Tap "Log a Store Visit" to get started.</div>
+      <div class="empty-state">No visits yet. Tap "Log a Store Visit" to start.</div>
     </div>
   </div>
 </div>
@@ -345,6 +403,19 @@
   </div>
 
   <div class="form-scroll">
+
+    <div class="config-notice" id="config-notice">
+      ⚠️ Google Sheets not connected yet — visits will be saved locally only.
+    </div>
+
+    <div class="form-section">
+      <h3>Who are you?</h3>
+      <div class="form-group">
+        <label for="rep-name">Your Name *</label>
+        <input type="text" id="rep-name" placeholder="e.g. Maria Garcia" autocomplete="name" />
+      </div>
+    </div>
+
     <div class="form-section">
       <h3>Store Details</h3>
       <div class="form-group">
@@ -401,10 +472,11 @@
       <div class="photo-area" id="photo-area" onclick="document.getElementById('photo-input').click()">
         <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8 15.2 10.23 15.2 12 13.77 15.2 12 15.2zm7-11h-3l-2-2H10L8 4.2H5c-1.1 0-2 .9-2 2V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.2c0-1.1-.9-2-2-2z"/></svg>
         <p>Tap to take or upload photos</p>
-        <small>Max 10 photos per visit</small>
+        <small>Up to 10 photos per visit</small>
       </div>
       <input type="file" id="photo-input" accept="image/*" multiple capture="environment" />
       <div class="photo-grid" id="photo-grid"></div>
+      <p class="photo-count" id="photo-count"></p>
     </div>
   </div>
 
@@ -417,7 +489,25 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SCREEN 4 — HISTORY
+     SCREEN 4 — SUCCESS
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-success" class="screen">
+  <div class="success-icon">
+    <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+  </div>
+  <h2 class="success-title">Visit Logged!</h2>
+  <p class="success-sub" id="success-sub">Saved to Google Sheets.</p>
+  <div class="success-btns">
+    <button class="btn-primary" id="btn-log-another">
+      <svg viewBox="0 0 24 24"><path d="M19 13H13v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Log Another Visit
+    </button>
+    <button class="btn-secondary" id="btn-go-history-success">View History</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 5 — HISTORY
 ═══════════════════════════════════════════════════════════ -->
 <div id="screen-history" class="screen">
   <div class="app-header">
@@ -436,426 +526,425 @@
 <!-- Loading overlay -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
-  <p id="overlay-text">Saving to SharePoint...</p>
+  <p id="overlay-text">Submitting visit...</p>
 </div>
 
-<!-- Toast notification -->
+<!-- Toast -->
 <div class="toast" id="toast">
   <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 10l-9 9z"/></svg>
   <span id="toast-msg">Saved!</span>
 </div>
 
-
 <script>
 // ═══════════════════════════════════════════════════════════════
-// ⚙️  CONFIGURATION — Update these values for your tenant
+// CONFIGURATION
+// Replace this URL with your deployed Google Apps Script Web App URL
+// See setup instructions in SETUP-GOOGLE.md
 // ═══════════════════════════════════════════════════════════════
-const CONFIG = {
-  // Azure AD App Registration
-  clientId:    "93221221-8272-412d-afcf-4aa4685db5a5",
-  tenantId:    "55b7a3ff-4a81-44d3-af47-a6c25393d553",
+const SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
-  // SharePoint — root communication site
-  spSiteUrl:   "https://goodgoodis.sharepoint.com",
-  spListName:  "VisitSubmissions",
-  spLibrary:   "MerchandiserPhotos",
-
-  // App
-  appName:     "Field Merchandiser",
-};
-
-// Microsoft Graph scopes needed
-const SCOPES = [
-  "User.Read",
-  "Sites.ReadWrite.All",
-  "Files.ReadWrite.All"
-];
+const CONFIGURED = SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
 // ═══════════════════════════════════════════════════════════════
-// MSAL Setup
+// STATE
 // ═══════════════════════════════════════════════════════════════
-const msalConfig = {
-  auth: {
-    clientId:   CONFIG.clientId,
-    authority:  `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-    redirectUri: "https://noreplygoodgood.github.io/field-merchandiser/",
-  },
-  cache: { cacheLocation: "sessionStorage", storeAuthStateInCookie: true }
-};
-const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-let currentUser = null;
-let gpsCoords    = null;
-let photoFiles   = [];
+let photoData = []; // Array of { dataUrl, base64, type, name }
+let gpsCoords = null;
 
 // ═══════════════════════════════════════════════════════════════
 // SCREEN ROUTING
 // ═══════════════════════════════════════════════════════════════
 function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  window.scrollTo(0,0);
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TOAST & OVERLAY
+// TOAST
 // ═══════════════════════════════════════════════════════════════
-function toast(msg, type = "") {
-  const t = document.getElementById("toast");
-  document.getElementById("toast-msg").textContent = msg;
-  t.className = "toast show " + type;
-  setTimeout(() => t.className = "toast", 3000);
-}
-function overlay(show, msg = "Saving to SharePoint...") {
-  document.getElementById("overlay-text").textContent = msg;
-  document.getElementById("overlay").className = show ? "overlay show" : "overlay";
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  const m = document.getElementById('toast-msg');
+  m.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MSAL AUTH
+// LOADING OVERLAY
 // ═══════════════════════════════════════════════════════════════
-async function signIn() {
-  try {
-    const resp = await msalInstance.loginPopup({ scopes: SCOPES });
-    currentUser = resp.account;
-    msalInstance.setActiveAccount(currentUser);
-    onSignedIn();
-  } catch(e) {
-    console.error(e);
-    toast("Sign-in failed: " + e.message, "error");
+function showOverlay(msg = 'Submitting...') {
+  document.getElementById('overlay-text').textContent = msg;
+  document.getElementById('overlay').classList.add('show');
+}
+function hideOverlay() {
+  document.getElementById('overlay').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GPS LOCATION
+// ═══════════════════════════════════════════════════════════════
+function getLocation() {
+  const bar = document.getElementById('location-bar');
+  const txt = document.getElementById('location-text');
+
+  if (!navigator.geolocation) {
+    txt.textContent = 'GPS not available on this device';
+    bar.className = 'location-bar error';
+    return;
   }
-}
 
-async function getToken() {
-  try {
-    const resp = await msalInstance.acquireTokenSilent({ scopes: SCOPES, account: currentUser });
-    return resp.accessToken;
-  } catch(e) {
-    const resp = await msalInstance.acquireTokenPopup({ scopes: SCOPES });
-    return resp.accessToken;
-  }
-}
+  bar.className = 'location-bar loading';
+  txt.textContent = 'Detecting location…';
 
-function onSignedIn() {
-  const name = currentUser.name || currentUser.username;
-  const initials = name.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2);
-  document.getElementById("user-avatar").textContent = initials;
-  document.getElementById("user-avatar").title = name + " (tap to sign out)";
-
-  const hour = new Date().getHours();
-  const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  document.getElementById("greeting-name").textContent = greet + ", " + name.split(" ")[0] + " 👋";
-  document.getElementById("greeting-date").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"});
-
-  loadRecentVisits();
-  showScreen("screen-home");
-}
-
-// Sign out
-document.getElementById("user-avatar").addEventListener("click", async () => {
-  if (!confirm("Sign out?")) return;
-  await msalInstance.logoutPopup();
-  currentUser = null;
-  showScreen("screen-login");
-});
-
-// ═══════════════════════════════════════════════════════════════
-// LOCAL STORAGE (visits cache for offline resilience)
-// ═══════════════════════════════════════════════════════════════
-function saveLocalVisit(visit) {
-  const visits = JSON.parse(localStorage.getItem("field_visits") || "[]");
-  visits.unshift(visit);
-  localStorage.setItem("field_visits", JSON.stringify(visits.slice(0, 100)));
-}
-function getLocalVisits() {
-  return JSON.parse(localStorage.getItem("field_visits") || "[]");
-}
-
-// ═══════════════════════════════════════════════════════════════
-// GRAPH API HELPERS
-// ═══════════════════════════════════════════════════════════════
-async function graphPost(url, body, token) {
-  const r = await fetch("https://graph.microsoft.com/v1.0" + url, {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-
-async function graphUpload(url, blob, token) {
-  const r = await fetch("https://graph.microsoft.com/v1.0" + url, {
-    method: "PUT",
-    headers: { "Authorization": "Bearer " + token, "Content-Type": blob.type || "image/jpeg" },
-    body: blob
-  });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-
-async function getSiteId(token) {
-  const siteHost = new URL(CONFIG.spSiteUrl).hostname;
-  const sitePath = new URL(CONFIG.spSiteUrl).pathname;
-  const r = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteHost}:${sitePath}`, {
-    headers: { "Authorization": "Bearer " + token }
-  });
-  if (!r.ok) throw new Error("Could not find SharePoint site: " + await r.text());
-  const d = await r.json();
-  return d.id;
-}
-
-async function getListId(siteId, listName, token) {
-  const r = await fetch(`https://graph.microsoft.com/v1.0/sites/${siteId}/lists?$filter=displayName eq '${encodeURIComponent(listName)}'`, {
-    headers: { "Authorization": "Bearer " + token }
-  });
-  const d = await r.json();
-  if (!d.value || d.value.length === 0) throw new Error(`List "${listName}" not found on SharePoint site.`);
-  return d.value[0].id;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// SUBMIT VISIT → SHAREPOINT
-// ═══════════════════════════════════════════════════════════════
-async function submitVisit() {
-  const storeName = document.getElementById("store-name").value.trim();
-  if (!storeName) { toast("Please enter a store name", "error"); return; }
-
-  const visit = {
-    id:        Date.now().toString(),
-    timestamp: new Date().toISOString(),
-    storeName: storeName,
-    storeType: document.getElementById("store-type").value,
-    notes:     document.getElementById("visit-notes").value.trim(),
-    outcome:   document.getElementById("visit-outcome").value,
-    gps:       gpsCoords ? `${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}` : "",
-    user:      currentUser ? currentUser.name : "Unknown",
-    photoCount: photoFiles.length,
-    synced:    false
-  };
-
-  // Save locally immediately
-  saveLocalVisit(visit);
-
-  overlay(true, "Saving to SharePoint...");
-  document.getElementById("btn-submit").disabled = true;
-
-  try {
-    const token  = await getToken();
-    const siteId = await getSiteId(token);
-    const listId = await getListId(siteId, CONFIG.spListName, token);
-
-    // Create list item
-    const item = await graphPost(`/sites/${siteId}/lists/${listId}/items`, {
-      fields: {
-        Title:            visit.storeName,
-        SetType:          visit.storeType,
-        FieldNotes:       visit.notes,
-        ComplianceStatus: visit.outcome,
-        GPSLatitude:      visit.gps ? visit.gps.split(",")[0].trim() : "",
-        GPSLongitude:     visit.gps ? visit.gps.split(",")[1]?.trim() : "",
-        MerchandiserName: visit.user,
-        VisitDateTime:    visit.timestamp
-      }
-    }, token);
-
-    const itemId = item.id;
-
-    // Upload photos
-    if (photoFiles.length > 0) {
-      overlay(true, `Uploading ${photoFiles.length} photo(s)...`);
-      for (let i = 0; i < photoFiles.length; i++) {
-        const file = photoFiles[i];
-        const safeName = `${visit.storeName.replace(/[^a-zA-Z0-9]/g,"_")}_${Date.now()}_${i+1}.jpg`;
-        const drivePath = `/sites/${siteId}/drive/root:/${CONFIG.spLibrary}/${safeName}:/content`;
-        await graphUpload(drivePath, file, token);
-      }
-    }
-
-    // Mark as synced in local cache
-    const visits = getLocalVisits();
-    const idx = visits.findIndex(v => v.id === visit.id);
-    if (idx >= 0) { visits[idx].synced = true; localStorage.setItem("field_visits", JSON.stringify(visits)); }
-
-    overlay(false);
-    toast("Visit saved to SharePoint ✓", "success");
-    resetForm();
-    loadRecentVisits();
-    showScreen("screen-home");
-
-  } catch(err) {
-    overlay(false);
-    document.getElementById("btn-submit").disabled = false;
-    console.error(err);
-    toast("Saved locally. Will sync when online.", "");
-    resetForm();
-    loadRecentVisits();
-    showScreen("screen-home");
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// FORM HELPERS
-// ═══════════════════════════════════════════════════════════════
-function resetForm() {
-  document.getElementById("store-name").value   = "";
-  document.getElementById("store-type").value   = "";
-  document.getElementById("visit-notes").value  = "";
-  document.getElementById("visit-outcome").value = "";
-  document.getElementById("photo-grid").innerHTML = "";
-  photoFiles = [];
-  gpsCoords  = null;
-  document.getElementById("location-text").textContent = "Tap to detect location";
-  document.getElementById("btn-submit").disabled = false;
-}
-
-// GPS
-document.getElementById("btn-location").addEventListener("click", () => {
-  if (!navigator.geolocation) { toast("GPS not available"); return; }
-  document.getElementById("location-text").textContent = "Detecting...";
   navigator.geolocation.getCurrentPosition(
-    pos => {
-      gpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-      document.getElementById("location-text").textContent =
-        `${gpsCoords.lat.toFixed(5)}, ${gpsCoords.lng.toFixed(5)}`;
+    (pos) => {
+      gpsCoords = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) };
+      txt.textContent = `${gpsCoords.lat}, ${gpsCoords.lng}`;
+      bar.className = 'location-bar';
+      document.getElementById('btn-location').textContent = 'Refresh';
     },
-    err => {
-      document.getElementById("location-text").textContent = "Could not get location";
-      toast("GPS error: " + err.message, "error");
+    (err) => {
+      txt.textContent = 'Could not get location — enter manually if needed';
+      bar.className = 'location-bar error';
+      gpsCoords = null;
     },
-    { enableHighAccuracy: true, timeout: 8000 }
+    { enableHighAccuracy: true, timeout: 10000 }
   );
-});
+}
 
-// Photo capture
-document.getElementById("photo-input").addEventListener("change", (e) => {
-  const files = Array.from(e.target.files);
-  if (photoFiles.length + files.length > 10) { toast("Max 10 photos per visit", "error"); return; }
-  files.forEach(file => {
-    photoFiles.push(file);
+// ═══════════════════════════════════════════════════════════════
+// PHOTO HANDLING
+// ═══════════════════════════════════════════════════════════════
+function compressImage(file) {
+  return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.onload = ev => {
-      const grid = document.getElementById("photo-grid");
-      const wrap = document.createElement("div");
-      wrap.className = "photo-thumb-wrap";
-      const idx = photoFiles.length - 1;
-      wrap.innerHTML = `
-        <img src="${ev.target.result}" class="photo-thumb" />
-        <div class="photo-remove" data-idx="${idx}">
-          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </div>`;
-      grid.appendChild(wrap);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          const r = new FileReader();
+          r.onload = () => {
+            const dataUrl = r.result;
+            const base64 = dataUrl.split(',')[1];
+            resolve({ dataUrl, base64, type: 'image/jpeg', name: file.name });
+          };
+          r.readAsDataURL(blob);
+        }, 'image/jpeg', 0.78);
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   });
-  e.target.value = "";
-});
-
-document.getElementById("photo-grid").addEventListener("click", e => {
-  const btn = e.target.closest(".photo-remove");
-  if (!btn) return;
-  const idx = parseInt(btn.dataset.idx);
-  photoFiles.splice(idx, 1);
-  // Re-render grid
-  const grid = document.getElementById("photo-grid");
-  const wraps = Array.from(grid.querySelectorAll(".photo-thumb-wrap"));
-  wraps.forEach((w, i) => {
-    const rm = w.querySelector(".photo-remove");
-    if (i === idx) { w.remove(); }
-    else if (i > idx) { rm.dataset.idx = i - 1; }
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════
-// RECENT VISITS / HISTORY
-// ═══════════════════════════════════════════════════════════════
-function formatTime(iso) {
-  const d = new Date(iso);
-  const now = new Date();
-  const diffH = (now - d) / 3600000;
-  if (diffH < 1) return "Just now";
-  if (diffH < 24) return `${Math.floor(diffH)}h ago`;
-  return d.toLocaleDateString("en-US", { month:"short", day:"numeric" });
 }
 
-function loadRecentVisits() {
-  const visits = getLocalVisits().slice(0, 5);
-  const el = document.getElementById("recent-visits");
-  if (!visits.length) {
-    el.innerHTML = '<div class="empty-state">No visits yet.<br>Tap "Log a Store Visit" to get started.</div>';
-    return;
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  const count = document.getElementById('photo-count');
+  grid.innerHTML = '';
+  photoData.forEach((p, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'photo-thumb-wrap';
+    wrap.innerHTML = `
+      <img class="photo-thumb" src="${p.dataUrl}" alt="Photo ${i+1}" />
+      <div class="photo-remove" data-idx="${i}">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+      </div>`;
+    wrap.querySelector('.photo-remove').addEventListener('click', (e) => {
+      e.stopPropagation();
+      photoData.splice(i, 1);
+      renderPhotoGrid();
+    });
+    grid.appendChild(wrap);
+  });
+  count.textContent = photoData.length > 0 ? `${photoData.length} photo${photoData.length > 1 ? 's' : ''} selected` : '';
+}
+
+async function handlePhotoInput(files) {
+  const remaining = 10 - photoData.length;
+  const toProcess = Array.from(files).slice(0, remaining);
+  if (toProcess.length === 0) { showToast('Maximum 10 photos per visit', 'error'); return; }
+  showOverlay('Processing photos…');
+  for (const file of toProcess) {
+    const compressed = await compressImage(file);
+    photoData.push(compressed);
   }
-  el.innerHTML = visits.map(v => `
-    <div class="visit-item">
-      <div class="visit-dot ${v.synced ? "" : "pending"}"></div>
-      <div class="visit-info">
-        <h4>${v.storeName}</h4>
-        <p>${v.storeType || "Store"} · ${v.user}</p>
-      </div>
-      <div class="visit-time">${formatTime(v.timestamp)}</div>
-    </div>`).join("");
+  hideOverlay();
+  renderPhotoGrid();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HISTORY (localStorage)
+// ═══════════════════════════════════════════════════════════════
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('fm_visits') || '[]'); } catch { return []; }
+}
+
+function saveHistory(visits) {
+  localStorage.setItem('fm_visits', JSON.stringify(visits));
+}
+
+function addToHistory(entry) {
+  const visits = getHistory();
+  visits.unshift(entry);
+  if (visits.length > 100) visits.pop();
+  saveHistory(visits);
+}
+
+function updateHistoryEntry(id, updates) {
+  const visits = getHistory();
+  const idx = visits.findIndex(v => v.id === id);
+  if (idx !== -1) { Object.assign(visits[idx], updates); saveHistory(visits); }
 }
 
 function renderHistory() {
-  const visits = getLocalVisits();
-  const el = document.getElementById("history-list");
-  if (!visits.length) {
-    el.innerHTML = '<div class="empty-state">No visits logged yet.</div>';
+  const container = document.getElementById('history-list');
+  const visits = getHistory();
+  if (visits.length === 0) {
+    container.innerHTML = '<div class="empty-state">No visits logged yet.</div>';
     return;
   }
-  el.innerHTML = visits.map(v => `
-    <div class="history-item">
-      <div class="history-item-header">
-        <h3>${v.storeName}</h3>
-        <span class="badge ${v.synced ? "synced" : "pending"}">${v.synced ? "Synced" : "Pending"}</span>
-      </div>
-      <div class="history-meta">
-        <span>
-          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg>
-          ${new Date(v.timestamp).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}
-        </span>
-        ${v.gps ? `<span><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>GPS captured</span>` : ""}
-        ${v.photoCount ? `<span>📷 ${v.photoCount} photo${v.photoCount>1?"s":""}</span>` : ""}
-      </div>
-      ${v.outcome ? `<div class="history-notes"><strong>Outcome:</strong> ${v.outcome}</div>` : ""}
-      ${v.notes ? `<div class="history-notes">${v.notes.slice(0,150)}${v.notes.length>150?"…":""}</div>` : ""}
-    </div>`).join("");
+  container.innerHTML = visits.map(v => {
+    const date = new Date(v.timestamp).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const time = new Date(v.timestamp).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+    const badgeClass = v.status === 'synced' ? 'synced' : v.status === 'failed' ? 'failed' : 'pending';
+    const badgeLabel = v.status === 'synced' ? '✓ Synced' : v.status === 'failed' ? 'Failed' : 'Pending';
+    const retryBtn = v.status === 'failed' ? `<button class="retry-btn" data-id="${v.id}">Retry sync →</button>` : '';
+    return `
+      <div class="history-item">
+        <div class="history-item-header">
+          <h3>${v.storeName || 'Unknown Store'}</h3>
+          <span class="badge ${badgeClass}">${badgeLabel}</span>
+        </div>
+        <div class="history-meta">
+          <span>${v.repName || ''}</span>
+          <span>${v.storeType || ''}</span>
+          <span>${date} ${time}</span>
+          ${v.photoCount > 0 ? `<span>📷 ${v.photoCount}</span>` : ''}
+        </div>
+        ${v.notes ? `<div class="history-notes">${v.notes}</div>` : ''}
+        ${retryBtn}
+      </div>`;
+  }).join('');
+
+  // Wire retry buttons
+  container.querySelectorAll('.retry-btn').forEach(btn => {
+    btn.addEventListener('click', () => retrySubmission(btn.dataset.id));
+  });
 }
 
-// ═══════════════════════════════════════════════════════════════
-// NAVIGATION EVENTS
-// ═══════════════════════════════════════════════════════════════
-document.getElementById("btn-signin").addEventListener("click", signIn);
-document.getElementById("btn-go-log").addEventListener("click", () => { resetForm(); showScreen("screen-log"); });
-document.getElementById("btn-go-history").addEventListener("click", () => { renderHistory(); showScreen("screen-history"); });
-document.getElementById("btn-back-log").addEventListener("click", () => showScreen("screen-home"));
-document.getElementById("btn-back-history").addEventListener("click", () => showScreen("screen-home"));
-document.getElementById("btn-submit").addEventListener("click", submitVisit);
-
-// ═══════════════════════════════════════════════════════════════
-// INIT — handle MSAL redirect & check for existing session
-// ═══════════════════════════════════════════════════════════════
-(async () => {
-  try {
-              await msalInstance.initialize();
-await msalInstance.handleRedirectPromise();
-    const accounts = msalInstance.getAllAccounts();
-    if (accounts.length > 0) {
-      currentUser = accounts[0];
-      msalInstance.setActiveAccount(currentUser);
-      onSignedIn();
-    }
-  } catch(e) {
-    console.warn("MSAL init:", e);
+function renderRecentVisits() {
+  const el = document.getElementById('recent-visits');
+  const visits = getHistory().slice(0, 3);
+  if (visits.length === 0) {
+    el.innerHTML = '<div class="empty-state">No visits yet. Tap "Log a Store Visit" to start.</div>';
+    return;
   }
-})();
-</script>
-
-<!-- Service Worker registration -->
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(e => console.log("SW:", e));
+  el.innerHTML = visits.map(v => {
+    const time = new Date(v.timestamp).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const dotClass = v.status === 'synced' ? '' : v.status === 'failed' ? 'failed' : 'pending';
+    return `
+      <div class="visit-item">
+        <div class="visit-dot ${dotClass}"></div>
+        <div class="visit-info">
+          <h4>${v.storeName || 'Unknown Store'}</h4>
+          <p>${v.storeType || ''} ${v.repName ? '· ' + v.repName : ''}</p>
+        </div>
+        <div class="visit-time">${time}</div>
+      </div>`;
+  }).join('');
 }
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT TOGOOGLE APPS SCRIPT
+// ═══════════════════════════════════════════════════════════════
+async function submitToGoogle(payload) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.error || 'Unknown error');
+  return json;
+}
+
+async function retrySubmission(id) {
+  const visits = getHistory();
+  const visit = visits.find(v => v.id === id);
+  if (!visit || !visit.payload) return;
+  showOverlay('Retrying sync…');
+  try {
+    await submitToGoogle(visit.payload);
+    updateHistoryEntry(id, { status: 'synced' });
+    showToast('Synced to Google Sheets!', 'success');
+  } catch (e) {
+    updateHistoryEntry(id, { status: 'failed' });
+    showToast('Still failed — check connection', 'error');
+  }
+  hideOverlay();
+  renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT VISIT
+// ═══════════════════════════════════════════════════════════════
+async function submitVisit() {
+  const repName  = document.getElementById('rep-name').value.trim();
+  const storeName = document.getElementById('store-name').value.trim();
+  const storeType = document.getElementById('store-type').value;
+  const notes    = document.getElementById('visit-notes').value.trim();
+  const outcome  = document.getElementById('visit-outcome').value;
+
+  if (!repName)   { showToast('Please enter your name', 'error'); return; }
+  if (!storeName) { showToast('Please enter the store name', 'error'); return; }
+
+  // Save name for next time
+  localStorage.setItem('fm_rep_name', repName);
+
+  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const timestamp = new Date().toISOString();
+
+  const payload = {
+    id,
+    timestamp,
+    repName,
+    storeName,
+    storeType,
+    location: gpsCoords ? `${gpsCoords.lat}, ${gpsCoords.lng}` : '',
+    notes,
+    outcome,
+    photos: photoData.map(p => ({ base64: p.base64, type: p.type, name: p.name })),
+  };
+
+  const historyEntry = {
+    id, timestamp, repName, storeName, storeType, notes, outcome,
+    photoCount: photoData.length,
+    status: CONFIGURED ? 'pending' : 'local',
+    payload: CONFIGURED ? payload : null,
+  };
+
+  showOverlay(CONFIGURED ? 'Submitting to Google Sheets…' : 'Saving locally…');
+
+  if (CONFIGURED) {
+    try {
+      await submitToGoogle(payload);
+      historyEntry.status = 'synced';
+      addToHistory(historyEntry);
+      hideOverlay();
+      document.getElementById('success-sub').textContent = 'Saved to Google Sheets.';
+      showScreen('screen-success');
+    } catch (e) {
+      historyEntry.status = 'failed';
+      addToHistory(historyEntry);
+      hideOverlay();
+      document.getElementById('success-sub').textContent = 'Saved locally — will retry when connected.';
+      showScreen('screen-success');
+    }
+  } else {
+    addToHistory(historyEntry);
+    hideOverlay();
+    document.getElementById('success-sub').textContent = 'Saved on this device. Connect Google Sheets to sync.';
+    showScreen('screen-success');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESET FORM
+// ═══════════════════════════════════════════════════════════════
+function resetForm() {
+  document.getElementById('store-name').value = '';
+  document.getElementById('store-type').value = '';
+  document.getElementById('visit-notes').value = '';
+  document.getElementById('visit-outcome').value = '';
+  document.getElementById('location-bar').className = 'location-bar';
+  document.getElementById('location-text').textContent = 'Tap to detect location';
+  document.getElementById('btn-location').textContent = 'Get GPS';
+  document.getElementById('photo-grid').innerHTML = '';
+  document.getElementById('photo-count').textContent = '';
+  document.getElementById('photo-input').value = '';
+  photoData = [];
+  gpsCoords = null;
+}
+
+function goToForm() {
+  resetForm();
+  // Pre-fill name
+  const saved = localStorage.getItem('fm_rep_name');
+  if (saved) document.getElementById('rep-name').value = saved;
+  // Show config notice if not set up
+  document.getElementById('config-notice').className = 'config-notice' + (CONFIGURED ? '' : ' show');
+  showScreen('screen-log');
+}
+
+// ════════�═══════════════════════════════════════════════════════
+// HOME GREETING
+// ═══════════════════════════════════════════════════════════════
+function updateGreeting() {
+  const h = new Date().getHours();
+  const saved = localStorage.getItem('fm_rep_name');
+  const name = saved ? `, ${saved.split(' ')[0]}` : '';
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting-name').textContent = greeting + name + '!';
+  document.getElementById('greeting-date').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Landing → directly to form (simpler flow)
+  document.getElementById('btn-start').addEventListener('click', () => {
+    updateGreeting();
+    renderRecentVisits();
+    showScreen('screen-home');
+  });
+
+  // Home
+  document.getElementById('btn-go-log').addEventListener('click', goToForm);
+  document.getElementById('btn-go-history').addEventListener('click', () => {
+    renderHistory();
+    showScreen('screen-history');
+  });
+  document.getElementById('btn-go-history-hdr').addEventListener('click', () => {
+    renderHistory();
+    showScreen('screen-history');
+  });
+
+  // Form
+  document.getElementById('btn-back-log').addEventListener('click', () => {
+    updateGreeting(); renderRecentVisits();
+    showScreen('screen-home');
+  });
+  document.getElementById('btn-location').addEventListener('click', getLocation);
+  document.getElementById('photo-input').addEventListener('change', (e) => {
+    if (e.target.files.length) handlePhotoInput(e.target.files);
+  });
+  document.getElementById('btn-submit').addEventListener('click', submitVisit);
+
+  // Success
+  document.getElementById('btn-log-another').addEventListener('click', goToForm);
+  document.getElementById('btn-go-history-success').addEventListener('click', () => {
+    renderHistory();
+    showScreen('screen-history');
+  });
+
+  // History
+  document.getElementById('btn-back-history').addEventListener('click', () => {
+    updateGreeting(); renderRecentVisits();
+    showScreen('screen-home');
+  });
+});
 </script>
 </body>
 </html>
