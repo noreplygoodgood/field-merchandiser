@@ -709,7 +709,7 @@ function renderPhotoGrid() {
   count.textContent = photoData.length > 0 ? `${photoData.length} photo${photoData.length > 1 ? 's' : ''} selected` : '';
 }
 
-arync function handlePhotoInput(files) {
+async function handlePhotoInput(files) {
   const remaining = 10 - photoData.length;
   const toProcess = Array.from(files).slice(0, remaining);
   if (toProcess.length === 0) { showToast('Maximum 10 photos per visit', 'error'); return; }
