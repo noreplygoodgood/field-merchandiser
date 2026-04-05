@@ -262,6 +262,21 @@
       border-radius: 8px; cursor: pointer;
     }
 
+    /* ─── Detail Screen ────────────────────────────────────────── */
+    #screen-detail { background: var(--bg); }
+    .detail-content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; }
+    .detail-section { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .detail-section h4 { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+    .detail-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+    .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .detail-label { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+    .detail-value { font-size: 13px; color: var(--text); font-weight: 500; text-align: right; }
+    .detail-notes { font-size: 14px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+    .detail-photos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .detail-photo { width: 100%; aspect-ratio: 1; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); cursor: pointer; }
+    .history-item { cursor: pointer; }
+    .history-item:active { opacity: 0.8; }
+
     /* ─── Toast ────────────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -544,6 +559,21 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 6 — VISIT DETAIL
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-detail" class="screen">
+  <div class="app-header">
+    <button class="header-back" id="btn-back-detail">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+      Back
+    </button>
+    <div class="header-title" id="detail-title">Visit</div>
+    <div style="width:60px"></div>
+  </div>
+  <div class="detail-content" id="detail-content"></div>
+</div>
+
 <!-- Loading overlay -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
@@ -637,43 +667,45 @@ function getLocation() {
   );
 }
 
+const MAPS_KEY = 'AIzaSyDiHjiJudiURXg4Ek7EA54tcd-DX0zln6c';
+
 async function suggestStoreName(lat, lng) {
-  try {
-    // Use Google Maps Places API for accurate store names
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=store&key=AIzaSyDummyKeyPlaceholder`,
-    );
-    // Fall back to Nominatim (no API key needed)
-    throw new Error('use nominatim');
-  } catch(e) {}
+  const txt = document.getElementById('location-text');
+  const coordLine = `${lat}, ${lng}`;
 
   try {
+    // Google Places Nearby Search — finds actual store names
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=store&key=${MAPS_KEY}`
+    );
+    const data = await res.json();
+    const top = data.results?.[0];
+    if (top) {
+      txt.textContent = (top.vicinity || coordLine) + ' · ' + coordLine;
+      const nameField = document.getElementById('store-name');
+      if (!nameField.value.trim()) {
+        nameField.value = top.name;
+      }
+      return;
+    }
+  } catch(e) { /* fall through to Nominatim */ }
+
+  try {
+    // Nominatim fallback
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
       { headers: { 'Accept-Language': 'en', 'User-Agent': 'GoodGood-FieldMerchandiser/1.0' } }
     );
     const data = await res.json();
-
-    // Update location bar with human-readable address
     const addr = data.address || {};
     const road = addr.road || addr.pedestrian || addr.retail || '';
     const city = addr.city || addr.town || addr.village || addr.suburb || '';
-    const txt = document.getElementById('location-text');
-    const coordLine = `${lat}, ${lng}`;
-    if (road || city) {
-      txt.textContent = [road, city].filter(Boolean).join(', ') + ' · ' + coordLine;
-    }
-
-    // Suggest store name if Nominatim returns a named place
-    if (data.name && data.name.trim()) {
+    if (road || city) txt.textContent = [road, city].filter(Boolean).join(', ') + ' · ' + coordLine;
+    if (data.name?.trim()) {
       const nameField = document.getElementById('store-name');
-      if (!nameField.value.trim()) {
-        nameField.value = data.name.trim();
-      }
+      if (!nameField.value.trim()) nameField.value = data.name.trim();
     }
-  } catch(e) {
-    // Silent fail — GPS coords are still captured
-  }
+  } catch(e) { /* silent fail */ }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -781,26 +813,68 @@ function renderHistory() {
     const badgeLabel = v.status === 'synced' ? '✓ Synced' : v.status === 'failed' ? 'Failed' : 'Pending';
     const retryBtn = v.status === 'failed' ? `<button class="retry-btn" data-id="${v.id}">Retry sync →</button>` : '';
     return `
-      <div class="history-item">
+      <div class="history-item" data-id="${v.id}">
         <div class="history-item-header">
           <h3>${v.storeName || 'Unknown Store'}</h3>
           <span class="badge ${badgeClass}">${badgeLabel}</span>
         </div>
         <div class="history-meta">
           <span>${v.repName || ''}</span>
-          <span>${v.storeType || ''}</span>
           <span>${date} ${time}</span>
-          ${v.photoCount > 0 ? `<span>📷 ${v.photoCount}</span>` : ''}
+          ${v.photoCount > 0 ? `<span>📷 ${v.photoCount} photo${v.photoCount > 1 ? 's' : ''}</span>` : ''}
         </div>
-        ${v.notes ? `<div class="history-notes">${v.notes}</div>` : ''}
         ${retryBtn}
       </div>`;
   }).join('');
 
-  // Wire retry buttons
+  // Wire retry buttons (stop propagation so it doesn't open detail)
   container.querySelectorAll('.retry-btn').forEach(btn => {
-    btn.addEventListener('click', () => retrySubmission(btn.dataset.id));
+    btn.addEventListener('click', (e) => { e.stopPropagation(); retrySubmission(btn.dataset.id); });
   });
+
+  // Wire tap to open detail
+  container.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => showVisitDetail(item.dataset.id));
+  });
+}
+
+function showVisitDetail(id) {
+  const visits = getHistory();
+  const v = visits.find(v => v.id === id);
+  if (!v) return;
+
+  const date = new Date(v.timestamp).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const time = new Date(v.timestamp).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+  document.getElementById('detail-title').textContent = v.storeName || 'Visit';
+
+  const photos = v.payload?.photos || [];
+  const photosHtml = photos.length > 0
+    ? `<div class="detail-section">
+        <h4>Photos (${photos.length})</h4>
+        <div class="detail-photos">
+          ${photos.map(p => `<img class="detail-photo" src="data:${p.type};base64,${p.base64}" alt="Visit photo" onclick="this.requestFullscreen?.()" />`).join('')}
+        </div>
+      </div>`
+    : v.photoCount > 0
+      ? `<div class="detail-section"><h4>Photos</h4><p style="font-size:13px;color:var(--muted)">${v.photoCount} photo${v.photoCount>1?'s':''} submitted (not stored locally)</p></div>`
+      : '';
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-section">
+      <h4>Visit Info</h4>
+      <div class="detail-row"><span class="detail-label">Store</span><span class="detail-value">${v.storeName || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Rep</span><span class="detail-value">${v.repName || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${date}</span></div>
+      <div class="detail-row"><span class="detail-label">Time</span><span class="detail-value">${time}</span></div>
+      ${v.payload?.location ? `<div class="detail-row"><span class="detail-label">GPS</span><span class="detail-value">${v.payload.location}</span></div>` : ''}
+      ${v.outcome ? `<div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-value">${v.outcome}</span></div>` : ''}
+    </div>
+    ${v.notes ? `<div class="detail-section"><h4>Notes</h4><div class="detail-notes">${v.notes}</div></div>` : ''}
+    ${photosHtml}
+  `;
+
+  showScreen('screen-detail');
 }
 
 function renderRecentVisits() {
@@ -814,15 +888,18 @@ function renderRecentVisits() {
     const time = new Date(v.timestamp).toLocaleDateString('en-US', { month:'short', day:'numeric' });
     const dotClass = v.status === 'synced' ? '' : v.status === 'failed' ? 'failed' : 'pending';
     return `
-      <div class="visit-item">
+      <div class="visit-item" data-id="${v.id}" style="cursor:pointer">
         <div class="visit-dot ${dotClass}"></div>
         <div class="visit-info">
           <h4>${v.storeName || 'Unknown Store'}</h4>
-          <p>${v.storeType || ''} ${v.repName ? '· ' + v.repName : ''}</p>
+          <p>${v.repName || ''}</p>
         </div>
         <div class="visit-time">${time}</div>
       </div>`;
   }).join('');
+  el.querySelectorAll('.visit-item').forEach(item => {
+    item.addEventListener('click', () => showVisitDetail(item.dataset.id));
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1033,6 +1110,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-back-history').addEventListener('click', () => {
     updateGreeting(); renderRecentVisits();
     showScreen('screen-home');
+  });
+
+  // Detail
+  document.getElementById('btn-back-detail').addEventListener('click', () => {
+    renderHistory();
+    showScreen('screen-history');
   });
 });
 </script>
