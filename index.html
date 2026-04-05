@@ -290,6 +290,24 @@
     .overlay p { color: var(--muted); font-size: 15px; font-weight: 500; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ─── Setup Screen ─────────────────────────────────────────── */
+    #screen-setup {
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      align-items: center; justify-content: center; padding: 40px 24px;
+    }
+    .setup-card {
+      background: white; border-radius: 20px; padding: 36px 28px;
+      width: 100%; max-width: 360px; box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+    }
+    .setup-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .setup-card p { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+    .setup-card input {
+      width: 100%; padding: 14px; border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 17px; outline: none;
+      transition: border-color 0.2s; margin-bottom: 16px;
+    }
+    .setup-card input:focus { border-color: var(--primary); }
+
     /* ─── Config notice ────────────────────────────────────────── */
     .config-notice {
       background: #fef3c7; border: 1.5px solid #fde68a;
@@ -329,6 +347,21 @@
     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
     Log a Store Visit
   </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1b — FIRST-TIME SETUP (name entry)
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-card">
+    <h2>Welcome!</h2>
+    <p>What's your name? We'll remember it so you never have to type it again.</p>
+    <input type="text" id="setup-name" placeholder="e.g. Maria Garcia" autocomplete="name" autocorrect="off" />
+    <button class="btn-primary" id="btn-setup-continue">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      Get Started
+    </button>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -408,11 +441,14 @@
       ⚠️ Google Sheets not connected yet — visits will be saved locally only.
     </div>
 
-    <div class="form-section">
+    <div class="form-section" id="name-section">
       <h3>Who are you?</h3>
       <div class="form-group">
         <label for="rep-name">Your Name *</label>
         <input type="text" id="rep-name" placeholder="e.g. Maria Garcia" autocomplete="name" />
+        <div id="name-hint" style="font-size:12px;color:var(--muted);margin-top:4px;display:none;">
+          Not you? <button onclick="changeName()" style="background:none;border:none;color:var(--primary);font-size:12px;font-weight:600;cursor:pointer;padding:0;">Change name</button>
+        </div>
       </div>
     </div>
 
@@ -917,14 +953,26 @@ function resetForm() {
 
 function goToForm() {
   resetForm();
-  // Pre-fill name
+  // Pre-fill name from localStorage
   const saved = localStorage.getItem('fm_rep_name');
-  if (saved) document.getElementById('rep-name').value = saved;
+  if (saved) {
+    document.getElementById('rep-name').value = saved;
+    document.getElementById('name-hint').style.display = 'block';
+  } else {
+    document.getElementById('name-hint').style.display = 'none';
+  }
   // Show config notice if not set up
   document.getElementById('config-notice').className = 'config-notice' + (CONFIGURED ? '' : ' show');
   showScreen('screen-log');
   // Auto-detect GPS and suggest store name
   getLocation();
+}
+
+function changeName() {
+  localStorage.removeItem('fm_rep_name');
+  document.getElementById('rep-name').value = '';
+  document.getElementById('name-hint').style.display = 'none';
+  document.getElementById('rep-name').focus();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -945,11 +993,29 @@ function updateGreeting() {
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Landing → directly to form (simpler flow)
+  // Landing → check if we know the user already
   document.getElementById('btn-start').addEventListener('click', () => {
+    if (localStorage.getItem('fm_rep_name')) {
+      updateGreeting();
+      renderRecentVisits();
+      showScreen('screen-home');
+    } else {
+      showScreen('screen-setup');
+      setTimeout(() => document.getElementById('setup-name').focus(), 300);
+    }
+  });
+
+  // Setup screen — save name and continue
+  document.getElementById('btn-setup-continue').addEventListener('click', () => {
+    const name = document.getElementById('setup-name').value.trim();
+    if (!name) { document.getElementById('setup-name').focus(); return; }
+    localStorage.setItem('fm_rep_name', name);
     updateGreeting();
     renderRecentVisits();
     showScreen('screen-home');
+  });
+  document.getElementById('setup-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('btn-setup-continue').click();
   });
 
   // Home
