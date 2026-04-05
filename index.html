@@ -467,21 +467,6 @@
         <label for="store-name">Store Name *</label>
         <input type="text" id="store-name" placeholder="e.g. Walmart – Main St" autocomplete="off" />
       </div>
-      <div class="form-group">
-        <label for="store-type">Store Type</label>
-        <select id="store-type">
-          <option value="">Select type...</option>
-          <option>Walmart</option>
-          <option>Target</option>
-          <option>Costco</option>
-          <option>HEB</option>
-          <option>Whole Foods</option>
-          <option>Kroger</option>
-          <option>Publix</option>
-          <option>Sprouts</option>
-          <option>Other</option>
-        </select>
-      </div>
     </div>
 
     <div class="form-section">
@@ -654,13 +639,22 @@ function getLocation() {
 
 async function suggestStoreName(lat, lng) {
   try {
+    // Use Google Maps Places API for accurate store names
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=store&key=AIzaSyDummyKeyPlaceholder`,
+    );
+    // Fall back to Nominatim (no API key needed)
+    throw new Error('use nominatim');
+  } catch(e) {}
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
       { headers: { 'Accept-Language': 'en', 'User-Agent': 'GoodGood-FieldMerchandiser/1.0' } }
     );
     const data = await res.json();
 
-    // Update location bar text with human-readable address
+    // Update location bar with human-readable address
     const addr = data.address || {};
     const road = addr.road || addr.pedestrian || addr.retail || '';
     const city = addr.city || addr.town || addr.village || addr.suburb || '';
@@ -670,20 +664,11 @@ async function suggestStoreName(lat, lng) {
       txt.textContent = [road, city].filter(Boolean).join(', ') + ' · ' + coordLine;
     }
 
-    // If Nominatim returns a named place (shop, building, etc.), suggest it
+    // Suggest store name if Nominatim returns a named place
     if (data.name && data.name.trim()) {
       const nameField = document.getElementById('store-name');
       if (!nameField.value.trim()) {
         nameField.value = data.name.trim();
-        // Try to auto-match store type
-        const n = data.name.toLowerCase();
-        const typeSelect = document.getElementById('store-type');
-        if (!typeSelect.value) {
-          const types = ['Walmart','Target','Costco','HEB','Whole Foods','Kroger','Publix','Sprouts'];
-          for (const t of types) {
-            if (n.includes(t.toLowerCase())) { typeSelect.value = t; break; }
-          }
-        }
       }
     }
   } catch(e) {
@@ -876,7 +861,6 @@ async function retrySubmission(id) {
 async function submitVisit() {
   const repName  = document.getElementById('rep-name').value.trim();
   const storeName = document.getElementById('store-name').value.trim();
-  const storeType = document.getElementById('store-type').value;
   const notes    = document.getElementById('visit-notes').value.trim();
   const outcome  = document.getElementById('visit-outcome').value;
 
@@ -894,7 +878,6 @@ async function submitVisit() {
     timestamp,
     repName,
     storeName,
-    storeType,
     location: gpsCoords ? `${gpsCoords.lat}, ${gpsCoords.lng}` : '',
     notes,
     outcome,
@@ -902,7 +885,7 @@ async function submitVisit() {
   };
 
   const historyEntry = {
-    id, timestamp, repName, storeName, storeType, notes, outcome,
+    id, timestamp, repName, storeName, notes, outcome,
     photoCount: photoData.length,
     status: CONFIGURED ? 'pending' : 'local',
     payload: CONFIGURED ? payload : null,
@@ -938,7 +921,6 @@ async function submitVisit() {
 // ═══════════════════════════════════════════════════════════════
 function resetForm() {
   document.getElementById('store-name').value = '';
-  document.getElementById('store-type').value = '';
   document.getElementById('visit-notes').value = '';
   document.getElementById('visit-outcome').value = '';
   document.getElementById('location-bar').className = 'location-bar loading';
