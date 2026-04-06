@@ -486,6 +486,10 @@
         <label for="store-name">Store Name *</label>
         <input type="text" id="store-name" placeholder="e.g. Walmart – Main St" autocomplete="off" />
       </div>
+      <div class="form-group">
+        <label for="visit-date">Visit Date</label>
+        <input type="date" id="visit-date" />
+      </div>
     </div>
 
     <div class="form-section">
@@ -872,8 +876,8 @@ function showVisitDetail(id) {
       <h4>Visit Info</h4>
       <div class="detail-row"><span class="detail-label">Store</span><span class="detail-value">${v.storeName || '—'}</span></div>
       <div class="detail-row"><span class="detail-label">Rep</span><span class="detail-value">${v.repName || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${date}</span></div>
-      <div class="detail-row"><span class="detail-label">Time</span><span class="detail-value">${time}</span></div>
+      ${v.visitDate ? `<div class="detail-row"><span class="detail-label">Visit Date</span><span class="detail-value">${new Date(v.visitDate + 'T12:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'})}</span></div>` : `<div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${date}</span></div>`}
+      <div class="detail-row"><span class="detail-label">Logged At</span><span class="detail-value">${time}</span></div>
       ${v.payload?.location ? `<div class="detail-row"><span class="detail-label">GPS</span><span class="detail-value">${v.payload.location}</span></div>` : ''}
       ${v.outcome ? `<div class="detail-row"><span class="detail-label">Outcome</span><span class="detail-value">${v.outcome}</span></div>` : ''}
     </div>
@@ -957,9 +961,12 @@ async function submitVisit() {
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const timestamp = new Date().toISOString();
 
+  const visitDate = document.getElementById('visit-date').value || new Date().toISOString().slice(0, 10);
+
   const payload = {
     id,
     timestamp,
+    visitDate,
     repName,
     storeName,
     location: gpsCoords ? `${gpsCoords.lat}, ${gpsCoords.lng}` : (document.getElementById('manual-address')?.value.trim() || ''),
@@ -969,7 +976,7 @@ async function submitVisit() {
   };
 
   const historyEntry = {
-    id, timestamp, repName, storeName, notes, outcome,
+    id, timestamp, visitDate, repName, storeName, notes, outcome,
     photoCount: photoData.length,
     status: CONFIGURED ? 'pending' : 'local',
     payload: CONFIGURED ? payload : null,
@@ -1017,6 +1024,12 @@ function resetForm() {
   document.getElementById('manual-address-wrap').style.display = 'none';
   photoData = [];
   gpsCoords = null;
+  // Auto-fill today's date
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  document.getElementById('visit-date').value = `${yyyy}-${mm}-${dd}`;
 }
 
 function goToForm() {
