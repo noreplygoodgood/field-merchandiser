@@ -474,6 +474,10 @@
         <span id="location-text">Detecting location…</span>
         <button id="btn-location">Refresh</button>
       </div>
+      <div id="manual-address-wrap" style="display:none; margin-top:10px;">
+        <input type="text" id="manual-address" placeholder="Type address or location manually…" autocomplete="street-address"
+          style="width:100%; padding:11px 13px; border:1.5px solid #fecaca; border-radius:10px; font-size:14px; background:#fff8f8; color:#333; box-sizing:border-box;" />
+      </div>
     </div>
 
     <div class="form-section">
@@ -510,7 +514,7 @@
         <p>Tap to take or upload photos</p>
         <small>Up to 10 photos per visit</small>
       </div>
-      <input type="file" id="photo-input" accept="image/*" multiple capture="environment" />
+      <input type="file" id="photo-input" accept="image/*" multiple />
       <div class="photo-grid" id="photo-grid"></div>
       <p class="photo-count" id="photo-count"></p>
     </div>
@@ -642,8 +646,9 @@ function getLocation() {
   const txt = document.getElementById('location-text');
 
   if (!navigator.geolocation) {
-    txt.textContent = 'GPS not available on this device';
+    txt.textContent = 'GPS not available — enter address below';
     bar.className = 'location-bar error';
+    document.getElementById('manual-address-wrap').style.display = 'block';
     return;
   }
 
@@ -659,9 +664,11 @@ function getLocation() {
       await suggestStoreName(gpsCoords.lat, gpsCoords.lng);
     },
     (err) => {
-      txt.textContent = 'Could not get location — enter manually if needed';
+      txt.textContent = 'GPS blocked — enter address below';
       bar.className = 'location-bar error';
       gpsCoords = null;
+      document.getElementById('manual-address-wrap').style.display = 'block';
+      document.getElementById('manual-address').focus();
     },
     { enableHighAccuracy: true, timeout: 10000 }
   );
@@ -955,7 +962,7 @@ async function submitVisit() {
     timestamp,
     repName,
     storeName,
-    location: gpsCoords ? `${gpsCoords.lat}, ${gpsCoords.lng}` : '',
+    location: gpsCoords ? `${gpsCoords.lat}, ${gpsCoords.lng}` : (document.getElementById('manual-address')?.value.trim() || ''),
     notes,
     outcome,
     photos: photoData.map(p => ({ base64: p.base64, type: p.type, name: p.name })),
@@ -1006,6 +1013,8 @@ function resetForm() {
   document.getElementById('photo-grid').innerHTML = '';
   document.getElementById('photo-count').textContent = '';
   document.getElementById('photo-input').value = '';
+  document.getElementById('manual-address').value = '';
+  document.getElementById('manual-address-wrap').style.display = 'none';
   photoData = [];
   gpsCoords = null;
 }
