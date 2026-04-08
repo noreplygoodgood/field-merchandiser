@@ -580,9 +580,73 @@
       Back
     </button>
     <div class="header-title" id="detail-title">Visit</div>
-    <div style="width:60px"></div>
+    <button class="header-action" id="btn-edit-visit" style="color:var(--primary);font-weight:700;font-size:15px;">Edit</button>
   </div>
   <div class="detail-content" id="detail-content"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 7 — EDIT VISIT
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-edit" class="screen">
+  <div class="app-header">
+    <button class="header-back" id="btn-back-edit">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+      Cancel
+    </button>
+    <div class="header-title">Edit Visit</div>
+    <div style="width:60px"></div>
+  </div>
+
+  <div class="form-scroll">
+    <div class="form-section">
+      <h3>Store & Rep</h3>
+      <div class="form-group">
+        <label for="edit-store-name">Store Name *</label>
+        <input type="text" id="edit-store-name" placeholder="e.g. Sprouts – Scottsdale" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="edit-rep-name">Rep Name *</label>
+        <input type="text" id="edit-rep-name" placeholder="e.g. Maria Garcia" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label for="edit-visit-date">Visit Date</label>
+        <input type="date" id="edit-visit-date" />
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Visit Notes</h3>
+      <div class="form-group">
+        <label for="edit-visit-notes">Observations / Issues</label>
+        <textarea id="edit-visit-notes" placeholder="Stock levels, shelf placement, compliance issues, actions taken..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="edit-visit-outcome">Outcome</label>
+        <select id="edit-visit-outcome">
+          <option value="">Select outcome...</option>
+          <option>All tasks completed</option>
+          <option>Partial – follow-up needed</option>
+          <option>Issue raised with store manager</option>
+          <option>Stock refill needed</option>
+          <option>Display reset completed</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section" style="background:#fff8ed;border-color:#f59e0b;">
+      <p style="font-size:13px;color:#92400e;line-height:1.5;">
+        <strong>Note:</strong> Editing will update this visit locally and re-sync the changes to Google Sheets. Photos cannot be changed after submission.
+      </p>
+    </div>
+  </div>
+
+  <div class="submit-bar">
+    <button class="btn-primary" id="btn-save-edit" style="background:var(--accent);">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+      Save Changes
+    </button>
+  </div>
 </div>
 
 <!-- Loading overlay -->
@@ -867,6 +931,7 @@ function showVisitDetail(id) {
   const visits = getHistory();
   const v = visits.find(v => v.id === id);
   if (!v) return;
+  editingVisitId = id; // track for Edit button
 
   const date = new Date(v.timestamp).toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
   const time = new Date(v.timestamp).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
@@ -1189,6 +1254,89 @@ function updateGreeting() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// EDIT VISIT
+// ═══════════════════════════════════════════════════════════════
+let editingVisitId = null;
+
+function showEditForm(id) {
+  const visits = getHistory();
+  const v = visits.find(v => v.id === id);
+  if (!v) return;
+  editingVisitId = id;
+
+  // Pre-fill form fields
+  document.getElementById('edit-store-name').value  = v.storeName  || '';
+  document.getElementById('edit-rep-name').value    = v.repName    || '';
+  document.getElementById('edit-visit-notes').value = v.notes      || '';
+  document.getElementById('edit-visit-outcome').value = v.outcome  || '';
+
+  // Visit date — strip to YYYY-MM-DD for the date input
+  if (v.visitDate) {
+    document.getElementById('edit-visit-date').value = v.visitDate.substring(0, 10);
+  } else {
+    document.getElementById('edit-visit-date').value = '';
+  }
+
+  showScreen('screen-edit');
+}
+
+async function saveEdit() {
+  const id = editingVisitId;
+  if (!id) return;
+
+  const storeName = document.getElementById('edit-store-name').value.trim();
+  const repName   = document.getElementById('edit-rep-name').value.trim();
+  const notes     = document.getElementById('edit-visit-notes').value.trim();
+  const outcome   = document.getElementById('edit-visit-outcome').value;
+  const visitDate = document.getElementById('edit-visit-date').value;
+
+  if (!storeName || !repName) {
+    showToast('Store name and rep name are required', 'error');
+    return;
+  }
+
+  // Update localStorage entry
+  const updates = { storeName, repName, notes, outcome, visitDate, status: 'pending' };
+
+  // Also patch the nested payload so retries use updated data
+  const visits = getHistory();
+  const v = visits.find(v => v.id === id);
+  if (v && v.payload) {
+    updates.payload = { ...v.payload, storeName, repName, notes, outcome, visitDate };
+  }
+
+  updateHistoryEntry(id, updates);
+
+  // Try to sync the edit to Google Sheets immediately
+  if (CONFIGURED) {
+    showOverlay('Saving changes…');
+    try {
+      await submitToGoogle({
+        action: 'editVisit',
+        id,
+        storeName,
+        repName,
+        notes,
+        outcome,
+        visitDate,
+      });
+      updateHistoryEntry(id, { status: 'synced' });
+      showToast('Changes saved!', 'success');
+    } catch (e) {
+      // Keep as pending — autoRetryFailed will pick it up
+      showToast('Saved locally — will sync when connected', '');
+    }
+    hideOverlay();
+  } else {
+    showToast('Changes saved locally', '');
+  }
+
+  renderHistory();
+  showVisitDetail(id);
+  showScreen('screen-detail');
+}
+
+// ═══════════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
@@ -1258,6 +1406,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHistory();
     showScreen('screen-history');
   });
+  document.getElementById('btn-edit-visit').addEventListener('click', () => {
+    if (editingVisitId) showEditForm(editingVisitId);
+  });
+
+  // Edit
+  document.getElementById('btn-back-edit').addEventListener('click', () => {
+    showVisitDetail(editingVisitId);
+    showScreen('screen-detail');
+  });
+  document.getElementById('btn-save-edit').addEventListener('click', saveEdit);
 
   // Auto-retry any failed/pending submissions silently on load
   setTimeout(autoRetryFailed, 1500);
