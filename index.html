@@ -946,10 +946,40 @@ async function submitToGoogle(payload) {
 async function retrySubmission(id) {
   const visits = getHistory();
   const visit = visits.find(v => v.id === id);
-  if (!visit || !visit.payload) return;
+  if (!visit) return;
   showOverlay('Retrying sync…');
   try {
-    await submitToGoogle(visit.payload);
+    // Re-build payload from stored fields if payload slot is missing (legacy entries)
+    const payload = visit.payload || {
+      action: 'submitVisit',
+      id:         visit.id,
+      timestamp:  visit.timestamp,
+      visitDate:  visit.visitDate,
+      repName:    visit.repName,
+      storeName:  visit.storeName,
+      location:   visit.location || '',
+      notes:      visit.notes    || '',
+      outcome:    visit.outcome  || '',
+      photoCount: visit.photoCount || 0,
+    };
+    await submitToGoogle(payload);
+
+    // Re-upload any stored photos
+    const photos = visit.photos || [];
+    for (let i = 0; i < photos.length; i++) {
+      const p = photos[i];
+      try {
+        await submitToGoogle({
+          action: 'addPhoto',
+          visitId: visit.id,
+          base64: p.base64,
+          type:   p.type,
+          name:   p.name || `photo_${i + 1}.jpg`,
+          index:  i,
+        });
+      } catch (_) { /* best-effort */ }
+    }
+
     updateHistoryEntry(id, { status: 'synced' });
     showToast('Synced to Google Sheets!', 'success');
   } catch (e) {
@@ -958,6 +988,56 @@ async function retrySubmission(id) {
   }
   hideOverlay();
   renderHistory();
+}
+
+// Silently retry all failed/pending submissions on app load
+async function autoRetryFailed() {
+  if (!CONFIGURED) return;
+  const visits = getHistory();
+  const toRetry = visits.filter(v => v.status === 'failed' || v.status === 'pending');
+  if (toRetry.length === 0) return;
+  console.log(`Auto-retrying ${toRetry.length} failed submission(s)…`);
+  let synced = 0;
+  for (const visit of toRetry) {
+    try {
+      const payload = visit.payload || {
+        action: 'submitVisit',
+        id:         visit.id,
+        timestamp:  visit.timestamp,
+        visitDate:  visit.visitDate,
+        repName:    visit.repName,
+        storeName:  visit.storeName,
+        location:   visit.location || '',
+        notes:      visit.notes    || '',
+        outcome:    visit.outcome  || '',
+        photoCount: visit.photoCount || 0,
+      };
+      await submitToGoogle(payload);
+
+      const photos = visit.photos || [];
+      for (let i = 0; i < photos.length; i++) {
+        const p = photos[i];
+        try {
+          await submitToGoogle({
+            action: 'addPhoto',
+            visitId: visit.id,
+            base64: p.base64,
+            type:   p.type,
+            name:   p.name || `photo_${i + 1}.jpg`,
+            index:  i,
+          });
+        } catch (_) { /* best-effort */ }
+      }
+
+      updateHistoryEntry(visit.id, { status: 'synced' });
+      synced++;
+    } catch (_) { /* leave as failed, will retry next open */ }
+  }
+  if (synced > 0) {
+    showToast(`${synced} saved visit${synced > 1 ? 's' : ''} synced to Google Sheets!`, 'success');
+    renderHistory();
+    renderRecentVisits();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -981,11 +1061,21 @@ async function submitVisit() {
     ? `${gpsCoords.lat}, ${gpsCoords.lng}`
     : (document.getElementById('manual-address')?.value.trim() || '');
 
+  // Build the full payload now so it can be stored and retried later
+  const visitPayload = {
+    action: 'submitVisit',
+    id, timestamp, visitDate, repName, storeName, location, notes, outcome,
+    photoCount: photoData.length,
+  };
+
   const historyEntry = {
     id, timestamp, visitDate, repName, storeName, notes, outcome,
     photoCount: photoData.length,
     status: CONFIGURED ? 'pending' : 'local',
-    payload: null,
+    payload: visitPayload,                  // store payload so retry works
+    photos: photoData.map(p => ({           // store photos for retry too
+      base64: p.base64, type: p.type, name: p.name,
+    })),
   };
 
   if (!CONFIGURED) {
@@ -998,11 +1088,7 @@ async function submitVisit() {
   try {
     // ── Step 1: submit visit metadata ──────────────────────────
     showOverlay('Submitting visit…');
-    await submitToGoogle({
-      action: 'submitVisit',
-      id, timestamp, visitDate, repName, storeName, location, notes, outcome,
-      photoCount: photoData.length,
-    });
+    await submitToGoogle(visitPayload);
     historyEntry.status = 'synced';
 
     // ── Step 2: upload each photo individually ─────────────────
@@ -1172,6 +1258,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderHistory();
     showScreen('screen-history');
   });
+
+  // Auto-retry any failed/pending submissions silently on load
+  setTimeout(autoRetryFailed, 1500);
 });
 </script>
 </body>
