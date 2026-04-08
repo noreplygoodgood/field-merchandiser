@@ -474,9 +474,12 @@
         <span id="location-text">Detecting location…</span>
         <button id="btn-location">Refresh</button>
       </div>
-      <div id="manual-address-wrap" style="display:none; margin-top:10px;">
+      <div style="margin-top:7px; text-align:right;">
+        <button id="btn-manual-toggle" onclick="toggleManualAddress()" style="background:none;border:none;font-size:12px;color:var(--primary);font-weight:600;cursor:pointer;padding:2px 0;">Enter address manually</button>
+      </div>
+      <div id="manual-address-wrap" style="display:none; margin-top:6px;">
         <input type="text" id="manual-address" placeholder="Type address or location manually…" autocomplete="street-address"
-          style="width:100%; padding:11px 13px; border:1.5px solid #fecaca; border-radius:10px; font-size:14px; background:#fff8f8; color:#333; box-sizing:border-box;" />
+          style="width:100%; padding:11px 13px; border:1.5px solid #d1d5db; border-radius:10px; font-size:14px; background:#f9fafb; color:#333; box-sizing:border-box;" />
       </div>
     </div>
 
@@ -645,14 +648,24 @@ function hideOverlay() {
 // ═══════════════════════════════════════════════════════════════
 // GPS LOCATION
 // ═══════════════════════════════════════════════════════════════
+function toggleManualAddress() {
+  const wrap = document.getElementById('manual-address-wrap');
+  const btn = document.getElementById('btn-manual-toggle');
+  const visible = wrap.style.display !== 'none';
+  wrap.style.display = visible ? 'none' : 'block';
+  btn.textContent = visible ? 'Enter address manually' : 'Use GPS instead';
+  if (!visible) document.getElementById('manual-address').focus();
+}
+
 function getLocation() {
   const bar = document.getElementById('location-bar');
   const txt = document.getElementById('location-text');
 
   if (!navigator.geolocation) {
-    txt.textContent = 'GPS not available — enter address below';
+    txt.textContent = 'GPS not available — use manual entry below';
     bar.className = 'location-bar error';
     document.getElementById('manual-address-wrap').style.display = 'block';
+    document.getElementById('btn-manual-toggle').textContent = 'Use GPS instead';
     return;
   }
 
@@ -668,10 +681,11 @@ function getLocation() {
       await suggestStoreName(gpsCoords.lat, gpsCoords.lng);
     },
     (err) => {
-      txt.textContent = 'GPS blocked — enter address below';
+      txt.textContent = 'GPS blocked — use manual entry below';
       bar.className = 'location-bar error';
       gpsCoords = null;
       document.getElementById('manual-address-wrap').style.display = 'block';
+      document.getElementById('btn-manual-toggle').textContent = 'Use GPS instead';
       document.getElementById('manual-address').focus();
     },
     { enableHighAccuracy: true, timeout: 10000 }
