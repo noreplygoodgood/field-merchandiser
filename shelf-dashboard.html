@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GOOD GOOD — Field Merchandiser Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --green-dark:   #1a3a24;
+      --green-mid:    #2d6a40;
+      --green-light:  #4caf72;
+      --gold:         #f0c040;
+      --gold-light:   #fff8e1;
+      --bg:           #f2f5f2;
+      --card:         #ffffff;
+      --text:         #1c2b1f;
+      --text-muted:   #6b8070;
+      --border:       #e0ebe2;
+      --positive:     #27ae60;
+      --warning:      #e67e22;
+      --danger:       #e74c3c;
+      --gap:          16px;
+      --radius:       10px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--green-dark);
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      background: var(--gold);
+      color: var(--green-dark);
+      font-weight: 800;
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
+    .header-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+
+    /* TIME FILTERS */
+    .time-filters { display: flex; gap: 6px; align-items: center; }
+    .time-btn {
+      padding: 6px 14px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 20px;
+      background: transparent;
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .time-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .time-btn.active {
+      background: var(--gold);
+      color: var(--green-dark);
+      border-color: var(--gold);
+      font-weight: 700;
+    }
+
+    /* MAIN */
+    .main { max-width: 1440px; margin: 0 auto; padding: 20px 20px 40px; }
+
+    /* SECTION HEADER */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin: 24px 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* KPI ROW */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
+    @media (max-width: 720px)  { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      border-top: 3px solid transparent;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card.accent-green  { border-top-color: var(--green-mid); }
+    .kpi-card.accent-gold   { border-top-color: var(--gold); }
+    .kpi-card.accent-warn   { border-top-color: var(--warning); }
+    .kpi-card.accent-danger { border-top-color: var(--danger); }
+    .kpi-card.accent-blue   { border-top-color: #3498db; }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .kpi-value { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 5px; }
+    .kpi-delta { font-size: 12px; font-weight: 500; }
+    .kpi-delta.up   { color: var(--positive); }
+    .kpi-delta.down { color: var(--danger); }
+    .kpi-delta.flat { color: var(--text-muted); }
+    .kpi-icon {
+      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+      font-size: 28px; opacity: 0.08;
+    }
+
+    /* CHARTS ROWS */
+    .charts-row-1 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .charts-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .charts-row-comp {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    .charts-row-comp-wide {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    @media (max-width: 900px) {
+      .charts-row-1, .charts-row-2, .charts-row-comp, .charts-row-comp-wide { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .chart-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+    .chart-card .chart-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+    .chart-wrap       { position: relative; height: 220px; }
+    .chart-wrap-tall  { position: relative; height: 260px; }
+    .chart-wrap-xtall { position: relative; height: 300px; }
+
+    /* AI INSIGHTS STRIP */
+    .insights-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+      margin-bottom: var(--gap);
+    }
+    @media (max-width: 800px) { .insights-strip { grid-template-columns: repeat(2, 1fr); } }
+
+    .insight-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .insight-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+    .insight-value { font-size: 22px; font-weight: 800; }
+    .insight-bar { height: 5px; background: var(--border); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+    .insight-bar-fill { height: 100%; border-radius: 3px; background: var(--green-mid); transition: width 0.4s; }
+    .insight-note { font-size: 11px; color: var(--text-muted); }
+
+    /* TABLE */
+    .table-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+    .table-header .row-count { font-size: 12px; color: var(--text-muted); }
+    .table-wrap { overflow-x: auto; max-height: 460px; overflow-y: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: #f7faf7; position: sticky; top: 0; z-index: 2; }
+    th {
+      text-align: left; padding: 10px 14px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 2px solid var(--border);
+      cursor: pointer; white-space: nowrap; user-select: none;
+    }
+    th:hover { color: var(--text); }
+    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tbody tr:hover { background: #f8faf8; }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; white-space: nowrap;
+    }
+    .badge-green  { background: #d4edda; color: #155724; }
+    .badge-yellow { background: #fff3cd; color: #856404; }
+    .badge-red    { background: #f8d7da; color: #721c24; }
+    .badge-blue   { background: #cce5ff; color: #004085; }
+    .badge-gray   { background: #e2e8e4; color: #495057; }
+    .badge-orange { background: #fde3c8; color: #7d3a00; }
+
+    .pos-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+    .ai-summary { font-size: 12px; color: var(--text-muted); max-width: 240px; line-height: 1.4; }
+    .comp-brands { font-size: 11px; color: var(--text-muted); max-width: 160px; line-height: 1.5; }
+
+    /* SHARE PILL */
+    .share-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* FOOTER */
+    .footer {
+      text-align: center; font-size: 11px; color: var(--text-muted);
+      padding: 24px 0 8px;
+    }
+
+    /* EMPTY STATE */
+    .empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">GOOD GOOD</div>
+    <div>
+      <div style="font-size:17px;font-weight:600;color:#fff;">Field Merchandiser Dashboard</div>
+      <div class="header-sub" id="data-range">Loading...</div>
+    </div>
+  </div>
+  <div class="time-filters">
+    <button class="time-btn" data-days="1"  onclick="setRange(1)">1D</button>
+    <button class="time-btn" data-days="7"  onclick="setRange(7)">7D</button>
+    <button class="time-btn active" data-days="30" onclick="setRange(30)">30D</button>
+    <button class="time-btn" data-days="90" onclick="setRange(90)">90D</button>
+    <button class="time-btn" data-days="0"  onclick="setRange(0)">All</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ── FIELD OPERATIONS ── -->
+  <div class="section-title">Field Operations</div>
+
+  <!-- KPI ROW 1: Operations -->
+  <div class="kpi-row">
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">Store Visits</div>
+      <div class="kpi-value" id="kpi-visits">—</div>
+      <div class="kpi-delta" id="kpi-visits-d">—</div>
+      <div class="kpi-icon">🏪</div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">Active Reps</div>
+      <div class="kpi-value" id="kpi-reps">—</div>
+      <div class="kpi-delta" id="kpi-reps-d">—</div>
+      <div class="kpi-icon">👤</div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">Stores Covered</div>
+      <div class="kpi-value" id="kpi-stores">—</div>
+      <div class="kpi-delta" id="kpi-stores-d">—</div>
+      <div class="kpi-icon">📍</div>
+    </div>
+    <div class="kpi-card accent-gold">
+      <div class="kpi-label">Photos Captured</div>
+      <div class="kpi-value" id="kpi-photos">—</div>
+      <div class="kpi-delta" id="kpi-photos-d">—</div>
+      <div class="kpi-icon">📸</div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">Avg Facings</div>
+      <div class="kpi-value" id="kpi-facings">—</div>
+      <div class="kpi-delta" id="kpi-facings-d">—</div>
+      <div class="kpi-icon">📦</div>
+    </div>
+    <div class="kpi-card accent-green">
+      <div class="kpi-label">In-Stock Rate</div>
+      <div class="kpi-value" id="kpi-instock">—</div>
+      <div class="kpi-delta" id="kpi-instock-d">—</div>
+      <div class="kpi-icon">✅</div>
+    </div>
+    <div class="kpi-card accent-gold">
+      <div class="kpi-label">POS Compliance</div>
+      <div class="kpi-value" id="kpi-pos">—</div>
+      <div class="kpi-delta" id="kpi-pos-d">—</div>
+      <div class="kpi-icon">🏷️</div>
+    </div>
+    <div class="kpi-card accent-danger">
+      <div class="kpi-label">Issues Flagged</div>
+      <div class="kpi-value" id="kpi-issues">—</div>
+      <div class="kpi-delta" id="kpi-issues-d">—</div>
+      <div class="kpi-icon">⚠️</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="charts-row-1">
+    <div class="chart-card">
+      <h3>Visit Activity</h3>
+      <div class="chart-sub">Store visits per day in selected period</div>
+      <div class="chart-wrap-tall"><canvas id="chart-trend"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Shelf Position Mix</h3>
+      <div class="chart-sub">Where GOOD GOOD sits on shelf</div>
+      <div class="chart-wrap"><canvas id="chart-position"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="charts-row-2">
+    <div class="chart-card">
+      <h3>Visits by Rep</h3>
+      <div class="chart-sub">Total store visits per field rep</div>
+      <div class="chart-wrap"><canvas id="chart-reps"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Stock Level Distribution</h3>
+      <div class="chart-sub">In-stock vs low vs out-of-stock</div>
+      <div class="chart-wrap"><canvas id="chart-stock"></canvas></div>
+    </div>
+  </div>
+
+  <!-- AI INSIGHTS STRIP -->
+  <div class="insights-strip">
+    <div class="insight-card">
+      <div class="insight-label">Eye-Level Placement</div>
+      <div class="insight-value" id="ins-eyelevel" style="color:var(--green-mid)">—</div>
+      <div class="insight-bar"><div class="insight-bar-fill" id="ins-eyelevel-bar" style="width:0%"></div></div>
+      <div class="insight-note">% of visits at eye level</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-label">Avg Photos / Visit</div>
+      <div class="insight-value" id="ins-photospervisit" style="color:var(--green-mid)">—</div>
+      <div class="insight-bar"><div class="insight-bar-fill" id="ins-ppv-bar" style="width:0%"></div></div>
+      <div class="insight-note">Target: 5 photos per visit</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-label">Issue Rate</div>
+      <div class="insight-value" id="ins-issuerate" style="color:var(--danger)">—</div>
+      <div class="insight-bar"><div class="insight-bar-fill" id="ins-issue-bar" style="width:0%;background:var(--danger)"></div></div>
+      <div class="insight-note">% visits with flagged issues</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-label">Avg GG Price</div>
+      <div class="insight-value" id="ins-ggprice" style="color:var(--green-dark)">—</div>
+      <div class="insight-bar"><div class="insight-bar-fill" id="ins-price-bar" style="width:0%;background:var(--gold)"></div></div>
+      <div class="insight-note">Avg shelf price observed</div>
+    </div>
+  </div>
+
+  <!-- ── COMPETITIVE INTELLIGENCE ── -->
+  <div class="section-title">Competitive Intelligence</div>
+
+  <!-- KPI ROW 2: Competitive -->
+  <div class="kpi-row">
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label">Avg Shelf Share</div>
+      <div class="kpi-value" id="kpi-shelfshare">—</div>
+      <div class="kpi-delta" id="kpi-shelfshare-d">—</div>
+      <div class="kpi-icon">📊</div>
+    </div>
+    <div class="kpi-card accent-warn">
+      <div class="kpi-label">Avg Competitor Brands</div>
+      <div class="kpi-value" id="kpi-compcount">—</div>
+      <div class="kpi-delta" id="kpi-compcount-d">—</div>
+      <div class="kpi-icon">🏷️</div>
+    </div>
+    <div class="kpi-card accent-danger">
+      <div class="kpi-label">Promo Exposure Rate</div>
+      <div class="kpi-value" id="kpi-promo">—</div>
+      <div class="kpi-delta" id="kpi-promo-d">—</div>
+      <div class="kpi-icon">🔥</div>
+    </div>
+    <div class="kpi-card accent-gold">
+      <div class="kpi-label">Unique Competitors Seen</div>
+      <div class="kpi-value" id="kpi-uniquecomps">—</div>
+      <div class="kpi-delta" id="kpi-uniquecomps-d">—</div>
+      <div class="kpi-icon">👀</div>
+    </div>
+  </div>
+
+  <!-- COMP CHARTS ROW 1 -->
+  <div class="charts-row-comp">
+    <div class="chart-card">
+      <h3>Competitor Brand Frequency</h3>
+      <div class="chart-sub">How often each competitor appears on shelf across visits</div>
+      <div class="chart-wrap-xtall"><canvas id="chart-comp-freq"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>GG Shelf Share Over Time</h3>
+      <div class="chart-sub">GOOD GOOD % of total facings per week</div>
+      <div class="chart-wrap-xtall"><canvas id="chart-shelf-share"></canvas></div>
+    </div>
+  </div>
+
+  <!-- COMP CHARTS ROW 2 -->
+  <div class="charts-row-comp-wide">
+    <div class="chart-card">
+      <h3>Pricing Comparison</h3>
+      <div class="chart-sub">Avg observed shelf price — GOOD GOOD vs key competitors</div>
+      <div class="chart-wrap-tall"><canvas id="chart-pricing"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Competitor Promo Activity</h3>
+      <div class="chart-sub">How often each brand runs in-store promotions</div>
+      <div class="chart-wrap-tall"><canvas id="chart-promos"></canvas></div>
+    </div>
+  </div>
+
+  <!-- VISITS TABLE -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3>Recent Store Visits</h3>
+      <div class="row-count" id="table-count">0 visits</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortTable('date')">Date ↕</th>
+            <th onclick="sortTable('rep')">Rep ↕</th>
+            <th onclick="sortTable('store')">Store ↕</th>
+            <th onclick="sortTable('city')">Location ↕</th>
+            <th onclick="sortTable('photos')">Photos ↕</th>
+            <th onclick="sortTable('facings')">Facings ↕</th>
+            <th onclick="sortTable('position')">Position ↕</th>
+            <th onclick="sortTable('stock')">Stock ↕</th>
+            <th>POS</th>
+            <th onclick="sortTable('shelfShare')">Share % ↕</th>
+            <th onclick="sortTable('ggPrice')">GG Price ↕</th>
+            <th>Competitors</th>
+            <th>Promos</th>
+            <th onclick="sortTable('hasIssue')">Issues ↕</th>
+            <th>AI Summary</th>
+          </tr>
+        </thead>
+        <tbody id="visits-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span id="data-source-badge"></span> &nbsp;|&nbsp; GOOD GOOD Field Merchandiser &nbsp;|&nbsp;
+    <span id="footer-date"></span>
+    &nbsp;|&nbsp; <a href="#" onclick="refreshData(); return false;" style="color:var(--green-mid);text-decoration:none;">↻ Refresh</a>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA GENERATION
+// ═══════════════════════════════════════════════
+const REPS   = ['Sarah K.','Jake M.','Maria R.','Tom B.','Lisa C.','Raj P.'];
+const STORES = [
+  'Sprouts','Whole Foods','Fresh Market','Natural Grocers','Earth Fare',"Lucky's Market","MOM's Organic"
+];
+const CITIES = [
+  {city:'Austin',state:'TX'},{city:'Denver',state:'CO'},{city:'Atlanta',state:'GA'},
+  {city:'Portland',state:'OR'},{city:'Nashville',state:'TN'},{city:'Miami',state:'FL'},
+  {city:'Phoenix',state:'AZ'},{city:'Seattle',state:'WA'},{city:'Chicago',state:'IL'},
+  {city:'Charlotte',state:'NC'},{city:'Dallas',state:'TX'},{city:'Boulder',state:'CO'},
+];
+const POSITIONS    = ['Eye-level','Mid-shelf','Bottom shelf','Top shelf'];
+const STOCK_LEVELS = ['In-stock','In-stock','In-stock','Low stock','Out-of-stock'];
+const COMP_BRANDS  = ["Smucker's","Bonne Maman","Welch's","Crofter's","Polaner","Stonewall Kitchen","Hero","Rao's"];
+const GG_SKUS      = [
+  'Strawberry Jam 300g','Wild Blueberry Jam 300g','Raspberry Jam 300g',
+  'Mango Spread 300g','Mixed Berry Jam 300g','Tropical Jam 300g',
+  'Reduced Sugar Strawberry 250g','Apricot Jam 300g'
+];
+
+const AI_SUMMARIES = [
+  "GOOD GOOD well-positioned at eye level with 5 facings. Smucker's present but minimal shelf share.",
+  "Shelf tidy, strong 6-facing block. POS signage in place. Low competition from Bonne Maman.",
+  "Only 3 facings found — potential void. Shelf tag present but stock running low.",
+  "OOS on strawberry SKU. Crofter's taking extra space with a 2-for-$6 promo. Follow-up needed.",
+  "Eye-level placement secured, 5 facings. POS missing — needs replacement.",
+  "Strong execution across jam and spread section. 7 facings at eye level, all SKUs present.",
+  "Good shelf presence, 4 facings. Reduced sugar SKU misplaced on bottom shelf.",
+  "Full planogram compliance. GOOD GOOD securing best position vs Welch's.",
+  "Top shelf placement — needs improvement. Discussed better positioning with category manager.",
+  "All 5 SKUs present, shelf clean. POS updated. Competitor Polaner moved to bottom shelf.",
+  "Stock healthy, 6 facings. Minor shelf gap on tropical SKU. Reorder flag submitted.",
+  "Great visit. Eye-level, full facing count, fresh POS. One of the best executions this month.",
+];
+
+function rand(arr)       { return arr[Math.floor(Math.random() * arr.length)]; }
+function randInt(a, b)   { return a + Math.floor(Math.random() * (b - a + 1)); }
+function randFloat(a, b) { return +(a + Math.random() * (b - a)).toFixed(2); }
+
+function pickBrands(n) {
+  const shuffled = [...COMP_BRANDS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
+
+function generateData() {
+  const visits = [];
+  const today  = new Date();
+  today.setHours(23, 59, 59, 999);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 89);
+
+  let id = 1000;
+  let d  = new Date(start);
+  while (d <= today) {
+    const dow   = d.getDay();
+    const count = (dow === 0 || dow === 6) ? randInt(0, 1) : randInt(1, 5);
+    for (let i = 0; i < count; i++) {
+      const store      = rand(STORES);
+      const loc        = rand(CITIES);
+      const pos        = rand(POSITIONS);
+      const stock      = rand(STOCK_LEVELS);
+      const facings    = stock === 'Out-of-stock' ? 0 : randInt(2, 8);
+      const posPresent = Math.random() > 0.28;
+      const hasIssue   = stock === 'Out-of-stock' || stock === 'Low stock' || Math.random() < 0.12;
+      const issueText  = hasIssue
+        ? rand(['OOS on 1 SKU','Missing POS','Shelf gap','Competitor taking space','Incorrect placement'])
+        : '';
+
+      // Competitive intelligence fields
+      const compCount    = randInt(1, 4);
+      const compBrands   = pickBrands(compCount);
+      const totalFacings = facings + randInt(compCount * 2, compCount * 6);
+      const shelfShare   = totalFacings > 0 ? +(facings / totalFacings * 100).toFixed(1) : 0;
+      const ggPrice      = randFloat(4.49, 5.99);
+
+      // Competitor prices (per brand)
+      const competitorPrices = {};
+      compBrands.forEach(b => {
+        competitorPrices[b] = randFloat(2.99, 6.49);
+      });
+
+      // Which competitors have promos this visit
+      const promos = compBrands.filter(() => Math.random() < 0.30);
+
+      // Visible GOOD GOOD SKUs
+      const skuCount   = stock === 'Out-of-stock' ? 0 : randInt(1, 3);
+      const visibleSkus = GG_SKUS.slice().sort(() => Math.random() - 0.5).slice(0, skuCount);
+
+      visits.push({
+        id: id++,
+        date: new Date(d),
+        dateStr: d.toISOString().slice(0, 10),
+        rep: rand(REPS),
+        store,
+        city: loc.city,
+        state: loc.state,
+        photos: randInt(2, 8),
+        facings,
+        position: pos,
+        stock,
+        posPresent,
+        hasIssue,
+        issueText,
+        summary: rand(AI_SUMMARIES),
+        // competitive
+        compBrands,
+        compCount,
+        shelfShare,
+        ggPrice,
+        competitorPrices,
+        promos,
+        visibleSkus,
+      });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return visits;
+}
+
+// ═══════════════════════════════════════════════
+// LIVE DATA CONFIG
+// ═══════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwx-aPEmLwZuanOJdlI82mK2RhMkxoXLNSx_Zw6zlpLak6i_-vDHsR0omEqpaPUkak8Fw/exec';
+let DATA_SOURCE  = 'sample'; // 'live' or 'sample'
+
+function mapSheetRowToVisit(row) {
+  // Map Google Sheet column headers to dashboard data model
+  const dateRaw = row['Visit Date'] || row['Submitted At'] || '';
+  const dateObj  = dateRaw ? new Date(dateRaw) : new Date();
+  const dateStr  = isNaN(dateObj) ? '' : dateObj.toISOString().slice(0, 10);
+
+  // Location: "Austin, TX" → city/state
+  const loc   = (row['Location'] || '').split(',');
+  const city  = (loc[0] || '').trim();
+  const state = (loc[1] || '').trim();
+
+  // Competitor brands: comma-separated string → array
+  const compBrandsRaw = row['Competitor Brands'] || '';
+  const compBrands    = compBrandsRaw ? compBrandsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  // Shelf share: "25.3%" → 25.3
+  const shareRaw  = String(row['GG Shelf Share %'] || '0').replace('%','');
+  const shelfShare = parseFloat(shareRaw) || 0;
+
+  // Promos: "Smucker's: 2 for $6 | Bonne Maman" → array of brand names
+  const promosRaw = row['Promos Detected'] || '';
+  const promos    = promosRaw
+    ? promosRaw.split('|').map(s => s.split(':')[0].trim()).filter(Boolean)
+    : [];
+
+  // Stock level
+  const stockRaw = String(row['GG Stock Level'] || '').toLowerCase();
+  const stock     = stockRaw.includes('out') ? 'Out-of-stock'
+                  : stockRaw.includes('low') ? 'Low stock' : 'In-stock';
+
+  // Issues
+  const issueText = (row['Issues'] || '').trim();
+  const hasIssue  = issueText.length > 0;
+
+  // Price
+  const ggPrice = parseFloat(String(row['GG Price'] || '0').replace('$','')) || 0;
+
+  // SKUs
+  const skuRaw   = row['GG SKUs Visible'] || '';
+  const visibleSkus = skuRaw ? skuRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+  // Position
+  const posRaw = String(row['GG Shelf Position'] || 'unknown').toLowerCase();
+  const position = posRaw.includes('eye') ? 'Eye-level'
+                 : posRaw.includes('mid') ? 'Mid-shelf'
+                 : posRaw.includes('top') ? 'Top shelf'
+                 : posRaw.includes('bot') ? 'Bottom shelf' : 'Mid-shelf';
+
+  return {
+    id:         row['ID'] || '',
+    date:       dateObj,
+    dateStr,
+    rep:        row['Rep'] || 'Unknown',
+    store:      row['Store'] || 'Unknown',
+    city:       city || 'Unknown',
+    state:      state || '',
+    photos:     parseInt(row['Photo Count']) || 0,
+    facings:    parseInt(row['GG Facings']) || 0,
+    position,
+    stock,
+    posPresent: String(row['POS Present'] || '').toLowerCase() === 'yes',
+    hasIssue,
+    issueText,
+    summary:    row['AI Summary'] || '',
+    compBrands,
+    compCount:  parseInt(row['Competitor Count']) || compBrands.length,
+    shelfShare,
+    ggPrice,
+    competitorPrices: {},
+    promos,
+    visibleSkus,
+  };
+}
+
+async function loadLiveData() {
+  try {
+    const resp = await fetch(SCRIPT_URL + '?action=getVisits', { mode: 'cors' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const json = await resp.json();
+    if (!json.visits || !Array.isArray(json.visits)) throw new Error('No visits array');
+    const mapped = json.visits
+      .filter(r => r['ID'])
+      .map(mapSheetRowToVisit)
+      .filter(v => !isNaN(v.date));
+    if (mapped.length === 0) throw new Error('Zero valid rows');
+    DATA_SOURCE = 'live';
+    return mapped;
+  } catch (err) {
+    console.warn('Live data unavailable, using sample data:', err.message);
+    DATA_SOURCE = 'sample';
+    return generateData();
+  }
+}
+
+let ALL_DATA = generateData(); // initial sample; replaced after live fetch
+
+// ═══════════════════════════════════════════════
+// FILTER STATE
+// ═══════════════════════════════════════════════
+let activeDays   = 30;
+let filteredData = [];
+let sortCol = 'date', sortDir = -1;
+
+function setRange(days) {
+  activeDays = days;
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-days="' + days + '"]').classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+  if (activeDays === 0) {
+    filteredData = [...ALL_DATA];
+  } else {
+    const cutoff = new Date(today);
+    cutoff.setDate(cutoff.getDate() - (activeDays - 1));
+    cutoff.setHours(0, 0, 0, 0);
+    filteredData = ALL_DATA.filter(v => v.date >= cutoff);
+  }
+  render();
+}
+
+// ═══════════════════════════════════════════════
+// KPI HELPERS
+// ═══════════════════════════════════════════════
+function fmt(n, type) {
+  if (type === 'pct') return n.toFixed(1) + '%';
+  if (type === 'dec') return n.toFixed(1);
+  if (type === '$')   return '$' + n.toFixed(2);
+  return n.toLocaleString();
+}
+function delta(val, prev, type, inverse) {
+  if (!prev) return '<span class="kpi-delta flat">No prior period</span>';
+  const pct = ((val - prev) / prev) * 100;
+  const up  = pct >= 0;
+  const cls = inverse ? (up ? 'down' : 'up') : (up ? 'up' : 'down');
+  const sign = up ? '+' : '';
+  return '<span class="kpi-delta ' + cls + '">' + sign + pct.toFixed(1) + '% vs prior period</span>';
+}
+
+function priorData() {
+  if (activeDays === 0) return [];
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  const cut1  = new Date(today); cut1.setDate(cut1.getDate() - (activeDays - 1)); cut1.setHours(0, 0, 0, 0);
+  const cut2  = new Date(cut1);  cut2.setDate(cut2.getDate() - activeDays);
+  return ALL_DATA.filter(v => v.date >= cut2 && v.date < cut1);
+}
+
+function avg(arr, fn) {
+  if (!arr.length) return 0;
+  return arr.reduce((s, v) => s + fn(v), 0) / arr.length;
+}
+
+// ═══════════════════════════════════════════════
+// KPI RENDER
+// ═══════════════════════════════════════════════
+function renderKPIs() {
+  const d = filteredData;
+  const p = priorData();
+
+  const visits      = d.length;
+  const reps        = new Set(d.map(v => v.rep)).size;
+  const stores      = new Set(d.map(v => v.store + v.city)).size;
+  const photos      = d.reduce((s, v) => s + v.photos, 0);
+  const avgFacings  = avg(d, v => v.facings);
+  const instockPct  = d.length ? d.filter(v => v.stock === 'In-stock').length / d.length * 100 : 0;
+  const posPct      = d.length ? d.filter(v => v.posPresent).length / d.length * 100 : 0;
+  const issues      = d.filter(v => v.hasIssue).length;
+
+  // Competitive KPIs
+  const avgShare    = avg(d, v => v.shelfShare);
+  const avgComps    = avg(d, v => v.compCount);
+  const promoPct    = d.length ? d.filter(v => v.promos.length > 0).length / d.length * 100 : 0;
+  const uniqueComps = new Set(d.flatMap(v => v.compBrands)).size;
+  const avgGGPrice  = avg(d, v => v.ggPrice);
+
+  const pv = p.length;
+  const pVisits     = pv;
+  const pReps       = new Set(p.map(v => v.rep)).size;
+  const pStores     = new Set(p.map(v => v.store + v.city)).size;
+  const pPhotos     = p.reduce((s, v) => s + v.photos, 0);
+  const pFacings    = avg(p, v => v.facings);
+  const pInstock    = pv ? p.filter(v => v.stock === 'In-stock').length / pv * 100 : 0;
+  const pPos        = pv ? p.filter(v => v.posPresent).length / pv * 100 : 0;
+  const pIssues     = p.filter(v => v.hasIssue).length;
+  const pShare      = avg(p, v => v.shelfShare);
+  const pComps      = avg(p, v => v.compCount);
+  const pPromoPct   = pv ? p.filter(v => v.promos.length > 0).length / pv * 100 : 0;
+  const pUniqueComps = new Set(p.flatMap(v => v.compBrands)).size;
+
+  set('kpi-visits',   fmt(visits));
+  set('kpi-reps',     fmt(reps));
+  set('kpi-stores',   fmt(stores));
+  set('kpi-photos',   fmt(photos));
+  set('kpi-facings',  fmt(avgFacings, 'dec'));
+  set('kpi-instock',  fmt(instockPct, 'pct'));
+  set('kpi-pos',      fmt(posPct, 'pct'));
+  set('kpi-issues',   fmt(issues));
+
+  setHTML('kpi-visits-d',   delta(visits,     pVisits));
+  setHTML('kpi-reps-d',     delta(reps,       pReps));
+  setHTML('kpi-stores-d',   delta(stores,     pStores));
+  setHTML('kpi-photos-d',   delta(photos,     pPhotos));
+  setHTML('kpi-facings-d',  delta(avgFacings, pFacings, 'dec'));
+  setHTML('kpi-instock-d',  delta(instockPct, pInstock, 'pct'));
+  setHTML('kpi-pos-d',      delta(posPct,     pPos,     'pct'));
+  setHTML('kpi-issues-d',   delta(issues,     pIssues,  'n', true));
+
+  // Competitive KPIs
+  set('kpi-shelfshare',   fmt(avgShare, 'pct'));
+  set('kpi-compcount',    fmt(avgComps, 'dec'));
+  set('kpi-promo',        fmt(promoPct, 'pct'));
+  set('kpi-uniquecomps',  fmt(uniqueComps));
+
+  setHTML('kpi-shelfshare-d',   delta(avgShare,    pShare,        'pct'));
+  setHTML('kpi-compcount-d',    delta(avgComps,    pComps,        'dec', true));
+  setHTML('kpi-promo-d',        delta(promoPct,    pPromoPct,     'pct', true));
+  setHTML('kpi-uniquecomps-d',  delta(uniqueComps, pUniqueComps,  'n'));
+
+  // Insight strip
+  const eyeLevelPct = d.length ? d.filter(v => v.position === 'Eye-level').length / d.length * 100 : 0;
+  const ppv         = d.length ? photos / d.length : 0;
+  const issuePct    = d.length ? issues / d.length * 100 : 0;
+
+  set('ins-eyelevel',       fmt(eyeLevelPct, 'pct'));
+  set('ins-photospervisit', fmt(ppv, 'dec'));
+  set('ins-issuerate',      fmt(issuePct, 'pct'));
+  set('ins-ggprice',        fmt(avgGGPrice, '$'));
+
+  setStyle('ins-eyelevel-bar', 'width', Math.min(eyeLevelPct, 100) + '%');
+  setStyle('ins-ppv-bar',      'width', Math.min(ppv / 8 * 100, 100) + '%');
+  setStyle('ins-issue-bar',    'width', Math.min(issuePct, 100) + '%');
+  setStyle('ins-price-bar',    'width', Math.min((avgGGPrice / 8) * 100, 100) + '%');
+
+  // Header date range
+  if (activeDays === 0) {
+    set('data-range', 'All time — ' + ALL_DATA.length + ' visits total');
+  } else if (activeDays === 1) {
+    set('data-range', 'Today — ' + visits + ' visit' + (visits !== 1 ? 's' : ''));
+  } else {
+    const from = new Date(); from.setDate(from.getDate() - (activeDays - 1));
+    set('data-range', from.toLocaleDateString('en', {month:'short', day:'numeric'}) + ' – Today');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════
+const PALETTE = ['#2d6a40','#4caf72','#f0c040','#e67e22','#e74c3c','#8172B3','#3498db','#1abc9c'];
+const COMP_COLORS = {
+  "Smucker's":       '#e74c3c',
+  "Bonne Maman":     '#e67e22',
+  "Welch's":         '#9b59b6',
+  "Crofter's":       '#3498db',
+  "Polaner":         '#1abc9c',
+  "Stonewall Kitchen": '#f39c12',
+  "Hero":            '#e84393',
+  "Rao's":           '#c0392b',
+};
+
+let charts = {};
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// --- Visit Trend ---
+function renderTrendChart() {
+  destroyChart('trend');
+  const ctx = document.getElementById('chart-trend').getContext('2d');
+  const buckets = {};
+  filteredData.forEach(v => { buckets[v.dateStr] = (buckets[v.dateStr] || 0) + 1; });
+  const dates  = Object.keys(buckets).sort();
+  const values = dates.map(d => buckets[d]);
+  let labels = dates, data = values;
+  if (dates.length > 45) {
+    const weekly = {};
+    dates.forEach((d, i) => {
+      const date = new Date(d);
+      const week = 'W' + getWeekNum(date) + ' ' + date.getFullYear();
+      weekly[week] = (weekly[week] || 0) + values[i];
+    });
+    labels = Object.keys(weekly);
+    data   = Object.values(weekly);
+  } else {
+    labels = dates.map(d => {
+      const [,m,day] = d.split('-');
+      return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1] + ' ' + parseInt(day);
+    });
+  }
+  charts['trend'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Store Visits',
+        data,
+        backgroundColor: '#2d6a4088',
+        borderColor: '#2d6a40',
+        borderWidth: 1.5,
+        borderRadius: 4,
+      },{
+        label: '7-day avg',
+        data: rollingAvg(data, 7),
+        type: 'line',
+        borderColor: '#f0c040',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        tension: 0.4,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { size: 12 } } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 11 } } },
+        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { stepSize: 1, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// --- Shelf Position ---
+function renderPositionChart() {
+  destroyChart('pos');
+  const ctx = document.getElementById('chart-position').getContext('2d');
+  const counts = {};
+  POSITIONS.forEach(p => counts[p] = 0);
+  filteredData.forEach(v => counts[v.position] = (counts[v.position] || 0) + 1);
+  charts['pos'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: ['#2d6a40','#4caf72','#f0c040','#a8d5b5'], borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '58%',
+      plugins: {
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const tot = ctx.dataset.data.reduce((a,b) => a+b, 0);
+              return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + (tot ? (ctx.parsed/tot*100).toFixed(0) : 0) + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// --- Visits by Rep ---
+function renderRepsChart() {
+  destroyChart('reps');
+  const ctx = document.getElementById('chart-reps').getContext('2d');
+  const counts = {};
+  filteredData.forEach(v => counts[v.rep] = (counts[v.rep] || 0) + 1);
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  charts['reps'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(x => x[0]),
+      datasets: [{ label: 'Visits', data: sorted.map(x => x[1]),
+        backgroundColor: PALETTE.map(c => c + 'cc'),
+        borderColor: PALETTE, borderWidth: 1.5, borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { stepSize: 1, font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+      }
+    }
+  });
+}
+
+// --- Stock Levels ---
+function renderStockChart() {
+  destroyChart('stock');
+  const ctx = document.getElementById('chart-stock').getContext('2d');
+  const levels  = ['In-stock','Low stock','Out-of-stock'];
+  const colors  = ['#2d6a40cc','#f0c040cc','#e74c3ccc'];
+  const borders = ['#2d6a40','#e67e22','#e74c3c'];
+  const counts  = levels.map(l => filteredData.filter(v => v.stock === l).length);
+  charts['stock'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: levels,
+      datasets: [{ label: 'Visits', data: counts, backgroundColor: colors, borderColor: borders, borderWidth: 1.5, borderRadius: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── COMPETITIVE CHARTS ─────────────────────────
+
+// --- Competitor Brand Frequency (horizontal bar) ---
+function renderCompFreqChart() {
+  destroyChart('comp-freq');
+  const ctx = document.getElementById('chart-comp-freq').getContext('2d');
+  const freq = {};
+  filteredData.forEach(v => v.compBrands.forEach(b => freq[b] = (freq[b] || 0) + 1));
+  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]);
+  const labels = sorted.map(x => x[0]);
+  const data   = sorted.map(x => x[1]);
+  const bgColors = labels.map(b => (COMP_COLORS[b] || '#8172B3') + 'cc');
+  const brColors = labels.map(b => (COMP_COLORS[b] || '#8172B3'));
+  charts['comp-freq'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Shelf appearances',
+        data,
+        backgroundColor: bgColors,
+        borderColor: brColors,
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ' ' + ctx.parsed.x + ' visits (' + (filteredData.length ? (ctx.parsed.x/filteredData.length*100).toFixed(0) : 0) + '% of shelf checks)'
+          }
+        }
+      },
+      scales: {
+        x: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+      }
+    }
+  });
+}
+
+// --- GG Shelf Share Over Time (line chart) ---
+function renderShelfShareChart() {
+  destroyChart('shelf-share');
+  const ctx = document.getElementById('chart-shelf-share').getContext('2d');
+
+  // Bucket by week
+  const weekly = {};
+  filteredData.forEach(v => {
+    const date = new Date(v.dateStr);
+    const week = v.dateStr.slice(0, 7) + '-W' + getWeekNum(date);
+    if (!weekly[week]) weekly[week] = { sum: 0, count: 0 };
+    weekly[week].sum   += v.shelfShare;
+    weekly[week].count += 1;
+  });
+  const weeks  = Object.keys(weekly).sort();
+  const shares = weeks.map(w => +(weekly[w].sum / weekly[w].count).toFixed(1));
+
+  // Simplified labels
+  const labels = weeks.map(w => {
+    const parts = w.split('-W');
+    return parts[0].slice(5) + '/W' + parts[1];
+  });
+
+  charts['shelf-share'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'GG Shelf Share %',
+        data: shares,
+        borderColor: '#2d6a40',
+        backgroundColor: '#2d6a4018',
+        borderWidth: 2.5,
+        pointRadius: 4,
+        pointBackgroundColor: '#2d6a40',
+        tension: 0.35,
+        fill: true,
+      },{
+        label: 'Target 25%',
+        data: Array(labels.length).fill(25),
+        borderColor: '#f0c040',
+        borderWidth: 1.5,
+        borderDash: [6, 3],
+        pointRadius: 0,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, padding: 14, font: { size: 12 } } },
+        tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '%' } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 11 } } },
+        y: {
+          beginAtZero: true,
+          max: 60,
+          grid: { color: '#f0f0f0' },
+          ticks: { font: { size: 11 }, callback: v => v + '%' }
+        }
+      }
+    }
+  });
+}
+
+// --- Pricing Comparison (grouped bar) ---
+function renderPricingChart() {
+  destroyChart('pricing');
+  const ctx = document.getElementById('chart-pricing').getContext('2d');
+
+  // GG avg price
+  const ggAvg = filteredData.length
+    ? +(filteredData.reduce((s, v) => s + v.ggPrice, 0) / filteredData.length).toFixed(2)
+    : 0;
+
+  // Competitor avg prices (only brands seen 3+ times)
+  const compTotals = {};
+  const compCounts = {};
+  filteredData.forEach(v => {
+    Object.entries(v.competitorPrices).forEach(([brand, price]) => {
+      compTotals[brand] = (compTotals[brand] || 0) + price;
+      compCounts[brand] = (compCounts[brand] || 0) + 1;
+    });
+  });
+  const compAvgs = Object.entries(compCounts)
+    .filter(([,c]) => c >= 3)
+    .map(([brand, count]) => ({ brand, avg: +(compTotals[brand] / count).toFixed(2) }))
+    .sort((a,b) => b.avg - a.avg);
+
+  const labels = ['GOOD GOOD', ...compAvgs.map(x => x.brand)];
+  const data   = [ggAvg, ...compAvgs.map(x => x.avg)];
+  const bgs    = ['#2d6a40cc', ...compAvgs.map(x => (COMP_COLORS[x.brand] || '#888') + 'cc')];
+  const brs    = ['#2d6a40',   ...compAvgs.map(x => (COMP_COLORS[x.brand] || '#888'))];
+
+  charts['pricing'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Avg Shelf Price ($)',
+        data,
+        backgroundColor: bgs,
+        borderColor: brs,
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' $' + ctx.parsed.y.toFixed(2) } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: {
+          beginAtZero: false,
+          min: 2,
+          grid: { color: '#f0f0f0' },
+          ticks: { font: { size: 11 }, callback: v => '$' + v }
+        }
+      }
+    }
+  });
+}
+
+// --- Competitor Promo Activity (bar) ---
+function renderPromosChart() {
+  destroyChart('promos');
+  const ctx = document.getElementById('chart-promos').getContext('2d');
+
+  const promoCounts = {};
+  const brandApps   = {};
+  filteredData.forEach(v => {
+    v.compBrands.forEach(b => brandApps[b] = (brandApps[b] || 0) + 1);
+    v.promos.forEach(b    => promoCounts[b] = (promoCounts[b] || 0) + 1);
+  });
+
+  // Rate: promos / appearances * 100
+  const brands = Object.keys(promoCounts)
+    .filter(b => brandApps[b] >= 3)
+    .map(b => ({ brand: b, rate: +(promoCounts[b] / brandApps[b] * 100).toFixed(1) }))
+    .sort((a,b) => b.rate - a.rate);
+
+  const labels = brands.map(x => x.brand);
+  const data   = brands.map(x => x.rate);
+  const bgs    = labels.map(b => (COMP_COLORS[b] || '#888') + 'cc');
+  const brs    = labels.map(b => (COMP_COLORS[b] || '#888'));
+
+  charts['promos'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.length ? labels : ['No promos detected'],
+      datasets: [{
+        label: 'Promo Rate %',
+        data: data.length ? data : [0],
+        backgroundColor: bgs.length ? bgs : ['#e2e8e4'],
+        borderColor: brs.length ? brs : ['#ccc'],
+        borderWidth: 1.5,
+        borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' Promo rate: ' + ctx.parsed.y + '% of appearances' } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          grid: { color: '#f0f0f0' },
+          ticks: { font: { size: 11 }, callback: v => v + '%' }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// TABLE
+// ═══════════════════════════════════════════════
+function stockBadge(s) {
+  if (s === 'In-stock')     return '<span class="badge badge-green">' + s + '</span>';
+  if (s === 'Low stock')    return '<span class="badge badge-yellow">' + s + '</span>';
+  if (s === 'Out-of-stock') return '<span class="badge badge-red">' + s + '</span>';
+  return '<span class="badge badge-gray">' + s + '</span>';
+}
+function posBadge(present) {
+  return present
+    ? '<span class="badge badge-green">Yes</span>'
+    : '<span class="badge badge-gray">No</span>';
+}
+function posDot(p) {
+  const map = { 'Eye-level':'#2d6a40', 'Mid-shelf':'#4caf72', 'Bottom shelf':'#f0c040', 'Top shelf':'#a8d5b5' };
+  return '<span class="pos-dot" style="background:' + (map[p] || '#ccc') + '"></span>' + p;
+}
+function sharePill(pct) {
+  const color = pct >= 25 ? '#2d6a40' : pct >= 15 ? '#e67e22' : '#e74c3c';
+  return '<span class="share-pill" style="background:' + color + '18;color:' + color + '">' + pct.toFixed(1) + '%</span>';
+}
+
+function renderTable() {
+  const sorted = [...filteredData].sort((a,b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (av instanceof Date) { av = av.getTime(); bv = bv.getTime(); }
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+
+  set('table-count', sorted.length + ' visit' + (sorted.length !== 1 ? 's' : ''));
+
+  const shown = sorted.slice(0, 200);
+  const tbody = document.getElementById('visits-tbody');
+  if (!shown.length) {
+    tbody.innerHTML = '<tr><td colspan="15" class="empty">No visits in this period</td></tr>';
+    return;
+  }
+  tbody.innerHTML = shown.map(v => {
+    const promoText = v.promos.length
+      ? v.promos.map(b => '<span class="badge badge-orange" style="margin-right:2px">' + b + '</span>').join('')
+      : '<span style="color:var(--text-muted);font-size:12px">—</span>';
+    const compText = v.compBrands.length
+      ? '<div class="comp-brands">' + v.compBrands.join(', ') + '</div>'
+      : '<span style="color:var(--text-muted);font-size:12px">—</span>';
+    return '<tr>' +
+      '<td style="white-space:nowrap">' + v.date.toLocaleDateString('en', {month:'short',day:'numeric',year:'numeric'}) + '</td>' +
+      '<td style="white-space:nowrap;font-weight:500">' + v.rep + '</td>' +
+      '<td style="white-space:nowrap">' + v.store + '</td>' +
+      '<td style="white-space:nowrap;color:var(--text-muted)">' + v.city + ', ' + v.state + '</td>' +
+      '<td style="text-align:center">' + v.photos + '</td>' +
+      '<td style="text-align:center;font-weight:600;color:' + (v.facings >= 5 ? 'var(--green-mid)' : v.facings === 0 ? 'var(--danger)' : 'var(--warning)') + '">' + v.facings + '</td>' +
+      '<td style="white-space:nowrap">' + posDot(v.position) + '</td>' +
+      '<td>' + stockBadge(v.stock) + '</td>' +
+      '<td>' + posBadge(v.posPresent) + '</td>' +
+      '<td style="text-align:center">' + sharePill(v.shelfShare) + '</td>' +
+      '<td style="text-align:center;font-weight:600">$' + v.ggPrice.toFixed(2) + '</td>' +
+      '<td>' + compText + '</td>' +
+      '<td>' + promoText + '</td>' +
+      '<td>' + (v.hasIssue ? '<span class="badge badge-red" title="' + v.issueText + '">! ' + v.issueText + '</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>') + '</td>' +
+      '<td><div class="ai-summary">' + v.summary + '</div></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function sortTable(col) {
+  if (sortCol === col) sortDir *= -1;
+  else { sortCol = col; sortDir = -1; }
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function set(id, val)          { const el = document.getElementById(id); if (el) el.textContent = val; }
+function setHTML(id, val)      { const el = document.getElementById(id); if (el) el.innerHTML = val; }
+function setStyle(id, prop, val) { const el = document.getElementById(id); if (el) el.style[prop] = val; }
+function rollingAvg(arr, w) {
+  return arr.map((_, i) => {
+    const sl = arr.slice(Math.max(0, i - w + 1), i + 1);
+    return +(sl.reduce((a,b) => a + b, 0) / sl.length).toFixed(1);
+  });
+}
+function getWeekNum(d) {
+  const s = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - s) / 86400000 + s.getDay() + 1) / 7);
+}
+
+// ═══════════════════════════════════════════════
+// MASTER RENDER
+// ═══════════════════════════════════════════════
+function render() {
+  renderKPIs();
+  renderTrendChart();
+  renderPositionChart();
+  renderRepsChart();
+  renderStockChart();
+  renderCompFreqChart();
+  renderShelfShareChart();
+  renderPricingChart();
+  renderPromosChart();
+  renderTable();
+}
+
+// ═══════════════════════════════════════════════
+// INIT — try live data, fall back to sample
+// ═══════════════════════════════════════════════
+function updateSourceBadge() {
+  const el = document.getElementById('data-source-badge');
+  if (!el) return;
+  if (DATA_SOURCE === 'live') {
+    el.innerHTML = '<span style="color:var(--green-mid);font-weight:700;">● Live Data</span> — ' + ALL_DATA.length + ' visits from Google Sheets';
+  } else {
+    el.innerHTML = '<span style="color:var(--warning);font-weight:700;">◌ Sample Data</span> — connect field reps to see real visits';
+  }
+}
+
+async function refreshData() {
+  const badge = document.getElementById('data-source-badge');
+  if (badge) badge.innerHTML = '<span style="color:var(--text-muted)">Loading…</span>';
+  ALL_DATA = await loadLiveData();
+  updateSourceBadge();
+  applyFilter();
+}
+
+document.getElementById('footer-date').textContent = new Date().toLocaleString();
+
+// Start with sample data immediately so the dashboard renders instantly
+applyFilter();
+
+// Then attempt live data in background
+refreshData();
+</script>
+</body>
+</html>
