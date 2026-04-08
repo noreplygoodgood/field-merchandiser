@@ -757,7 +757,7 @@ function compressImage(file) {
             resolve({ dataUrl, base64, type: 'image/jpeg', name: file.name });
           };
           r.readAsDataURL(blob);
-        }, 'image/jpeg', 0.78);
+        }, 'image/jpeg', 0.62);
       };
       img.src = e.target.result;
     };
@@ -961,62 +961,78 @@ async function retrySubmission(id) {
 // SUBMIT VISIT
 // ═══════════════════════════════════════════════════════════════
 async function submitVisit() {
-  const repName  = document.getElementById('rep-name').value.trim();
+  const repName   = document.getElementById('rep-name').value.trim();
   const storeName = document.getElementById('store-name').value.trim();
-  const notes    = document.getElementById('visit-notes').value.trim();
-  const outcome  = document.getElementById('visit-outcome').value;
+  const notes     = document.getElementById('visit-notes').value.trim();
+  const outcome   = document.getElementById('visit-outcome').value;
 
   if (!repName)   { showToast('Please enter your name', 'error'); return; }
   if (!storeName) { showToast('Please enter the store name', 'error'); return; }
 
-  // Save name for next time
   localStorage.setItem('fm_rep_name', repName);
 
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const id        = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const timestamp = new Date().toISOString();
-
   const visitDate = document.getElementById('visit-date').value || new Date().toISOString().slice(0, 10);
-
-  const payload = {
-    id,
-    timestamp,
-    visitDate,
-    repName,
-    storeName,
-    location: gpsCoords ? `${gpsCoords.lat}, ${gpsCoords.lng}` : (document.getElementById('manual-address')?.value.trim() || ''),
-    notes,
-    outcome,
-    photos: photoData.map(p => ({ base64: p.base64, type: p.type, name: p.name })),
-  };
+  const location  = gpsCoords
+    ? `${gpsCoords.lat}, ${gpsCoords.lng}`
+    : (document.getElementById('manual-address')?.value.trim() || '');
 
   const historyEntry = {
     id, timestamp, visitDate, repName, storeName, notes, outcome,
     photoCount: photoData.length,
     status: CONFIGURED ? 'pending' : 'local',
-    payload: CONFIGURED ? payload : null,
+    payload: null,
   };
 
-  showOverlay(CONFIGURED ? 'Submitting to Google Sheets…' : 'Saving locally…');
+  if (!CONFIGURED) {
+    addToHistory(historyEntry);
+    document.getElementById('success-sub').textContent = 'Saved on this device.';
+    showScreen('screen-success');
+    return;
+  }
 
-  if (CONFIGURED) {
-    try {
-      await submitToGoogle(payload);
-      historyEntry.status = 'synced';
-      addToHistory(historyEntry);
-      hideOverlay();
-      document.getElementById('success-sub').textContent = 'Saved to Google Sheets.';
-      showScreen('screen-success');
-    } catch (e) {
-      historyEntry.status = 'failed';
-      addToHistory(historyEntry);
-      hideOverlay();
-      document.getElementById('success-sub').textContent = 'Saved locally — will retry when connected.';
-      showScreen('screen-success');
+  try {
+    // ── Step 1: submit visit metadata ──────────────────────────
+    showOverlay('Submitting visit…');
+    await submitToGoogle({
+      action: 'submitVisit',
+      id, timestamp, visitDate, repName, storeName, location, notes, outcome,
+      photoCount: photoData.length,
+    });
+    historyEntry.status = 'synced';
+
+    // ── Step 2: upload each photo individually ─────────────────
+    let uploaded = 0;
+    for (let i = 0; i < photoData.length; i++) {
+      showOverlay(`Uploading photo ${i + 1} of ${photoData.length}…`);
+      const p = photoData[i];
+      try {
+        await submitToGoogle({
+          action: 'addPhoto',
+          visitId: id,
+          base64: p.base64,
+          type:   p.type,
+          name:   p.name || `photo_${i + 1}.jpg`,
+          index:  i,
+        });
+        uploaded++;
+      } catch (e) { /* keep going even if one photo fails */ }
     }
-  } else {
+
     addToHistory(historyEntry);
     hideOverlay();
-    document.getElementById('success-sub').textContent = 'Saved on this device. Connect Google Sheets to sync.';
+    const photoMsg = photoData.length > 0
+      ? ` + ${uploaded}/${photoData.length} photo${photoData.length > 1 ? 's' : ''} saved to Drive.`
+      : '';
+    document.getElementById('success-sub').textContent = 'Visit saved to Google Sheets.' + photoMsg;
+    showScreen('screen-success');
+
+  } catch (e) {
+    historyEntry.status = 'failed';
+    addToHistory(historyEntry);
+    hideOverlay();
+    document.getElementById('success-sub').textContent = 'Saved locally — will retry when connected.';
     showScreen('screen-success');
   }
 }
