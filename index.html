@@ -154,6 +154,15 @@
     }
     .form-group textarea { resize: none; height: 90px; }
 
+    /* Multi-select outcome chips */
+    .outcome-checks { display: flex; flex-direction: column; gap: 8px; }
+    .outcome-chip { display: flex; align-items: center; gap: 10px; cursor: pointer;
+      padding: 10px 14px; border-radius: 10px; border: 1.5px solid #e2e8f0;
+      background: #f8fafc; font-size: 14px; font-weight: 500; color: #374151;
+      transition: border-color .15s, background .15s; user-select: none; }
+    .outcome-chip:has(input:checked) { border-color: var(--primary); background: #f0fdf4; color: var(--primary-dark, #166534); }
+    .outcome-chip input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; cursor: pointer; }
+
     .location-bar {
       background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px;
       padding: 12px 14px; display: flex; align-items: center; gap: 10px;
@@ -502,15 +511,14 @@
         <textarea id="visit-notes" placeholder="Stock levels, shelf placement, compliance issues, actions taken..."></textarea>
       </div>
       <div class="form-group">
-        <label for="visit-outcome">Outcome</label>
-        <select id="visit-outcome">
-          <option value="">Select outcome...</option>
-          <option>All tasks completed</option>
-          <option>Partial – follow-up needed</option>
-          <option>Issue raised with store manager</option>
-          <option>Stock refill needed</option>
-          <option>Display reset completed</option>
-        </select>
+        <label>Outcome <span style="font-weight:400;font-size:12px;color:#6b7280;">(select all that apply)</span></label>
+        <div class="outcome-checks" id="visit-outcome-group">
+          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="All tasks completed"><span>All tasks completed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Partial – follow-up needed"><span>Partial – follow-up needed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Issue raised with store manager"><span>Issue raised with store manager</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Stock refill needed"><span>Stock refill needed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Display reset completed"><span>Display reset completed</span></label>
+        </div>
       </div>
     </div>
 
@@ -628,15 +636,14 @@
         <textarea id="edit-visit-notes" placeholder="Stock levels, shelf placement, compliance issues, actions taken..."></textarea>
       </div>
       <div class="form-group">
-        <label for="edit-visit-outcome">Outcome</label>
-        <select id="edit-visit-outcome">
-          <option value="">Select outcome...</option>
-          <option>All tasks completed</option>
-          <option>Partial – follow-up needed</option>
-          <option>Issue raised with store manager</option>
-          <option>Stock refill needed</option>
-          <option>Display reset completed</option>
-        </select>
+        <label>Outcome <span style="font-weight:400;font-size:12px;color:#6b7280;">(select all that apply)</span></label>
+        <div class="outcome-checks" id="edit-visit-outcome-group">
+          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="All tasks completed"><span>All tasks completed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Partial – follow-up needed"><span>Partial – follow-up needed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Issue raised with store manager"><span>Issue raised with store manager</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Stock refill needed"><span>Stock refill needed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Display reset completed"><span>Display reset completed</span></label>
+        </div>
       </div>
     </div>
 
@@ -1146,7 +1153,7 @@ async function submitVisit() {
   const repName   = document.getElementById('rep-name').value.trim();
   const storeName = document.getElementById('store-name').value.trim();
   const notes     = document.getElementById('visit-notes').value.trim();
-  const outcome   = document.getElementById('visit-outcome').value;
+  const outcome   = [...document.querySelectorAll('#visit-outcome-group input:checked')].map(c => c.value).join(', ');
 
   if (!repName)   { showToast('Please enter your name', 'error'); return; }
   if (!storeName) { showToast('Please enter the store name', 'error'); return; }
@@ -1231,7 +1238,7 @@ async function submitVisit() {
 function resetForm() {
   document.getElementById('store-name').value = '';
   document.getElementById('visit-notes').value = '';
-  document.getElementById('visit-outcome').value = '';
+  document.querySelectorAll('#visit-outcome-group input').forEach(c => c.checked = false);
   document.getElementById('location-bar').className = 'location-bar loading';
   document.getElementById('location-text').textContent = 'Detecting location…';
   document.getElementById('btn-location').textContent = 'Refresh';
@@ -1302,7 +1309,10 @@ function showEditForm(id) {
   document.getElementById('edit-store-name').value  = v.storeName  || '';
   document.getElementById('edit-rep-name').value    = v.repName    || '';
   document.getElementById('edit-visit-notes').value = v.notes      || '';
-  document.getElementById('edit-visit-outcome').value = v.outcome  || '';
+  const savedOutcomes = (v.outcome || '').split(',').map(s => s.trim()).filter(Boolean);
+  document.querySelectorAll('#edit-visit-outcome-group input').forEach(c => {
+    c.checked = savedOutcomes.includes(c.value);
+  });
 
   // Visit date — strip to YYYY-MM-DD for the date input
   if (v.visitDate) {
@@ -1321,7 +1331,7 @@ async function saveEdit() {
   const storeName = document.getElementById('edit-store-name').value.trim();
   const repName   = document.getElementById('edit-rep-name').value.trim();
   const notes     = document.getElementById('edit-visit-notes').value.trim();
-  const outcome   = document.getElementById('edit-visit-outcome').value;
+  const outcome   = [...document.querySelectorAll('#edit-visit-outcome-group input:checked')].map(c => c.value).join(', ');
   const visitDate = document.getElementById('edit-visit-date').value;
 
   if (!storeName || !repName) {
