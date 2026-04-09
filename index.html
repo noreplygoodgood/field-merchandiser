@@ -583,6 +583,12 @@
     <button class="header-action" id="btn-edit-visit" style="color:var(--primary);font-weight:700;font-size:15px;">Edit</button>
   </div>
   <div class="detail-content" id="detail-content"></div>
+  <div class="submit-bar" style="border-top:1px solid var(--border);padding:12px 20px;">
+    <button id="btn-delete-visit" style="width:100%;padding:14px;background:white;color:var(--danger);border:1.5px solid var(--danger);border-radius:var(--radius);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      Delete Visit
+    </button>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -886,6 +892,34 @@ function updateHistoryEntry(id, updates) {
   const visits = getHistory();
   const idx = visits.findIndex(v => v.id === id);
   if (idx !== -1) { Object.assign(visits[idx], updates); saveHistory(visits); }
+}
+
+function removeFromHistory(id) {
+  const visits = getHistory().filter(v => v.id !== id);
+  saveHistory(visits);
+}
+
+async function deleteVisit(id) {
+  const visits = getHistory();
+  const v = visits.find(v => v.id === id);
+  if (!v) return;
+
+  const storeName = v.storeName || 'this visit';
+  if (!confirm(`Delete "${storeName}"?\n\nThis will remove it from this device and from Google Sheets. This cannot be undone.`)) return;
+
+  removeFromHistory(id);
+
+  // Fire delete to server (best-effort, no-cors)
+  if (CONFIGURED) {
+    try {
+      await submitToGoogle({ action: 'deleteVisit', id });
+    } catch (_) { /* silent — local delete already done */ }
+  }
+
+  showToast('Visit deleted', '');
+  renderHistory();
+  renderRecentVisits();
+  showScreen('screen-history');
 }
 
 function renderHistory() {
@@ -1408,6 +1442,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-edit-visit').addEventListener('click', () => {
     if (editingVisitId) showEditForm(editingVisitId);
+  });
+  document.getElementById('btn-delete-visit').addEventListener('click', () => {
+    if (editingVisitId) deleteVisit(editingVisitId);
   });
 
   // Edit
