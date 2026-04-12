@@ -747,7 +747,13 @@ function toggleManualAddress() {
   const visible = wrap.style.display !== 'none';
   wrap.style.display = visible ? 'none' : 'block';
   btn.textContent = visible ? 'Enter address manually' : 'Use GPS instead';
-  if (!visible) document.getElementById('manual-address').focus();
+  if (!visible) {
+    // Switching to manual entry — clear GPS so typed address is used on submit
+    gpsCoords = null;
+    document.getElementById('location-text').textContent = 'Using manual address';
+    document.getElementById('location-bar').className = 'location-bar';
+    document.getElementById('manual-address').focus();
+  }
 }
 
 function getLocation() {
