@@ -12,7 +12,7 @@
   <title>Field Merchandiser</title>
 
   <style>
-    /* ─── Reset & Base ─────────────────────────────────────────── */
+    /* âââ Reset & Base âââââââââââââââââââââââââââââââââââââââââââ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --primary: #2563eb;
@@ -40,11 +40,11 @@
       overscroll-behavior: none;
     }
 
-    /* ─── Layout Screens ───────────────────────────────────────── */
+    /* âââ Layout Screens âââââââââââââââââââââââââââââââââââââââââ */
     .screen { display: none; min-height: 100vh; flex-direction: column; }
     .screen.active { display: flex; }
 
-    /* ─── Landing Screen ───────────────────────────────────────── */
+    /* âââ Landing Screen âââââââââââââââââââââââââââââââââââââââââ */
     #screen-landing {
       background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
       align-items: center; justify-content: center; padding: 40px 24px;
@@ -68,7 +68,7 @@
     .btn-start:active { transform: scale(0.97); }
     .btn-start svg { width: 22px; height: 22px; fill: var(--primary); }
 
-    /* ─── Header ───────────────────────────────────────────────── */
+    /* âââ Header âââââââââââââââââââââââââââââââââââââââââââââââââ */
     .app-header {
       background: white; border-bottom: 1px solid var(--border);
       padding: 16px 20px; display: flex; align-items: center;
@@ -87,7 +87,7 @@
       color: var(--primary); font-size: 14px; font-weight: 600;
     }
 
-    /* ─── Home / Dashboard ─────────────────────────────────────── */
+    /* âââ Home / Dashboard âââââââââââââââââââââââââââââââââââââââ */
     #screen-home { background: var(--bg); }
     .home-content { padding: 24px 20px; flex: 1; }
     .greeting { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
@@ -114,6 +114,8 @@
     .action-icon.green { background: #d1fae5; }
     .action-icon.green svg { fill: var(--accent); }
     .action-text h3 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .action-icon.orange { background: #fed7aa; }
+    .action-icon.orange svg { fill: #ea580c; }
     .action-text p { font-size: 13px; color: var(--muted); }
     .action-arrow { margin-left: auto; color: var(--muted); font-size: 20px; }
 
@@ -130,7 +132,7 @@
     .visit-time { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
     .empty-state { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px; }
 
-    /* ─── Log Visit Screen ─────────────────────────────────────── */
+    /* âââ Log Visit Screen âââââââââââââââââââââââââââââââââââââââ */
     #screen-log { background: var(--bg); }
     .form-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
 
@@ -165,7 +167,7 @@
       background: #f8fafc; font-size: 15px; font-weight: 500; color: #374151;
       transition: border-color .15s, background .15s; user-select: none; }
     .outcome-chip:has(input:checked) { border-color: var(--primary); background: #f0fdf4; color: #166534; }
-    /* Custom checkbox — circle that fills green when checked */
+    /* Custom checkbox â circle that fills green when checked */
     .outcome-chip input[type="checkbox"] { display: none; }
     .outcome-chip .chip-box {
       width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1;
@@ -240,7 +242,7 @@
     .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; transform: none; }
     .btn-primary svg { width: 20px; height: 20px; fill: white; }
 
-    /* ─── Success Screen ───────────────────────────────────────── */
+    /* âââ Success Screen âââââââââââââââââââââââââââââââââââââââââ */
     #screen-success {
       background: var(--bg); align-items: center; justify-content: center;
       padding: 40px 24px; text-align: center;
@@ -262,7 +264,7 @@
     }
     .btn-secondary:active { background: #eff6ff; }
 
-    /* ─── History Screen ───────────────────────────────────────── */
+    /* âââ History Screen âââââââââââââââââââââââââââââââââââââââââ */
     #screen-history { background: var(--bg); }
     .history-content { flex: 1; overflow-y: auto; padding: 20px; }
     .history-item {
@@ -287,7 +289,7 @@
       border-radius: 8px; cursor: pointer;
     }
 
-    /* ─── Detail Screen ────────────────────────────────────────── */
+    /* âââ Detail Screen ââââââââââââââââââââââââââââââââââââââââââ */
     #screen-detail { background: var(--bg); }
     .detail-content { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 40px; }
     .detail-section { background: var(--card); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); box-shadow: var(--shadow); }
@@ -302,7 +304,7 @@
     .history-item { cursor: pointer; }
     .history-item:active { opacity: 0.8; }
 
-    /* ─── Toast ────────────────────────────────────────────────── */
+    /* âââ Toast ââââââââââââââââââââââââââââââââââââââââââââââââââ */
     .toast {
       position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px);
       background: #1e293b; color: white; padding: 12px 20px; border-radius: 30px;
@@ -315,7 +317,7 @@
     .toast.error { background: #991b1b; }
     .toast svg { width: 16px; height: 16px; fill: white; }
 
-    /* ─── Loading overlay ──────────────────────────────────────── */
+    /* âââ Loading overlay ââââââââââââââââââââââââââââââââââââââââ */
     .overlay {
       position: fixed; inset: 0; background: rgba(255,255,255,0.92);
       display: none; align-items: center; justify-content: center;
@@ -330,7 +332,7 @@
     .overlay p { color: var(--muted); font-size: 15px; font-weight: 500; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ─── Setup Screen ─────────────────────────────────────────── */
+    /* âââ Setup Screen âââââââââââââââââââââââââââââââââââââââââââ */
     #screen-setup {
       background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
       align-items: center; justify-content: center; padding: 40px 24px;
@@ -348,7 +350,7 @@
     }
     .setup-card input:focus { border-color: var(--primary); }
 
-    /* ─── Config notice ────────────────────────────────────────── */
+    /* âââ Config notice ââââââââââââââââââââââââââââââââââââââââââ */
     .config-notice {
       background: #fef3c7; border: 1.5px solid #fde68a;
       border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
@@ -359,9 +361,9 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 1 — LANDING
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 1 â LANDING
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-landing" class="screen active">
   <div class="landing-logo">
     <!-- GOOD GOOD logo (white version) -->
@@ -389,9 +391,9 @@
   </button>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 1b — FIRST-TIME SETUP (name entry)
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 1b â FIRST-TIME SETUP (name entry)
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-setup" class="screen">
   <div class="setup-card">
     <h2>Welcome!</h2>
@@ -404,9 +406,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 2 — HOME / DASHBOARD
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 2 â HOME / DASHBOARD
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-home" class="screen">
   <div class="app-header">
     <!-- GOOD GOOD logo (dark version) -->
@@ -441,7 +443,7 @@
           <h3>Log a Store Visit</h3>
           <p>Check in, add notes and photos</p>
         </div>
-        <span class="action-arrow">›</span>
+        <span class="action-arrow">âº</span>
       </div>
       <div class="action-card" id="btn-go-history">
         <div class="action-icon green">
@@ -450,6 +452,16 @@
         <div class="action-text">
           <h3>Visit History</h3>
           <p>View past store visits on this device</p>
+        </div>
+        <span class="action-arrow">âº</span>
+      </div>
+      <div class="action-card" id="btn-go-guide">
+        <div class="action-icon orange">
+          <svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>
+        </div>
+        <div class="action-text">
+          <h3>Photo Guide</h3>
+          <p>View shelf photo standards &amp; examples</p>
         </div>
         <span class="action-arrow">›</span>
       </div>
@@ -462,9 +474,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 3 — LOG VISIT
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 3 â LOG VISIT
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-log" class="screen">
   <div class="app-header">
     <button class="header-back" id="btn-back-log">
@@ -478,7 +490,7 @@
   <div class="form-scroll">
 
     <div class="config-notice" id="config-notice">
-      ⚠️ Google Sheets not connected yet — visits will be saved locally only.
+      â ï¸ Google Sheets not connected yet â visits will be saved locally only.
     </div>
 
     <div class="form-section" id="name-section">
@@ -496,14 +508,14 @@
       <h3>Location</h3>
       <div class="location-bar" id="location-bar">
         <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg>
-        <span id="location-text">Detecting location…</span>
+        <span id="location-text">Detecting locationâ¦</span>
         <button id="btn-location">Refresh</button>
       </div>
       <div style="margin-top:7px; text-align:right;">
         <button id="btn-manual-toggle" onclick="toggleManualAddress()" style="background:none;border:none;font-size:12px;color:var(--primary);font-weight:600;cursor:pointer;padding:2px 0;">Enter address manually</button>
       </div>
       <div id="manual-address-wrap" style="display:none; margin-top:6px;">
-        <input type="text" id="manual-address" placeholder="Type address or location manually…" autocomplete="street-address"
+        <input type="text" id="manual-address" placeholder="Type address or location manuallyâ¦" autocomplete="street-address"
           style="width:100%; padding:11px 13px; border:1.5px solid #d1d5db; border-radius:10px; font-size:14px; background:#f9fafb; color:#333; box-sizing:border-box;" />
       </div>
     </div>
@@ -512,7 +524,7 @@
       <h3>Store Details</h3>
       <div class="form-group">
         <label for="store-name">Store Name *</label>
-        <input type="text" id="store-name" placeholder="e.g. Walmart – Main St" autocomplete="off" />
+        <input type="text" id="store-name" placeholder="e.g. Walmart â Main St" autocomplete="off" />
       </div>
       <div class="form-group">
         <label for="visit-date">Visit Date</label>
@@ -530,7 +542,7 @@
         <label>Outcome <span style="font-weight:400;font-size:12px;color:#6b7280;">(select all that apply)</span></label>
         <div class="outcome-checks" id="visit-outcome-group">
           <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="All tasks completed"><span class="chip-box"></span><span>All tasks completed</span></label>
-          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Partial – follow-up needed"><span class="chip-box"></span><span>Partial – follow-up needed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Partial â follow-up needed"><span class="chip-box"></span><span>Partial â follow-up needed</span></label>
           <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Issue raised with store manager"><span class="chip-box"></span><span>Issue raised with store manager</span></label>
           <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Stock refill needed"><span class="chip-box"></span><span>Stock refill needed</span></label>
           <label class="outcome-chip"><input type="checkbox" name="visit-outcome" value="Display reset completed"><span class="chip-box"></span><span>Display reset completed</span></label>
@@ -559,9 +571,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 4 — SUCCESS
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 4 â SUCCESS
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-success" class="screen">
   <div class="success-icon">
     <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
@@ -577,9 +589,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 5 — HISTORY
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 5 â HISTORY
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-history" class="screen">
   <div class="app-header">
     <button class="header-back" id="btn-back-history">
@@ -594,9 +606,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 6 — VISIT DETAIL
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 6 â VISIT DETAIL
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-detail" class="screen">
   <div class="app-header">
     <button class="header-back" id="btn-back-detail">
@@ -615,9 +627,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     SCREEN 7 — EDIT VISIT
-═══════════════════════════════════════════════════════════ -->
+<!-- âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+     SCREEN 7 â EDIT VISIT
+âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div id="screen-edit" class="screen">
   <div class="app-header">
     <button class="header-back" id="btn-back-edit">
@@ -633,7 +645,7 @@
       <h3>Store & Rep</h3>
       <div class="form-group">
         <label for="edit-store-name">Store Name *</label>
-        <input type="text" id="edit-store-name" placeholder="e.g. Sprouts – Scottsdale" autocomplete="off" />
+        <input type="text" id="edit-store-name" placeholder="e.g. Sprouts â Scottsdale" autocomplete="off" />
       </div>
       <div class="form-group">
         <label for="edit-rep-name">Rep Name *</label>
@@ -655,7 +667,7 @@
         <label>Outcome <span style="font-weight:400;font-size:12px;color:#6b7280;">(select all that apply)</span></label>
         <div class="outcome-checks" id="edit-visit-outcome-group">
           <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="All tasks completed"><span class="chip-box"></span><span>All tasks completed</span></label>
-          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Partial – follow-up needed"><span class="chip-box"></span><span>Partial – follow-up needed</span></label>
+          <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Partial â follow-up needed"><span class="chip-box"></span><span>Partial â follow-up needed</span></label>
           <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Issue raised with store manager"><span class="chip-box"></span><span>Issue raised with store manager</span></label>
           <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Stock refill needed"><span class="chip-box"></span><span>Stock refill needed</span></label>
           <label class="outcome-chip"><input type="checkbox" name="edit-visit-outcome" value="Display reset completed"><span class="chip-box"></span><span>Display reset completed</span></label>
@@ -678,6 +690,53 @@
   </div>
 </div>
 
+<div id="screen-guide" class="screen">
+  <div class="app-header">
+    <button class="header-back" id="btn-back-guide">
+      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+    </button>
+    <div class="header-title">Photo Guide</div>
+  </div>
+  <div style="padding:16px;overflow-y:auto;height:calc(100vh - 60px);">
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:12px;">📸 Shelf Photo Standards</h2>
+    <div style="background:#fff7ed;border-radius:12px;padding:16px;margin-bottom:16px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#ea580c;">✅ Every visit must include:</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.8;">
+        <li>Full shelf section showing GOOD GOOD facings</li>
+        <li>Close-up of price tag</li>
+        <li>Competitor products on adjacent shelf</li>
+        <li>Any promo or signage if present</li>
+      </ul>
+    </div>
+    <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:16px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#059669;">📐 How to frame your shot:</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.8;">
+        <li>Stand 3–5 feet back for full shelf shot</li>
+        <li>Hold phone level — no tilting</li>
+        <li>Make sure product labels are readable</li>
+        <li>Good lighting — turn on aisle lights if needed</li>
+      </ul>
+    </div>
+    <div style="background:#eff6ff;border-radius:12px;padding:16px;margin-bottom:16px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#2563eb;">⚠️ Common mistakes to avoid:</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.8;">
+        <li>Blurry or out-of-focus images</li>
+        <li>Photos from too far away (can't read labels)</li>
+        <li>Missing price tag in shot</li>
+        <li>Only shooting GOOD GOOD — always capture the full set</li>
+      </ul>
+    </div>
+    <div style="background:#faf5ff;border-radius:12px;padding:16px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#7c3aed;">🏷️ OOS &amp; promo notes:</h3>
+      <ul style="margin:0;padding-left:18px;line-height:1.8;">
+        <li>If GOOD GOOD is OOS, photograph the empty shelf</li>
+        <li>Capture any sale tags, end-caps, or displays</li>
+        <li>Note competitor promos in your visit notes</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
 <!-- Loading overlay -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
@@ -691,33 +750,33 @@
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // CONFIGURATION
 // Replace this URL with your deployed Google Apps Script Web App URL
 // See setup instructions in SETUP-GOOGLE.md
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyg_TcS1Um7CjTf0kspTXesH77rCV3xB_qr2KnXNZR7eJb8zKCajB6Z-RLFTfUyUixVhw/exec';
 
 const CONFIGURED = SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // STATE
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 let photoData = []; // Array of { dataUrl, base64, type, name }
 let gpsCoords = null;
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // SCREEN ROUTING
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // TOAST
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   const m = document.getElementById('toast-msg');
@@ -727,9 +786,9 @@ function showToast(msg, type = '') {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // LOADING OVERLAY
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function showOverlay(msg = 'Submitting...') {
   document.getElementById('overlay-text').textContent = msg;
   document.getElementById('overlay').classList.add('show');
@@ -738,9 +797,9 @@ function hideOverlay() {
   document.getElementById('overlay').classList.remove('show');
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // GPS LOCATION
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function toggleManualAddress() {
   const wrap = document.getElementById('manual-address-wrap');
   const btn = document.getElementById('btn-manual-toggle');
@@ -748,7 +807,7 @@ function toggleManualAddress() {
   wrap.style.display = visible ? 'none' : 'block';
   btn.textContent = visible ? 'Enter address manually' : 'Use GPS instead';
   if (!visible) {
-    // Switching to manual entry — clear GPS so typed address is used on submit
+    // Switching to manual entry â clear GPS so typed address is used on submit
     gpsCoords = null;
     document.getElementById('location-text').textContent = 'Using manual address';
     document.getElementById('location-bar').className = 'location-bar';
@@ -761,7 +820,7 @@ function getLocation() {
   const txt = document.getElementById('location-text');
 
   if (!navigator.geolocation) {
-    txt.textContent = 'GPS not available — use manual entry below';
+    txt.textContent = 'GPS not available â use manual entry below';
     bar.className = 'location-bar error';
     document.getElementById('manual-address-wrap').style.display = 'block';
     document.getElementById('btn-manual-toggle').textContent = 'Use GPS instead';
@@ -769,7 +828,7 @@ function getLocation() {
   }
 
   bar.className = 'location-bar loading';
-  txt.textContent = 'Detecting location…';
+  txt.textContent = 'Detecting locationâ¦';
 
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
@@ -780,7 +839,7 @@ function getLocation() {
       await suggestStoreName(gpsCoords.lat, gpsCoords.lng);
     },
     (err) => {
-      txt.textContent = 'GPS blocked — use manual entry below';
+      txt.textContent = 'GPS blocked â use manual entry below';
       bar.className = 'location-bar error';
       gpsCoords = null;
       document.getElementById('manual-address-wrap').style.display = 'block';
@@ -798,14 +857,14 @@ async function suggestStoreName(lat, lng) {
   const coordLine = `${lat}, ${lng}`;
 
   try {
-    // Google Places Nearby Search — finds actual store names
+    // Google Places Nearby Search â finds actual store names
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=store&key=${MAPS_KEY}`
     );
     const data = await res.json();
     const top = data.results?.[0];
     if (top) {
-      txt.textContent = (top.vicinity || coordLine) + ' · ' + coordLine;
+      txt.textContent = (top.vicinity || coordLine) + ' Â· ' + coordLine;
       const nameField = document.getElementById('store-name');
       if (!nameField.value.trim()) {
         nameField.value = top.name;
@@ -824,7 +883,7 @@ async function suggestStoreName(lat, lng) {
     const addr = data.address || {};
     const road = addr.road || addr.pedestrian || addr.retail || '';
     const city = addr.city || addr.town || addr.village || addr.suburb || '';
-    if (road || city) txt.textContent = [road, city].filter(Boolean).join(', ') + ' · ' + coordLine;
+    if (road || city) txt.textContent = [road, city].filter(Boolean).join(', ') + ' Â· ' + coordLine;
     if (data.name?.trim()) {
       const nameField = document.getElementById('store-name');
       if (!nameField.value.trim()) nameField.value = data.name.trim();
@@ -832,9 +891,9 @@ async function suggestStoreName(lat, lng) {
   } catch(e) { /* silent fail */ }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // PHOTO HANDLING
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -890,7 +949,7 @@ async function handlePhotoInput(files) {
   const remaining = 10 - photoData.length;
   const toProcess = Array.from(files).slice(0, remaining);
   if (toProcess.length === 0) { showToast('Maximum 10 photos per visit', 'error'); return; }
-  showOverlay('Processing photos…');
+  showOverlay('Processing photosâ¦');
   for (const file of toProcess) {
     const compressed = await compressImage(file);
     photoData.push(compressed);
@@ -899,9 +958,9 @@ async function handlePhotoInput(files) {
   renderPhotoGrid();
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // HISTORY (localStorage)
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function getHistory() {
   try { return JSON.parse(localStorage.getItem('fm_visits') || '[]'); } catch { return []; }
 }
@@ -942,7 +1001,7 @@ async function deleteVisit(id) {
   if (CONFIGURED) {
     try {
       await submitToGoogle({ action: 'deleteVisit', id });
-    } catch (_) { /* silent — local delete already done */ }
+    } catch (_) { /* silent â local delete already done */ }
   }
 
   showToast('Visit deleted', '');
@@ -962,8 +1021,8 @@ function renderHistory() {
     const date = new Date(v.timestamp).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     const time = new Date(v.timestamp).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
     const badgeClass = v.status === 'synced' ? 'synced' : v.status === 'failed' ? 'failed' : 'pending';
-    const badgeLabel = v.status === 'synced' ? '✓ Synced' : v.status === 'failed' ? 'Failed' : 'Pending';
-    const retryBtn = v.status === 'failed' ? `<button class="retry-btn" data-id="${v.id}">Retry sync →</button>` : '';
+    const badgeLabel = v.status === 'synced' ? 'â Synced' : v.status === 'failed' ? 'Failed' : 'Pending';
+    const retryBtn = v.status === 'failed' ? `<button class="retry-btn" data-id="${v.id}">Retry sync â</button>` : '';
     return `
       <div class="history-item" data-id="${v.id}">
         <div class="history-item-header">
@@ -973,7 +1032,7 @@ function renderHistory() {
         <div class="history-meta">
           <span>${v.repName || ''}</span>
           <span>${date} ${time}</span>
-          ${v.photoCount > 0 ? `<span>📷 ${v.photoCount} photo${v.photoCount > 1 ? 's' : ''}</span>` : ''}
+          ${v.photoCount > 0 ? `<span>ð· ${v.photoCount} photo${v.photoCount > 1 ? 's' : ''}</span>` : ''}
         </div>
         ${retryBtn}
       </div>`;
@@ -1016,8 +1075,8 @@ function showVisitDetail(id) {
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-section">
       <h4>Visit Info</h4>
-      <div class="detail-row"><span class="detail-label">Store</span><span class="detail-value">${v.storeName || '—'}</span></div>
-      <div class="detail-row"><span class="detail-label">Rep</span><span class="detail-value">${v.repName || '—'}</span></div>
+      <div class="detail-row"><span class="detail-label">Store</span><span class="detail-value">${v.storeName || 'â'}</span></div>
+      <div class="detail-row"><span class="detail-label">Rep</span><span class="detail-value">${v.repName || 'â'}</span></div>
       ${v.visitDate ? `<div class="detail-row"><span class="detail-label">Visit Date</span><span class="detail-value">${new Date(v.visitDate + 'T12:00:00').toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'})}</span></div>` : `<div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${date}</span></div>`}
       <div class="detail-row"><span class="detail-label">Logged At</span><span class="detail-value">${time}</span></div>
       ${v.payload?.location ? `<div class="detail-row"><span class="detail-label">GPS</span><span class="detail-value">${v.payload.location}</span></div>` : ''}
@@ -1055,11 +1114,11 @@ function renderRecentVisits() {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // SUBMIT TO GOOGLE APPS SCRIPT
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 async function submitToGoogle(payload) {
-  // Apps Script redirects POST cross-origin — use no-cors so the request
+  // Apps Script redirects POST cross-origin â use no-cors so the request
   // fires cleanly without trying to read the opaque redirected response.
   // The server still processes and writes the data; we just can't read
   // the response body from a different origin.
@@ -1068,14 +1127,14 @@ async function submitToGoogle(payload) {
     mode:     'no-cors',
     body:     JSON.stringify(payload),
   });
-  // no-cors gives an opaque response (status 0) — treat completion as success.
+  // no-cors gives an opaque response (status 0) â treat completion as success.
 }
 
 async function retrySubmission(id) {
   const visits = getHistory();
   const visit = visits.find(v => v.id === id);
   if (!visit) return;
-  showOverlay('Retrying sync…');
+  showOverlay('Retrying syncâ¦');
   try {
     // Re-build payload from stored fields if payload slot is missing (legacy entries)
     const payload = visit.payload || {
@@ -1112,7 +1171,7 @@ async function retrySubmission(id) {
     showToast('Synced to Google Sheets!', 'success');
   } catch (e) {
     updateHistoryEntry(id, { status: 'failed' });
-    showToast('Still failed — check connection', 'error');
+    showToast('Still failed â check connection', 'error');
   }
   hideOverlay();
   renderHistory();
@@ -1124,7 +1183,7 @@ async function autoRetryFailed() {
   const visits = getHistory();
   const toRetry = visits.filter(v => v.status === 'failed' || v.status === 'pending');
   if (toRetry.length === 0) return;
-  console.log(`Auto-retrying ${toRetry.length} failed submission(s)…`);
+  console.log(`Auto-retrying ${toRetry.length} failed submission(s)â¦`);
   let synced = 0;
   for (const visit of toRetry) {
     try {
@@ -1168,9 +1227,9 @@ async function autoRetryFailed() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // SUBMIT VISIT
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 async function submitVisit() {
   const repName   = document.getElementById('rep-name').value.trim();
   const storeName = document.getElementById('store-name').value.trim();
@@ -1214,15 +1273,15 @@ async function submitVisit() {
   }
 
   try {
-    // ── Step 1: submit visit metadata ──────────────────────────
-    showOverlay('Submitting visit…');
+    // ââ Step 1: submit visit metadata ââââââââââââââââââââââââââ
+    showOverlay('Submitting visitâ¦');
     await submitToGoogle(visitPayload);
     historyEntry.status = 'synced';
 
-    // ── Step 2: upload each photo individually ─────────────────
+    // ââ Step 2: upload each photo individually âââââââââââââââââ
     let uploaded = 0;
     for (let i = 0; i < photoData.length; i++) {
-      showOverlay(`Uploading photo ${i + 1} of ${photoData.length}…`);
+      showOverlay(`Uploading photo ${i + 1} of ${photoData.length}â¦`);
       const p = photoData[i];
       try {
         await submitToGoogle({
@@ -1249,20 +1308,20 @@ async function submitVisit() {
     historyEntry.status = 'failed';
     addToHistory(historyEntry);
     hideOverlay();
-    document.getElementById('success-sub').textContent = 'Saved locally — will retry when connected.';
+    document.getElementById('success-sub').textContent = 'Saved locally â will retry when connected.';
     showScreen('screen-success');
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // RESET FORM
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function resetForm() {
   document.getElementById('store-name').value = '';
   document.getElementById('visit-notes').value = '';
   document.querySelectorAll('#visit-outcome-group input').forEach(c => c.checked = false);
   document.getElementById('location-bar').className = 'location-bar loading';
-  document.getElementById('location-text').textContent = 'Detecting location…';
+  document.getElementById('location-text').textContent = 'Detecting locationâ¦';
   document.getElementById('btn-location').textContent = 'Refresh';
   document.getElementById('photo-grid').innerHTML = '';
   document.getElementById('photo-count').textContent = '';
@@ -1303,9 +1362,9 @@ function changeName() {
   document.getElementById('rep-name').focus();
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // HOME GREETING
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function updateGreeting() {
   const h = new Date().getHours();
   const saved = localStorage.getItem('fm_rep_name');
@@ -1316,9 +1375,9 @@ function updateGreeting() {
     new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // EDIT VISIT
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 let editingVisitId = null;
 
 function showEditForm(id) {
@@ -1336,7 +1395,7 @@ function showEditForm(id) {
     c.checked = savedOutcomes.includes(c.value);
   });
 
-  // Visit date — strip to YYYY-MM-DD for the date input
+  // Visit date â strip to YYYY-MM-DD for the date input
   if (v.visitDate) {
     document.getElementById('edit-visit-date').value = v.visitDate.substring(0, 10);
   } else {
@@ -1375,7 +1434,7 @@ async function saveEdit() {
 
   // Try to sync the edit to Google Sheets immediately
   if (CONFIGURED) {
-    showOverlay('Saving changes…');
+    showOverlay('Saving changesâ¦');
     try {
       await submitToGoogle({
         action: 'editVisit',
@@ -1389,8 +1448,8 @@ async function saveEdit() {
       updateHistoryEntry(id, { status: 'synced' });
       showToast('Changes saved!', 'success');
     } catch (e) {
-      // Keep as pending — autoRetryFailed will pick it up
-      showToast('Saved locally — will sync when connected', '');
+      // Keep as pending â autoRetryFailed will pick it up
+      showToast('Saved locally â will sync when connected', '');
     }
     hideOverlay();
   } else {
@@ -1402,12 +1461,12 @@ async function saveEdit() {
   showScreen('screen-detail');
 }
 
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // INIT
-// ═══════════════════════════════════════════════════════════════
+// âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 document.addEventListener('DOMContentLoaded', () => {
 
-  // Landing → check if we know the user already
+  // Landing â check if we know the user already
   document.getElementById('btn-start').addEventListener('click', () => {
     if (localStorage.getItem('fm_rep_name')) {
       updateGreeting();
@@ -1419,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Setup screen — save name and continue
+  // Setup screen â save name and continue
   document.getElementById('btn-setup-continue').addEventListener('click', () => {
     const name = document.getElementById('setup-name').value.trim();
     if (!name) { document.getElementById('setup-name').focus(); return; }
@@ -1437,6 +1496,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-go-history').addEventListener('click', () => {
     renderHistory();
     showScreen('screen-history');
+  });
+  document.getElementById('btn-go-guide').addEventListener('click', () => {
+    showScreen('screen-guide');
+  });
+  document.getElementById('btn-back-guide').addEventListener('click', () => {
+    showScreen('screen-home');
   });
   document.getElementById('btn-go-history-hdr').addEventListener('click', () => {
     renderHistory();
