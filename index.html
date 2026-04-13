@@ -555,11 +555,12 @@
       <div class="photo-area" id="photo-area" onclick="document.getElementById('photo-input').click()">
         <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8 15.2 10.23 15.2 12 13.77 15.2 12 15.2zm7-11h-3l-2-2H10L8 4.2H5c-1.1 0-2 .9-2 2V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.2c0-1.1-.9-2-2-2z"/></svg>
         <p>Tap to take or upload photos</p>
-        <small>Up to 10 photos per visit</small>
+        <small>Minimum 3 photos · up to 10 per visit</small>
       </div>
       <input type="file" id="photo-input" accept="image/*" multiple />
       <div class="photo-grid" id="photo-grid"></div>
       <p class="photo-count" id="photo-count"></p>
+      <p style="font-size:12px;color:#94a3b8;text-align:center;margin-top:6px;">📸 Take at least 3 photos — <a href="#" onclick="showScreen('screen-guide');return false;" style="color:var(--primary);text-decoration:none;font-weight:600;">see Photo Guide</a></p>
     </div>
   </div>
 
