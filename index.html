@@ -1238,6 +1238,7 @@ async function submitVisit() {
 
   if (!repName)   { showToast('Please enter your name', 'error'); return; }
   if (!storeName) { showToast('Please enter the store name', 'error'); return; }
+  if (photoData.length === 0) { showToast('📸 Please take at least 1 photo before submitting', 'error'); return; }
 
   localStorage.setItem('fm_rep_name', repName);
 
