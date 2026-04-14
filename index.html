@@ -1108,7 +1108,7 @@ function renderRecentVisits() {
         </div>
         <div class="visit-time">${time}</div>
       </div>`;
-  }).join('');
+    }).join('');
   el.querySelectorAll('.visit-item').forEach(item => {
     item.addEventListener('click', () => showVisitDetail(item.dataset.id));
   });
@@ -1159,8 +1159,9 @@ async function retrySubmission(id) {
     };
     await submitToGoogle(payload);
 
-    // Re-upload any stored photos
+    // Re-upload any stored photos (Drive save only)
     const photos = visit.photos || [];
+    let uploaded = 0;
     for (let i = 0; i < photos.length; i++) {
       const p = photos[i];
       try {
@@ -1172,7 +1173,12 @@ async function retrySubmission(id) {
           name:   p.name || `photo_${i + 1}.jpg`,
           index:  i,
         });
+        uploaded++;
       } catch (_) { /* best-effort */ }
+    }
+    // Batch Gemini analysis after all photos are up
+    if (uploaded > 0) {
+      try { await submitToGoogle({ action: 'analyzeVisit', visitId: visit.id }); } catch (_) {}
     }
 
     updateHistoryEntry(id, { status: 'synced' });
@@ -1210,6 +1216,7 @@ async function autoRetryFailed() {
       await submitToGoogle(payload);
 
       const photos = visit.photos || [];
+      let photoUploaded = 0;
       for (let i = 0; i < photos.length; i++) {
         const p = photos[i];
         try {
@@ -1221,7 +1228,11 @@ async function autoRetryFailed() {
             name:   p.name || `photo_${i + 1}.jpg`,
             index:  i,
           });
+          photoUploaded++;
         } catch (_) { /* best-effort */ }
+      }
+      if (photoUploaded > 0) {
+        try { await submitToGoogle({ action: 'analyzeVisit', visitId: visit.id }); } catch (_) {}
       }
 
       updateHistoryEntry(visit.id, { status: 'synced' });
@@ -1235,9 +1246,9 @@ async function autoRetryFailed() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
 // SUBMIT VISIT
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
 async function submitVisit() {
   const repName   = document.getElementById('rep-name').value.trim();
   const storeName = document.getElementById('store-name').value.trim();
@@ -1246,7 +1257,6 @@ async function submitVisit() {
 
   if (!repName)   { showToast('Please enter your name', 'error'); return; }
   if (!storeName) { showToast('Please enter the store name', 'error'); return; }
-  if (photoData.length === 0) { showToast('📸 Please take at least 1 photo before submitting', 'error'); return; }
 
   localStorage.setItem('fm_rep_name', repName);
 
@@ -1287,10 +1297,10 @@ async function submitVisit() {
     await submitToGoogle(visitPayload);
     historyEntry.status = 'synced';
 
-    // ── Step 2: upload each photo individually ─────────────────
+    // ── Step 2: upload each photo to Drive (fast — no AI yet) ────
     let uploaded = 0;
     for (let i = 0; i < photoData.length; i++) {
-      showOverlay(`Uploading photo ${i + 1} of ${photoData.length}…`);
+      showOverlay(`Saving photo ${i + 1} of ${photoData.length} to Drive…`);
       const p = photoData[i];
       try {
         await submitToGoogle({
@@ -1305,10 +1315,18 @@ async function submitVisit() {
       } catch (e) { /* keep going even if one photo fails */ }
     }
 
+    // ── Step 3: batch Gemini analysis (one call for all photos) ──
+    if (uploaded > 0) {
+      showOverlay('Analysing shelf with Gemini AI…');
+      try {
+        await submitToGoogle({ action: 'analyzeVisit', visitId: id });
+      } catch (e) { /* non-blocking — visit is saved regardless */ }
+    }
+
     addToHistory(historyEntry);
     hideOverlay();
-    const photoMsg = photoData.length > 0
-      ? ` + ${uploaded}/${photoData.length} photo${photoData.length > 1 ? 's' : ''} saved to Drive.`
+    const photoMsg = uploaded > 0
+      ? ` ${uploaded}/${photoData.length} photo${photoData.length > 1 ? 's' : ''} saved + AI analysed.`
       : '';
     document.getElementById('success-sub').textContent = 'Visit saved to Google Sheets.' + photoMsg;
     showScreen('screen-success');
