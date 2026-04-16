@@ -1176,10 +1176,6 @@ async function retrySubmission(id) {
         uploaded++;
       } catch (_) { /* best-effort */ }
     }
-    // Batch Gemini analysis after all photos are up
-    if (uploaded > 0) {
-      try { await submitToGoogle({ action: 'analyzeVisit', visitId: visit.id }); } catch (_) {}
-    }
 
     updateHistoryEntry(id, { status: 'synced' });
     showToast('Synced to Google Sheets!', 'success');
@@ -1230,9 +1226,6 @@ async function autoRetryFailed() {
           });
           photoUploaded++;
         } catch (_) { /* best-effort */ }
-      }
-      if (photoUploaded > 0) {
-        try { await submitToGoogle({ action: 'analyzeVisit', visitId: visit.id }); } catch (_) {}
       }
 
       updateHistoryEntry(visit.id, { status: 'synced' });
@@ -1319,7 +1312,6 @@ async function submitVisit() {
     if (uploaded > 0) {
       showOverlay('Analysing shelf with Gemini AI…');
       try {
-        await submitToGoogle({ action: 'analyzeVisit', visitId: id });
       } catch (e) { /* non-blocking — visit is saved regardless */ }
     }
 
