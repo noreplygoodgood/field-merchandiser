@@ -1,1427 +1,2188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GOOD GOOD — Field Merchandiser Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
-  <style>
-    :root {
-      --green-dark:   #1a3a24;
-      --green-mid:    #2d6a40;
-      --green-light:  #4caf72;
-      --gold:         #f0c040;
-      --gold-light:   #fff8e1;
-      --bg:           #f2f5f2;
-      --card:         #ffffff;
-      --text:         #1c2b1f;
-      --text-muted:   #6b8070;
-      --border:       #e0ebe2;
-      --positive:     #27ae60;
-      --warning:      #e67e22;
-      --danger:       #e74c3c;
-      --gap:          16px;
-      --radius:       10px;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-      line-height: 1.5;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GOOD GOOD &#x2014; Shelf Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-light: #e8f7f2;
+    --amber: #EF9F27;
+    --amber-light: #fef6e8;
+    --red: #E24B4A;
+    --red-light: #fdeaea;
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --border: #e8eaef;
+    --text: #1a1d27;
+    --muted: #6b7280;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
 
-    /* HEADER */
-    .header {
-      background: var(--green-dark);
-      color: #fff;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    }
-    .header-left { display: flex; align-items: center; gap: 14px; }
-    .logo {
-      background: var(--gold);
-      color: var(--green-dark);
-      font-weight: 800;
-      font-size: 13px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
-    }
-    .header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.2px; }
-    .header-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+  /* -- PASSWORD GATE -- */
+  #gate {
+    position: fixed; inset: 0; z-index: 999;
+    background: linear-gradient(135deg, #0f1f18 0%, #1a3329 100%);
+    display: none; align-items: center; justify-content: center;
+  }
+  .gate-box {
+    background: var(--card); border-radius: 16px; padding: 48px 40px;
+    width: 380px; text-align: center; box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+  }
+  .gate-logo { font-size: 28px; font-weight: 800; color: var(--green); letter-spacing: -1px; margin-bottom: 4px; }
+  .gate-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  .gate-label { display: block; text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .gate-input {
+    width: 100%; padding: 12px 16px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 15px; outline: none; transition: border 0.2s;
+  }
+  .gate-input:focus { border-color: var(--green); }
+  .gate-btn {
+    width: 100%; margin-top: 16px; padding: 13px;
+    background: var(--green); color: #fff; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+  }
+  .gate-btn:hover { opacity: 0.9; }
+  .gate-error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; }
 
-    /* TIME FILTERS */
-    .time-filters { display: flex; gap: 6px; align-items: center; }
-    .time-btn {
-      padding: 6px 14px;
-      border: 1.5px solid rgba(255,255,255,0.25);
-      border-radius: 20px;
-      background: transparent;
-      color: rgba(255,255,255,0.75);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .time-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
-    .time-btn.active {
-      background: var(--gold);
-      color: var(--green-dark);
-      border-color: var(--gold);
-      font-weight: 700;
-    }
+  /* -- LAYOUT -- */
+  #app { display: block; }
+  .header {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
+    height: 56px; position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { font-size: 20px; font-weight: 800; color: var(--green); letter-spacing: -0.5px; }
+  .header-title { font-size: 14px; color: var(--muted); font-weight: 500; }
+  .live-badge {
+    background: var(--green-light); color: var(--green);
+    font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+    display: flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .period-select {
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px;
+    font-size: 13px; background: var(--bg); color: var(--text); cursor: pointer;
+  }
 
-    /* MAIN */
-    .main { max-width: 1440px; margin: 0 auto; padding: 20px 20px 40px; }
+  .main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
 
-    /* SECTION HEADER */
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin: 24px 0 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+  /* -- KPI CARDS -- */
+  .kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px; }
+  .kpi {
+    background: var(--card); border-radius: 10px; padding: 16px;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  .kpi-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -1px; line-height: 1; }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi-badge { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 6px; display: inline-block; }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-red { background: var(--red-light); color: var(--red); }
 
-    /* KPI ROW */
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-    }
-    @media (max-width: 1100px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
-    @media (max-width: 720px)  { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+  /* -- MAP + COVERAGE ROW -- */
+  .map-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 20px; align-items: stretch; }
+  .map-row > .card:first-child { display: flex; flex-direction: column; }
+  .card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .card-body { padding: 16px 18px; }
+  #map { flex: 1; min-height: 240px; position: relative; border-radius: 0 0 10px 10px; overflow: hidden; }
 
-    .kpi-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      border-top: 3px solid transparent;
-      position: relative;
-      overflow: hidden;
-    }
-    .kpi-card.accent-green  { border-top-color: var(--green-mid); }
-    .kpi-card.accent-gold   { border-top-color: var(--gold); }
-    .kpi-card.accent-warn   { border-top-color: var(--warning); }
-    .kpi-card.accent-danger { border-top-color: var(--danger); }
-    .kpi-card.accent-blue   { border-top-color: #3498db; }
+  /* Coverage bars */
+  .retailer-bar { margin-bottom: 8px; cursor: pointer; transition: background 0.15s; border-radius: 8px; padding: 5px 7px; margin-left: -7px; margin-right: -7px; }
+  .retailer-bar:last-child { margin-bottom: 0; }
+  .retailer-bar:hover { background: var(--bg); }
+  .retailer-bar.active { background: var(--green-light); }
+  .retailer-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .bar-track { background: var(--bg); border-radius: 4px; height: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  /* -- RETAILER DETAIL PANEL -- */
+  .retailer-detail-panel { display: none; border-top: 2px solid var(--green); padding-top: 14px; margin-top: 8px; }
+  .retailer-detail-panel.open { display: block; }
+  .bar-green { background: var(--green); }
+  .bar-amber { background: var(--amber); }
+  .bar-red { background: var(--red); }
 
-    .kpi-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .kpi-value { font-size: 30px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 5px; }
-    .kpi-delta { font-size: 12px; font-weight: 500; }
-    .kpi-delta.up   { color: var(--positive); }
-    .kpi-delta.down { color: var(--danger); }
-    .kpi-delta.flat { color: var(--text-muted); }
-    .kpi-icon {
-      position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
-      font-size: 28px; opacity: 0.08;
-    }
+  /* -- CHARTS ROW -- */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .chart-wrap { position: relative; height: 200px; }
 
-    /* CHARTS ROWS */
-    .charts-row-1 {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-    }
-    .charts-row-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-    }
-    .charts-row-comp {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-    }
-    .charts-row-comp-wide {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-    }
-    @media (max-width: 900px) {
-      .charts-row-1, .charts-row-2, .charts-row-comp, .charts-row-comp-wide { grid-template-columns: 1fr; }
-    }
+  /* -- COMPETITIVE ROW -- */
+  .intel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 
-    .chart-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 20px 22px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    }
-    .chart-card h3 {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-bottom: 4px;
-    }
-    .chart-card .chart-sub {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
-    .chart-wrap       { position: relative; height: 220px; }
-    .chart-wrap-tall  { position: relative; height: 260px; }
-    .chart-wrap-xtall { position: relative; height: 300px; }
+  /* -- TABLE -- */
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  td { font-size: 13px; padding: 10px 12px; border-bottom: 1px solid #f0f1f5; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbfc; }
 
-    /* AI INSIGHTS STRIP */
-    .insights-strip {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: var(--gap);
-      margin-bottom: var(--gap);
-    }
-    @media (max-width: 800px) { .insights-strip { grid-template-columns: repeat(2, 1fr); } }
+  /* Status pills */
+  .pill { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+  .pill-green { background: var(--green-light); color: var(--green); }
+  .pill-amber { background: var(--amber-light); color: var(--amber); }
+  .pill-red { background: var(--red-light); color: var(--red); }
+  .pill-grey { background: #f0f1f5; color: #888; }
 
-    .insight-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 16px 18px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .insight-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
-    .insight-value { font-size: 22px; font-weight: 800; }
-    .insight-bar { height: 5px; background: var(--border); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-    .insight-bar-fill { height: 100%; border-radius: 3px; background: var(--green-mid); transition: width 0.4s; }
-    .insight-note { font-size: 11px; color: var(--text-muted); }
+  /* -- BOTTOM ROW -- */
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 
-    /* TABLE */
-    .table-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      overflow: hidden;
-    }
-    .table-header {
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .table-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
-    .table-header .row-count { font-size: 12px; color: var(--text-muted); }
-    .table-wrap { overflow-x: auto; max-height: 460px; overflow-y: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead tr { background: #f7faf7; position: sticky; top: 0; z-index: 2; }
-    th {
-      text-align: left; padding: 10px 14px;
-      font-size: 11px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      color: var(--text-muted);
-      border-bottom: 2px solid var(--border);
-      cursor: pointer; white-space: nowrap; user-select: none;
-    }
-    th:hover { color: var(--text); }
-    td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
-    tbody tr:hover { background: #f8faf8; }
-    tbody tr:last-child td { border-bottom: none; }
+  /* Feed */
+  .feed-item { padding: 12px 0; border-bottom: 1px solid #f0f1f5; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; border-radius: 6px; transition: background 0.15s; }
+  .feed-item:hover { background: #f7f9fc; }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .feed-store { font-size: 13px; font-weight: 600; color: var(--text); }
+  .feed-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .feed-issue { font-size: 12px; margin-top: 4px; font-style: italic; color: var(--muted); }
+  .feed-photos { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .feed-photo { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0; }
+  .feed-map-hint { font-size: 10px; color: var(--green); margin-top: 4px; font-weight: 600; letter-spacing: 0.3px; }
+  .feed-no-gps { font-size: 10px; color: var(--muted); margin-top: 4px; }
 
-    .badge {
-      display: inline-flex; align-items: center;
-      padding: 2px 8px; border-radius: 20px;
-      font-size: 11px; font-weight: 600; white-space: nowrap;
-    }
-    .badge-green  { background: #d4edda; color: #155724; }
-    .badge-yellow { background: #fff3cd; color: #856404; }
-    .badge-red    { background: #f8d7da; color: #721c24; }
-    .badge-blue   { background: #cce5ff; color: #004085; }
-    .badge-gray   { background: #e2e8e4; color: #495057; }
-    .badge-orange { background: #fde3c8; color: #7d3a00; }
+  /* Rep leaderboard */
+  .rep-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f1f5; }
+  .rep-row:last-child { border-bottom: none; }
+  .rep-rank { font-size: 12px; font-weight: 800; color: var(--muted); width: 20px; }
+  .rep-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--green-light); color: var(--green); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rep-name { flex: 1; font-size: 13px; font-weight: 600; }
+  .rep-count { font-size: 13px; font-weight: 700; color: var(--green); }
 
-    .pos-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  /* -- STORE SCORECARDS -- */
+  .scorecards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .scorecard { background: var(--card); border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); padding: 16px; cursor: pointer; transition: box-shadow 0.2s; }
+  .scorecard:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .sc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .sc-store { font-size: 13px; font-weight: 700; color: var(--text); }
+  .sc-retailer { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .sc-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .sc-metric { text-align: center; }
+  .sc-metric-val { font-size: 18px; font-weight: 800; color: var(--text); }
+  .sc-metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+  .sc-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
 
-    .ai-summary { font-size: 12px; color: var(--text-muted); max-width: 240px; line-height: 1.4; }
-    .comp-brands { font-size: 11px; color: var(--text-muted); max-width: 160px; line-height: 1.5; }
+  /* Escalation banner */
+  .escalate-banner {
+    background: linear-gradient(135deg, #1D9E75 0%, #157a5a 100%);
+    color: #fff; border-radius: 10px; padding: 18px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; box-shadow: var(--shadow);
+  }
+  .escalate-text { font-size: 13px; font-weight: 600; }
+  .escalate-sub { font-size: 12px; opacity: 0.8; margin-top: 2px; }
 
-    /* SHARE PILL */
-    .share-pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-    }
+  footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
 
-    /* FOOTER */
-    .footer {
-      text-align: center; font-size: 11px; color: var(--text-muted);
-      padding: 24px 0 8px;
-    }
+  /* -- MOBILE RESPONSIVE --------------------------------------- */
+  .map-toggle-btn {
+    display: none; align-items: center; gap: 6px;
+    background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 10px; font-size: 12px;
+    color: var(--muted); cursor: pointer;
+  }
+  .map-toggle-btn:hover { background: var(--bg); }
+  .map-collapsible { flex: 1; display: flex; flex-direction: column; min-height: 0; transition: max-height 0.3s ease, opacity 0.3s ease; }
 
-    /* EMPTY STATE */
-    .empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
-  </style>
+  /* -- MAP FILTERS -- */
+  .map-filters {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .map-filter-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .region-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+  .region-pill {
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    border: 1.5px solid var(--border); background: var(--card); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .region-pill:hover { border-color: var(--green); color: var(--green); }
+  .region-pill.active { background: var(--green); border-color: var(--green); color: #fff; }
+  .chain-select {
+    border: 1.5px solid var(--border); border-radius: 6px; padding: 4px 10px;
+    font-size: 12px; background: var(--card); color: var(--text); cursor: pointer;
+    min-width: 140px;
+  }
+  .chain-select:focus { outline: none; border-color: var(--green); }
+  .map-filter-sep { width: 1px; height: 18px; background: var(--border); }
+
+  @media (max-width: 900px) {
+    .kpi-row { grid-template-columns: repeat(3, 1fr); }
+    .charts-row { grid-template-columns: 1fr 1fr; }
+    .scorecards { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    /* Gate */
+    .gate-box { width: calc(100% - 32px); max-width: 420px; padding: 32px 24px; }
+
+    /* Header */
+    .header { padding: 0 14px; height: 50px; }
+    .header-title { display: none; }
+    .live-badge { display: none; }
+    .header-right { gap: 8px; }
+    #last-updated { display: none; }
+    .period-select { font-size: 12px; padding: 5px 8px; }
+    .logo { font-size: 17px; }
+
+    /* Main */
+    .main { padding: 12px 14px; }
+
+    /* KPIs -- 2 cols */
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
+    .kpi { padding: 12px 14px; }
+    .kpi-value { font-size: 24px; }
+    .kpi-sub { font-size: 11px; }
+
+    /* Escalation banner */
+    .escalate-banner { flex-direction: column; gap: 6px; padding: 14px 16px; }
+    .escalate-banner > div:last-child { margin-left: 0 !important; white-space: normal !important; opacity: 0.7; font-size: 11px; }
+
+    /* Map row -- stack, map collapsible */
+    .map-row { grid-template-columns: 1fr; gap: 12px; }
+    .map-toggle-btn { display: flex; }
+    .map-collapsible { flex: none; max-height: 0; overflow: hidden; opacity: 0; }
+    .map-collapsible.open { flex: none; max-height: 500px; opacity: 1; }
+    #map { flex: none; height: 260px; }
+
+    /* Charts -- single col */
+    .charts-row { grid-template-columns: 1fr; gap: 12px; }
+    .chart-wrap { height: 180px; }
+
+    /* Intel, bottom -- single col */
+    .intel-row { grid-template-columns: 1fr; gap: 12px; }
+    .bottom-row { grid-template-columns: 1fr; gap: 12px; }
+
+    /* Scorecards -- single col */
+    .scorecards { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Tables -- horizontal scroll */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { white-space: nowrap; }
+
+    /* Cards */
+    .card-header { padding: 12px 14px; }
+    .card-body { padding: 12px 14px; }
+    .card-title { font-size: 12px; }
+  }
+
+  @media (max-width: 480px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .kpi-value { font-size: 22px; }
+    .scorecards { grid-template-columns: 1fr; }
+    .main { padding: 10px 10px; }
+    .header { padding: 0 10px; }
+  }
+
+  /* -- REP DETAIL PANEL -- */
+  .rep-row { cursor: pointer; transition: background 0.15s; border-radius: 8px; padding-left: 4px; padding-right: 4px; }
+  .rep-row:hover { background: var(--bg); }
+  .rep-row.active { background: var(--green-light) !important; }
+  .rep-detail-panel { display: none; border-top: 2px solid var(--green); padding-top: 14px; margin-top: 4px; }
+  .rep-detail-panel.open { display: block; }
+  .rep-detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .rep-detail-close {
+    background: none; border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; color: var(--muted); cursor: pointer;
+  }
+  .rep-detail-close:hover { background: var(--bg); }
+  .rep-submission {
+    padding: 12px; border-radius: 8px; border: 1px solid var(--border);
+    margin-bottom: 8px; cursor: pointer; transition: all 0.15s; background: var(--bg);
+  }
+  .rep-submission:hover { border-color: var(--green); background: var(--green-light); box-shadow: 0 2px 8px rgba(29,158,117,0.1); }
+  .rep-submission:last-child { margin-bottom: 0; }
+  .rep-sub-photos { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+  .rep-sub-photo { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
+
+  /* -- PHOTO LIGHTBOX -- */
+  .photo-lightbox {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .photo-lightbox.open { display: flex; }
+  .lb-close {
+    position: absolute; top: 20px; right: 24px;
+    background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
+    width: 38px; height: 38px; color: #fff; font-size: 20px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .lb-close:hover { background: rgba(255,255,255,0.25); }
+  .lb-img-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+  .lb-img { max-width: 88vw; max-height: 68vh; border-radius: 8px; object-fit: contain; display: block; }
+  .lb-nav { display: flex; align-items: center; gap: 20px; margin-top: 14px; }
+  .lb-btn {
+    background: rgba(255,255,255,0.12); border: none; border-radius: 50%;
+    width: 40px; height: 40px; color: #fff; font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .lb-btn:hover { background: rgba(255,255,255,0.25); }
+  .lb-counter { color: rgba(255,255,255,0.65); font-size: 13px; min-width: 50px; text-align: center; }
+  .lb-caption { color: rgba(255,255,255,0.75); font-size: 12px; margin-top: 8px; text-align: center; max-width: 500px; }
+  .lb-thumbs { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; justify-content: center; max-width: 80vw; }
+  .lb-thumb {
+    width: 54px; height: 40px; object-fit: cover; border-radius: 4px;
+    cursor: pointer; opacity: 0.5; transition: opacity 0.15s; border: 2px solid transparent;
+  }
+  .lb-thumb.active { opacity: 1; border-color: var(--green); }
+  .lb-thumb:hover { opacity: 0.85; }
+
+  /* ── LOG VISIT BUTTON ── */
+  .log-visit-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--green); color: #fff; border: none;
+    border-radius: 7px; padding: 7px 14px; font-size: 13px;
+    font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  .log-visit-btn:hover { opacity: 0.88; }
+  .log-visit-btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+
+  /* ── VISIT MODAL OVERLAY ── */
+  #visit-modal {
+    display: none; position: fixed; inset: 0; z-index: 600;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #visit-modal.open { display: flex; }
+  .vm-box {
+    background: #fff; border-radius: 14px;
+    width: 100%; max-width: 720px; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+    display: flex; flex-direction: column;
+  }
+  .vm-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: #fff; z-index: 1;
+    border-radius: 14px 14px 0 0;
+  }
+  .vm-title { font-size: 17px; font-weight: 700; color: var(--text); }
+  .vm-close {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: var(--bg); color: var(--muted); font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .vm-close:hover { background: var(--border); }
+  .vm-body { padding: 20px 24px; flex: 1; }
+  .vm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .vm-full { grid-column: 1 / -1; }
+  .vm-label {
+    display: block; font-size: 11px; font-weight: 700;
+    color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 5px;
+  }
+  .vm-label .vm-req { color: var(--red); }
+  .vm-input, .vm-select, .vm-textarea {
+    width: 100%; padding: 9px 12px;
+    border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 13.5px; color: var(--text);
+    background: #f9fafb; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .vm-input:focus, .vm-select:focus, .vm-textarea:focus {
+    outline: none; border-color: var(--green); background: #fff;
+  }
+  .vm-textarea { resize: vertical; min-height: 84px; }
+  .vm-section-title {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin: 18px 0 8px;
+  }
+  /* Outcome chips */
+  .vm-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .vm-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border: 1.5px solid var(--border);
+    border-radius: 20px; cursor: pointer; font-size: 12.5px;
+    color: var(--text); transition: all 0.13s; user-select: none;
+  }
+  .vm-chip input { display: none; }
+  .vm-chip:has(input:checked) {
+    border-color: var(--green); background: var(--green-light);
+    color: #166534; font-weight: 600;
+  }
+  /* Photo drop zone */
+  .vm-photo-zone {
+    border: 2px dashed var(--border); border-radius: 9px;
+    padding: 20px; text-align: center; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    color: var(--muted); font-size: 13px;
+  }
+  .vm-photo-zone:hover, .vm-photo-zone.dragover {
+    border-color: var(--green); background: var(--green-light);
+  }
+  .vm-photo-zone svg { width: 28px; height: 28px; fill: var(--muted); margin-bottom: 6px; }
+  .vm-photo-zone:hover svg, .vm-photo-zone.dragover svg { fill: var(--green); }
+  .vm-photo-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .vm-photo-thumb {
+    position: relative; width: 80px; height: 60px;
+  }
+  .vm-photo-thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 5px; display: block;
+  }
+  .vm-photo-remove {
+    position: absolute; top: -6px; right: -6px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--red); color: #fff; border: none;
+    font-size: 11px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; line-height: 1;
+  }
+  .vm-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px; border-top: 1px solid var(--border);
+    position: sticky; bottom: 0; background: #fff;
+    border-radius: 0 0 14px 14px;
+  }
+  .vm-btn-cancel {
+    padding: 9px 18px; border: 1.5px solid var(--border);
+    border-radius: 7px; background: #fff; color: var(--muted);
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: background 0.13s;
+  }
+  .vm-btn-cancel:hover { background: var(--bg); }
+  .vm-btn-submit {
+    padding: 9px 20px; border: none; border-radius: 7px;
+    background: var(--green); color: #fff;
+    font-size: 13.5px; font-weight: 700; cursor: pointer;
+    transition: opacity 0.13s; display: flex; align-items: center; gap: 7px;
+  }
+  .vm-btn-submit:hover { opacity: 0.88; }
+  .vm-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+  .vm-toast {
+    display: none; padding: 10px 16px; border-radius: 7px;
+    font-size: 13px; font-weight: 600; margin-bottom: 12px;
+  }
+  .vm-toast.success { background: var(--green-light); color: #166534; display: block; }
+  .vm-toast.error { background: var(--red-light); color: #991b1b; display: block; }
+</style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-left">
-    <div class="logo">GOOD GOOD</div>
-    <div>
-      <div style="font-size:17px;font-weight:600;color:#fff;">Field Merchandiser Dashboard</div>
-      <div class="header-sub" id="data-range">Loading...</div>
-    </div>
-  </div>
-  <div class="time-filters">
-    <button class="time-btn" data-days="1"  onclick="setRange(1)">1D</button>
-    <button class="time-btn" data-days="7"  onclick="setRange(7)">7D</button>
-    <button class="time-btn active" data-days="30" onclick="setRange(30)">30D</button>
-    <button class="time-btn" data-days="90" onclick="setRange(90)">90D</button>
-    <button class="time-btn" data-days="0"  onclick="setRange(0)">All</button>
+<!-- &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550; PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">GOOD GOOD</div>
+    <div class="gate-sub">Shelf Intelligence Dashboard &#xB7; Internal</div>
+    <label class="gate-label">Password</label>
+    <input id="pw" class="gate-input" type="password" placeholder="Enter password" autocomplete="off"/>
+    <button class="gate-btn" onclick="unlock()">Access Dashboard &#x2192;</button>
+    <div class="gate-error" id="gate-error">Incorrect password. Try again.</div>
   </div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<!-- &#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550;&#x2550; DASHBOARD -->
+<div id="app">
 
-  <!-- ── FIELD OPERATIONS ── -->
-  <div class="section-title">Field Operations</div>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="logo">GOOD GOOD</span>
+      <span class="header-title">Shelf Intelligence</span>
+      <span class="live-badge"><span class="live-dot"></span>Live</span>
+    </div>
+    <div class="header-right">
+      <select class="period-select" onchange="filterPeriod(this.value)">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+        <option value="all">All time</option>
+      </select>
+      <span style="font-size:12px;color:var(--muted);" id="last-updated">Updated just now</span>
+      <button class="log-visit-btn" onclick="openVisitModal()">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
+        Log Visit
+      </button>
+    </div>
+  </header>
 
-  <!-- KPI ROW 1: Operations -->
-  <div class="kpi-row">
-    <div class="kpi-card accent-green">
-      <div class="kpi-label">Store Visits</div>
-      <div class="kpi-value" id="kpi-visits">—</div>
-      <div class="kpi-delta" id="kpi-visits-d">—</div>
-      <div class="kpi-icon">🏪</div>
+  <main class="main">
+
+    <!-- &#x2500;&#x2500; ESCALATION BANNER &#x2500;&#x2500; -->
+    <div class="escalate-banner">
+      <div>
+        <div class="escalate-text">&#x26A1; One thing to escalate today</div>
+        <div class="escalate-sub">Raspberry Jam OOS at Caraluzzi's & HEB &#x2014; both stores currently on promo 2/$9. Lost sales every day this isn't resolved. Call buyers now.</div>
+      </div>
+      <div style="font-size:11px;opacity:0.7;white-space:nowrap;margin-left:24px">Apr 6 &#xB7; 2 stores</div>
     </div>
-    <div class="kpi-card accent-green">
-      <div class="kpi-label">Active Reps</div>
-      <div class="kpi-value" id="kpi-reps">—</div>
-      <div class="kpi-delta" id="kpi-reps-d">—</div>
-      <div class="kpi-icon">👤</div>
+
+    <!-- &#x2500;&#x2500; KPI ROW &#x2500;&#x2500; -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Total Visits</div>
+        <div class="kpi-value" id="kpi-visits">&#x2014;</div>
+        <div class="kpi-sub" id="kpi-visits-sub">loading...</div>
+        <span class="kpi-badge badge-amber" id="kpi-visits-badge"></span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Stores Covered</div>
+        <div class="kpi-value" id="kpi-stores">&#x2014;</div>
+        <div class="kpi-sub">unique accounts</div>
+        <span class="kpi-badge badge-green" id="kpi-stores-badge"></span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">OOS Alerts</div>
+        <div class="kpi-value" style="color:var(--red)" id="kpi-oos">&#x2014;</div>
+        <div class="kpi-sub">need restocking</div>
+        <span class="kpi-badge badge-red">Act now</span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Avg Facings</div>
+        <div class="kpi-value">7</div>
+        <div class="kpi-sub">per AI-analyzed store</div>
+        <span class="kpi-badge badge-green">&#x2191; vs target 4</span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Promo Compliance</div>
+        <div class="kpi-value" style="color:var(--amber)">67%</div>
+        <div class="kpi-sub">2 of 3 promos live</div>
+        <span class="kpi-badge badge-amber">1 gap found</span>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Reps Active</div>
+        <div class="kpi-value" id="kpi-reps">&#x2014;</div>
+        <div class="kpi-sub">this period</div>
+        <span class="kpi-badge badge-green" id="kpi-photos-badge"></span>
+      </div>
     </div>
-    <div class="kpi-card accent-green">
-      <div class="kpi-label">Stores Covered</div>
-      <div class="kpi-value" id="kpi-stores">—</div>
-      <div class="kpi-delta" id="kpi-stores-d">—</div>
-      <div class="kpi-icon">📍</div>
+
+    <!-- &#x2500;&#x2500; MAP + COVERAGE &#x2500;&#x2500; -->
+    <div class="map-row">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">&#x1F4CD; Store Coverage Map</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:12px;color:var(--muted)" class="map-legend">
+              <span style="color:var(--green)">&#x25CF;</span> In-stock &nbsp;
+              <span style="color:var(--amber)">&#x25CF;</span> Low &nbsp;
+              <span style="color:var(--red)">&#x25CF;</span> OOS
+            </span>
+            <button class="map-toggle-btn" id="map-toggle" onclick="toggleMap()">&#x25BC; Show map</button>
+          </div>
+        </div>
+        <div class="map-collapsible" id="map-wrap">
+          <div class="map-filters">
+            <span class="map-filter-label">Region</span>
+            <div class="region-pills">
+              <button class="region-pill active" onclick="setRegion('all',this)">&#x1F30D; All</button>
+              <button class="region-pill" onclick="setRegion('usa',this)">&#x1F1FA;&#x1F1F8; USA</button>
+              <button class="region-pill" onclick="setRegion('iceland',this)">&#x1F1EE;&#x1F1F8; Iceland</button>
+              <button class="region-pill" onclick="setRegion('europe',this)">&#x1F1EA;&#x1F1FA; Europe</button>
+            </div>
+            <div class="map-filter-sep"></div>
+            <span class="map-filter-label">Chain</span>
+            <select class="chain-select" id="chain-filter" onchange="setChain(this.value)">
+              <option value="all">All stores</option>
+            </select>
+          </div>
+          <div id="map"></div>
+          <div id="map-no-gps"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Coverage by Retailer</span>
+        </div>
+        <div class="card-body" id="retailer-coverage">
+          <div style="color:var(--muted);font-size:12px">Loading...</div>
+        </div>
+        <div style="padding:0 18px 14px" id="retailer-detail-panel" class="retailer-detail-panel"></div>
+      </div>
     </div>
-    <div class="kpi-card accent-gold">
-      <div class="kpi-label">Photos Captured</div>
-      <div class="kpi-value" id="kpi-photos">—</div>
-      <div class="kpi-delta" id="kpi-photos-d">—</div>
-      <div class="kpi-icon">📸</div>
+
+    <!-- &#x2500;&#x2500; RECENT SUBMISSIONS + REP LEADERBOARD &#x2500;&#x2500; -->
+    <div class="bottom-row">
+      <div class="card">
+        <div class="card-header"><span class="card-title">&#x1F550; Recent Submissions</span><span style="font-size:12px;color:var(--muted)" id="feed-subtitle"></span></div>
+        <div class="card-body" style="padding:0 18px" id="feed-container">
+          <div style="color:var(--muted);font-size:12px;padding:16px 0">Loading visits...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">&#x1F3C6; Rep Activity</span><span style="font-size:12px;color:var(--muted)">This period</span></div>
+        <div class="card-body" style="padding:0 18px" id="rep-container">
+          <div style="color:var(--muted);font-size:12px;padding:16px 0">Loading...</div>
+        </div>
+        <!-- Rep detail panel expands here when a rep is clicked -->
+        <div style="padding:0 18px 14px" id="rep-detail-panel" class="rep-detail-panel"></div>
+        <div style="padding:14px 18px;border-top:1px solid var(--border)" id="rep-photo-rate"></div>
+      </div>
     </div>
-    <div class="kpi-card accent-green">
-      <div class="kpi-label">Avg Facings</div>
-      <div class="kpi-value" id="kpi-facings">—</div>
-      <div class="kpi-delta" id="kpi-facings-d">—</div>
-      <div class="kpi-icon">📦</div>
+
+    <!-- &#x2500;&#x2500; CHARTS ROW &#x2500;&#x2500; -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header"><span class="card-title">&#x1F4E6; Stock Status &#xB7; All Stores</span></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="stockChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">&#x1F4CA; Facings by Store (AI)</span></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="facingsChart"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">&#x1F3EA; Shelf Position Breakdown</span></div>
+        <div class="card-body"><div class="chart-wrap"><canvas id="positionChart"></canvas></div></div>
+      </div>
     </div>
-    <div class="kpi-card accent-green">
-      <div class="kpi-label">In-Stock Rate</div>
-      <div class="kpi-value" id="kpi-instock">—</div>
-      <div class="kpi-delta" id="kpi-instock-d">—</div>
-      <div class="kpi-icon">✅</div>
+
+    <!-- &#x2500;&#x2500; COMPETITIVE INTEL &#x2500;&#x2500; -->
+    <div class="intel-row">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">&#x1F94A; Competitor Heat &#x2014; AI Photo Analysis</span>
+          <span style="font-size:12px;color:var(--muted)">seen on shelf this period</span>
+        </div>
+        <div class="card-body table-scroll" style="padding:0" id="competitor-intel">
+          <div style="color:var(--muted);font-size:12px;padding:16px">Loading competitor data...</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">&#x1F3F7;&#xFE0F; Promo Compliance</span></div>
+        <div class="card-body" id="promo-compliance">
+          <div style="color:var(--muted);font-size:12px">Loading promo data...</div>
+        </div>
+      </div>
     </div>
-    <div class="kpi-card accent-gold">
-      <div class="kpi-label">POS Compliance</div>
-      <div class="kpi-value" id="kpi-pos">—</div>
-      <div class="kpi-delta" id="kpi-pos-d">—</div>
-      <div class="kpi-icon">🏷️</div>
+
+    <!-- &#x2500;&#x2500; STORE SCORECARDS &#x2500;&#x2500; -->
+    <div style="margin-bottom:12px;display:flex;align-items:baseline;gap:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--text)">Store Scorecards</div>
+      <div style="font-size:12px;color:var(--muted)">AI-analyzed &#xB7; Most recent visit per store</div>
     </div>
-    <div class="kpi-card accent-danger">
-      <div class="kpi-label">Issues Flagged</div>
-      <div class="kpi-value" id="kpi-issues">—</div>
-      <div class="kpi-delta" id="kpi-issues-d">—</div>
-      <div class="kpi-icon">⚠️</div>
+    <div class="scorecards" id="store-scorecards">
+      <div style="color:var(--muted);font-size:12px">Loading scorecards...</div>
     </div>
+
+    <!-- &#x2500;&#x2500; OPEN ISSUES &#x2500;&#x2500; -->
+    <div class="card" style="margin-bottom:20px" id="open-issues-card">
+      <div class="card-header">
+        <span class="card-title">&#x1F6A8; Open Issues</span>
+        <div style="display:flex;gap:6px" id="issues-badges"></div>
+      </div>
+      <div class="table-scroll" id="open-issues-body">
+        <div style="color:var(--muted);font-size:12px;padding:16px">Loading issues...</div>
+      </div>
+    </div>
+
+  </main>
+  <footer id="dash-footer">GOOD GOOD Shelf Intelligence &#xB7; Internal use only &#xB7; Powered by Gemini AI</footer>
+</div>
+
+<!-- &#x2500;&#x2500; PHOTO LIGHTBOX &#x2500;&#x2500; -->
+<div id="photo-lightbox" class="photo-lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="event.stopPropagation();closeLightbox()">&#xD7;</button>
+  <div class="lb-img-wrap" onclick="event.stopPropagation()">
+    <img id="lb-img" class="lb-img" src="" alt=""/>
   </div>
-
-  <!-- CHARTS ROW 1 -->
-  <div class="charts-row-1">
-    <div class="chart-card">
-      <h3>Visit Activity</h3>
-      <div class="chart-sub">Store visits per day in selected period</div>
-      <div class="chart-wrap-tall"><canvas id="chart-trend"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>Shelf Position Mix</h3>
-      <div class="chart-sub">Where GOOD GOOD sits on shelf</div>
-      <div class="chart-wrap"><canvas id="chart-position"></canvas></div>
-    </div>
+  <div class="lb-nav" onclick="event.stopPropagation()">
+    <button class="lb-btn" onclick="lbNav(-1)">&#x2039;</button>
+    <span class="lb-counter" id="lb-counter">1 / 1</span>
+    <button class="lb-btn" onclick="lbNav(1)">&#x203A;</button>
   </div>
+  <div class="lb-caption" id="lb-caption"></div>
+  <div class="lb-thumbs" id="lb-thumbs" onclick="event.stopPropagation()"></div>
+</div>
 
-  <!-- CHARTS ROW 2 -->
-  <div class="charts-row-2">
-    <div class="chart-card">
-      <h3>Visits by Rep</h3>
-      <div class="chart-sub">Total store visits per field rep</div>
-      <div class="chart-wrap"><canvas id="chart-reps"></canvas></div>
+<!-- ── LOG VISIT MODAL ── -->
+<div id="visit-modal">
+  <div class="vm-box">
+    <div class="vm-header">
+      <span class="vm-title">&#x1F4CB; Log a Store Visit</span>
+      <button class="vm-close" onclick="closeVisitModal()">&#xD7;</button>
     </div>
-    <div class="chart-card">
-      <h3>Stock Level Distribution</h3>
-      <div class="chart-sub">In-stock vs low vs out-of-stock</div>
-      <div class="chart-wrap"><canvas id="chart-stock"></canvas></div>
-    </div>
-  </div>
+    <div class="vm-body">
+      <div id="vm-toast" class="vm-toast"></div>
+      <div class="vm-grid">
+        <div>
+          <label class="vm-label">Rep Name <span class="vm-req">*</span></label>
+          <input id="vm-rep" class="vm-input" type="text" placeholder="e.g. Maria Garcia" autocomplete="name"/>
+        </div>
+        <div>
+          <label class="vm-label">Store Name <span class="vm-req">*</span></label>
+          <input id="vm-store" class="vm-input" type="text" placeholder="e.g. Sprouts &#x2013; Scottsdale" autocomplete="off"/>
+        </div>
+        <div>
+          <label class="vm-label">Visit Date</label>
+          <input id="vm-date" class="vm-input" type="date"/>
+        </div>
+        <div>
+          <label class="vm-label">Store Type</label>
+          <select id="vm-type" class="vm-select">
+            <option value="">&#x2014; Select &#x2014;</option>
+            <option>Natural / Specialty</option>
+            <option>Conventional Grocery</option>
+            <option>Mass Retail</option>
+            <option>Club Store</option>
+            <option>Drug Store</option>
+            <option>Online / DTC</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="vm-full">
+          <label class="vm-label">Location <span style="font-weight:400;text-transform:none;font-size:11px;">(address or coordinates)</span></label>
+          <input id="vm-location" class="vm-input" type="text" placeholder="e.g. 1234 Main St, Phoenix AZ" autocomplete="street-address"/>
+        </div>
+        <div class="vm-full">
+          <label class="vm-label">Observations / Notes</label>
+          <textarea id="vm-notes" class="vm-textarea" placeholder="Stock levels, shelf placement, compliance issues, actions taken, pricing notes..."></textarea>
+        </div>
+      </div>
 
-  <!-- AI INSIGHTS STRIP -->
-  <div class="insights-strip">
-    <div class="insight-card">
-      <div class="insight-label">Eye-Level Placement</div>
-      <div class="insight-value" id="ins-eyelevel" style="color:var(--green-mid)">—</div>
-      <div class="insight-bar"><div class="insight-bar-fill" id="ins-eyelevel-bar" style="width:0%"></div></div>
-      <div class="insight-note">% of visits at eye level</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-label">Avg Photos / Visit</div>
-      <div class="insight-value" id="ins-photospervisit" style="color:var(--green-mid)">—</div>
-      <div class="insight-bar"><div class="insight-bar-fill" id="ins-ppv-bar" style="width:0%"></div></div>
-      <div class="insight-note">Target: 5 photos per visit</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-label">Issue Rate</div>
-      <div class="insight-value" id="ins-issuerate" style="color:var(--danger)">—</div>
-      <div class="insight-bar"><div class="insight-bar-fill" id="ins-issue-bar" style="width:0%;background:var(--danger)"></div></div>
-      <div class="insight-note">% visits with flagged issues</div>
-    </div>
-    <div class="insight-card">
-      <div class="insight-label">Avg GG Price</div>
-      <div class="insight-value" id="ins-ggprice" style="color:var(--green-dark)">—</div>
-      <div class="insight-bar"><div class="insight-bar-fill" id="ins-price-bar" style="width:0%;background:var(--gold)"></div></div>
-      <div class="insight-note">Avg shelf price observed</div>
-    </div>
-  </div>
+      <div class="vm-section-title">Outcome <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted);">(select all that apply)</span></div>
+      <div class="vm-chips">
+        <label class="vm-chip"><input type="checkbox" name="vm-outcome" value="All tasks completed"/>&#x2713; All tasks completed</label>
+        <label class="vm-chip"><input type="checkbox" name="vm-outcome" value="Partial &#x2013; follow-up needed"/>&#x26A0; Partial &#x2013; follow-up needed</label>
+        <label class="vm-chip"><input type="checkbox" name="vm-outcome" value="Issue raised with store manager"/>&#x1F4AC; Issue raised with store manager</label>
+        <label class="vm-chip"><input type="checkbox" name="vm-outcome" value="Stock refill needed"/>&#x1F4E6; Stock refill needed</label>
+        <label class="vm-chip"><input type="checkbox" name="vm-outcome" value="Display reset completed"/>&#x1F5BC; Display reset completed</label>
+      </div>
 
-  <!-- ── COMPETITIVE INTELLIGENCE ── -->
-  <div class="section-title">Competitive Intelligence</div>
-
-  <!-- KPI ROW 2: Competitive -->
-  <div class="kpi-row">
-    <div class="kpi-card accent-blue">
-      <div class="kpi-label">Avg Shelf Share</div>
-      <div class="kpi-value" id="kpi-shelfshare">—</div>
-      <div class="kpi-delta" id="kpi-shelfshare-d">—</div>
-      <div class="kpi-icon">📊</div>
+      <div class="vm-section-title">Photos <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--muted);">(optional)</span></div>
+      <div class="vm-photo-zone" id="vm-drop-zone" onclick="document.getElementById('vm-file-input').click()">
+        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+        <div style="font-weight:600;color:var(--text);">Click to upload or drag &amp; drop photos</div>
+        <div style="font-size:12px;margin-top:3px;">JPG, PNG &#x2014; multiple files OK</div>
+      </div>
+      <input type="file" id="vm-file-input" accept="image/*" multiple style="display:none"/>
+      <div class="vm-photo-grid" id="vm-photo-grid"></div>
     </div>
-    <div class="kpi-card accent-warn">
-      <div class="kpi-label">Avg Competitor Brands</div>
-      <div class="kpi-value" id="kpi-compcount">—</div>
-      <div class="kpi-delta" id="kpi-compcount-d">—</div>
-      <div class="kpi-icon">🏷️</div>
+    <div class="vm-footer">
+      <button class="vm-btn-cancel" onclick="closeVisitModal()">Cancel</button>
+      <button class="vm-btn-submit" id="vm-submit-btn" onclick="submitVisitFromDashboard()">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        Submit Visit
+      </button>
     </div>
-    <div class="kpi-card accent-danger">
-      <div class="kpi-label">Promo Exposure Rate</div>
-      <div class="kpi-value" id="kpi-promo">—</div>
-      <div class="kpi-delta" id="kpi-promo-d">—</div>
-      <div class="kpi-icon">🔥</div>
-    </div>
-    <div class="kpi-card accent-gold">
-      <div class="kpi-label">Unique Competitors Seen</div>
-      <div class="kpi-value" id="kpi-uniquecomps">—</div>
-      <div class="kpi-delta" id="kpi-uniquecomps-d">—</div>
-      <div class="kpi-icon">👀</div>
-    </div>
-  </div>
-
-  <!-- COMP CHARTS ROW 1 -->
-  <div class="charts-row-comp">
-    <div class="chart-card">
-      <h3>Competitor Brand Frequency</h3>
-      <div class="chart-sub">How often each competitor appears on shelf across visits</div>
-      <div class="chart-wrap-xtall"><canvas id="chart-comp-freq"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>GG Shelf Share Over Time</h3>
-      <div class="chart-sub">GOOD GOOD % of total facings per week</div>
-      <div class="chart-wrap-xtall"><canvas id="chart-shelf-share"></canvas></div>
-    </div>
-  </div>
-
-  <!-- COMP CHARTS ROW 2 -->
-  <div class="charts-row-comp-wide">
-    <div class="chart-card">
-      <h3>Pricing Comparison</h3>
-      <div class="chart-sub">Avg observed shelf price — GOOD GOOD vs key competitors</div>
-      <div class="chart-wrap-tall"><canvas id="chart-pricing"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <h3>Competitor Promo Activity</h3>
-      <div class="chart-sub">How often each brand runs in-store promotions</div>
-      <div class="chart-wrap-tall"><canvas id="chart-promos"></canvas></div>
-    </div>
-  </div>
-
-  <!-- VISITS TABLE -->
-  <div class="table-card">
-    <div class="table-header">
-      <h3>Recent Store Visits</h3>
-      <div class="row-count" id="table-count">0 visits</div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th onclick="sortTable('date')">Date ↕</th>
-            <th onclick="sortTable('rep')">Rep ↕</th>
-            <th onclick="sortTable('store')">Store ↕</th>
-            <th onclick="sortTable('city')">Location ↕</th>
-            <th onclick="sortTable('photos')">Photos ↕</th>
-            <th onclick="sortTable('facings')">Facings ↕</th>
-            <th onclick="sortTable('position')">Position ↕</th>
-            <th onclick="sortTable('stock')">Stock ↕</th>
-            <th>POS</th>
-            <th onclick="sortTable('shelfShare')">Share % ↕</th>
-            <th onclick="sortTable('ggPrice')">GG Price ↕</th>
-            <th>Competitors</th>
-            <th>Promos</th>
-            <th onclick="sortTable('hasIssue')">Issues ↕</th>
-            <th>AI Summary</th>
-          </tr>
-        </thead>
-        <tbody id="visits-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="footer">
-    <span id="data-source-badge"></span> &nbsp;|&nbsp; GOOD GOOD Field Merchandiser &nbsp;|&nbsp;
-    <span id="footer-date"></span>
-    &nbsp;|&nbsp; <a href="#" onclick="refreshData(); return false;" style="color:var(--green-mid);text-decoration:none;">↻ Refresh</a>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════
-// DATA GENERATION
-// ═══════════════════════════════════════════════
-const REPS   = ['Sarah K.','Jake M.','Maria R.','Tom B.','Lisa C.','Raj P.'];
-const STORES = [
-  'Sprouts','Whole Foods','Fresh Market','Natural Grocers','Earth Fare',"Lucky's Market","MOM's Organic"
-];
-const CITIES = [
-  {city:'Austin',state:'TX'},{city:'Denver',state:'CO'},{city:'Atlanta',state:'GA'},
-  {city:'Portland',state:'OR'},{city:'Nashville',state:'TN'},{city:'Miami',state:'FL'},
-  {city:'Phoenix',state:'AZ'},{city:'Seattle',state:'WA'},{city:'Chicago',state:'IL'},
-  {city:'Charlotte',state:'NC'},{city:'Dallas',state:'TX'},{city:'Boulder',state:'CO'},
-];
-const POSITIONS    = ['Eye-level','Mid-shelf','Bottom shelf','Top shelf'];
-const STOCK_LEVELS = ['In-stock','In-stock','In-stock','Low stock','Out-of-stock'];
-const COMP_BRANDS  = ["Smucker's","Bonne Maman","Welch's","Crofter's","Polaner","Stonewall Kitchen","Hero","Rao's"];
-const GG_SKUS      = [
-  'Strawberry Jam 300g','Wild Blueberry Jam 300g','Raspberry Jam 300g',
-  'Mango Spread 300g','Mixed Berry Jam 300g','Tropical Jam 300g',
-  'Reduced Sugar Strawberry 250g','Apricot Jam 300g'
-];
+// \u2500\u2500 LIVE DATA (injected by Apps Script doGet, or fetched via API) \u2500\u2500
+window.__GG_DATA__ = null; // INJECT_DATA_HERE
 
-const AI_SUMMARIES = [
-  "GOOD GOOD well-positioned at eye level with 5 facings. Smucker's present but minimal shelf share.",
-  "Shelf tidy, strong 6-facing block. POS signage in place. Low competition from Bonne Maman.",
-  "Only 3 facings found — potential void. Shelf tag present but stock running low.",
-  "OOS on strawberry SKU. Crofter's taking extra space with a 2-for-$6 promo. Follow-up needed.",
-  "Eye-level placement secured, 5 facings. POS missing — needs replacement.",
-  "Strong execution across jam and spread section. 7 facings at eye level, all SKUs present.",
-  "Good shelf presence, 4 facings. Reduced sugar SKU misplaced on bottom shelf.",
-  "Full planogram compliance. GOOD GOOD securing best position vs Welch's.",
-  "Top shelf placement — needs improvement. Discussed better positioning with category manager.",
-  "All 5 SKUs present, shelf clean. POS updated. Competitor Polaner moved to bottom shelf.",
-  "Stock healthy, 6 facings. Minor shelf gap on tropical SKU. Reorder flag submitted.",
-  "Great visit. Eye-level, full facing count, fresh POS. One of the best executions this month.",
-];
+// \u2500\u2500 Apps Script web app URL (used as fallback when data is not server-injected) \u2500\u2500
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyg_TcS1Um7CjTf0kspTXesH77rCV3xB_qr2KnXNZR7eJb8zKCajB6Z-RLFTfUyUixVhw/exec';
 
-function rand(arr)       { return arr[Math.floor(Math.random() * arr.length)]; }
-function randInt(a, b)   { return a + Math.floor(Math.random() * (b - a + 1)); }
-function randFloat(a, b) { return +(a + Math.random() * (b - a)).toFixed(2); }
+// \u2500\u2500 GLOBAL STATE \u2500\u2500
+var _charts = {};         // Chart.js instances \u2014 destroyed before re-create
+var _ggMap = null;        // Leaflet map instance
+var _ggAllData = null;    // Original unfiltered data (set on first unlock)
+var _feedVisits = [];     // Current feed visits array (for click-to-open)
+var _activeRep = null;    // Currently expanded rep name
+var _repVisits = [];      // Visits for expanded rep
+var _lbUrls = [];         // Lightbox photo URLs
+var _lbIdx = 0;           // Lightbox current index
+var _lbCaption = '';
+var _activeRetailer = null; // Currently expanded retailer name
+var _retailerVisits = [];   // Visits for expanded retailer
 
-function pickBrands(n) {
-  const shuffled = [...COMP_BRANDS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, n);
-}
+// \u2500\u2500 PASSWORD \u2500\u2500
+const DASHBOARD_PASSWORD = 'goodgood2026';
 
-function generateData() {
-  const visits = [];
-  const today  = new Date();
-  today.setHours(23, 59, 59, 999);
-  const start = new Date(today);
-  start.setDate(start.getDate() - 89);
-
-  let id = 1000;
-  let d  = new Date(start);
-  while (d <= today) {
-    const dow   = d.getDay();
-    const count = (dow === 0 || dow === 6) ? randInt(0, 1) : randInt(1, 5);
-    for (let i = 0; i < count; i++) {
-      const store      = rand(STORES);
-      const loc        = rand(CITIES);
-      const pos        = rand(POSITIONS);
-      const stock      = rand(STOCK_LEVELS);
-      const facings    = stock === 'Out-of-stock' ? 0 : randInt(2, 8);
-      const posPresent = Math.random() > 0.28;
-      const hasIssue   = stock === 'Out-of-stock' || stock === 'Low stock' || Math.random() < 0.12;
-      const issueText  = hasIssue
-        ? rand(['OOS on 1 SKU','Missing POS','Shelf gap','Competitor taking space','Incorrect placement'])
-        : '';
-
-      // Competitive intelligence fields
-      const compCount    = randInt(1, 4);
-      const compBrands   = pickBrands(compCount);
-      const totalFacings = facings + randInt(compCount * 2, compCount * 6);
-      const shelfShare   = totalFacings > 0 ? +(facings / totalFacings * 100).toFixed(1) : 0;
-      const ggPrice      = randFloat(4.49, 5.99);
-
-      // Competitor prices (per brand)
-      const competitorPrices = {};
-      compBrands.forEach(b => {
-        competitorPrices[b] = randFloat(2.99, 6.49);
-      });
-
-      // Which competitors have promos this visit
-      const promos = compBrands.filter(() => Math.random() < 0.30);
-
-      // Visible GOOD GOOD SKUs
-      const skuCount   = stock === 'Out-of-stock' ? 0 : randInt(1, 3);
-      const visibleSkus = GG_SKUS.slice().sort(() => Math.random() - 0.5).slice(0, skuCount);
-
-      visits.push({
-        id: id++,
-        date: new Date(d),
-        dateStr: d.toISOString().slice(0, 10),
-        rep: rand(REPS),
-        store,
-        city: loc.city,
-        state: loc.state,
-        photos: randInt(2, 8),
-        facings,
-        position: pos,
-        stock,
-        posPresent,
-        hasIssue,
-        issueText,
-        summary: rand(AI_SUMMARIES),
-        // competitive
-        compBrands,
-        compCount,
-        shelfShare,
-        ggPrice,
-        competitorPrices,
-        promos,
-        visibleSkus,
-      });
+function unlock() {
+  if (document.getElementById('pw').value === DASHBOARD_PASSWORD) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    updateTimestamp();
+    var data = (window.__GG_DATA__ && window.__GG_DATA__.ok && window.__GG_DATA__.visits) ? window.__GG_DATA__ : null;
+    if (data) {
+      _ggAllData = data;
+      renderLiveData(data);
+      initCharts(data);
+      setTimeout(function() { initMap(); }, 50);
+    } else {
+      // No server-injected data \u2014 fetch live from Apps Script API
+      fetchLiveData();
     }
-    d.setDate(d.getDate() + 1);
+  } else {
+    document.getElementById('gate-error').style.display = 'block';
+    document.getElementById('pw').style.borderColor = 'var(--red)';
+    setTimeout(function() { document.getElementById('pw').style.borderColor = ''; }, 1500);
   }
-  return visits;
 }
 
-// ═══════════════════════════════════════════════
-// LIVE DATA CONFIG
-// ═══════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyg_TcS1Um7CjTf0kspTXesH77rCV3xB_qr2KnXNZR7eJb8zKCajB6Z-RLFTfUyUixVhw/exec';
-let DATA_SOURCE  = 'sample'; // 'live' or 'sample'
+function fetchLiveData() {
+  // Show a loading indicator in the KPI cards while fetching
+  var loadingMsg = '<span style="color:var(--muted);font-size:12px">Loading...</span>';
+  ['kpi-visits','kpi-stores','kpi-oos','kpi-reps'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = loadingMsg;
+  });
 
-function mapSheetRowToVisit(row) {
-  // Map Google Sheet column headers to dashboard data model
-  const dateRaw = row['Visit Date'] || row['Submitted At'] || '';
-  const dateObj  = dateRaw ? new Date(dateRaw) : new Date();
-  const dateStr  = isNaN(dateObj) ? '' : dateObj.toISOString().slice(0, 10);
+  var url = SCRIPT_URL + '?action=getDashboardData';
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      // jsonOk() returns the object directly (no wrapper)
+      var data = json;
+      if (data && data.ok && data.visits) {
+        _ggAllData = data;
+        window.__GG_DATA__ = data;
+        updateTimestamp();
+        renderLiveData(data);
+        initCharts(data);
+        setTimeout(function() { initMap(); }, 50);
+      } else {
+        console.warn('Dashboard: unexpected API response', json);
+        initCharts(null);
+        setTimeout(function() { initMap(); }, 50);
+      }
+    })
+    .catch(function(err) {
+      console.error('Dashboard fetch error:', err);
+      initCharts(null);
+      setTimeout(function() { initMap(); }, 50);
+    });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-fetch on load \u2014 no password gate
+  updateTimestamp();
+  fetchLiveData();
+});
 
-  // Location: "Austin, TX" → city/state
-  const loc   = (row['Location'] || '').split(',');
-  const city  = (loc[0] || '').trim();
-  const state = (loc[1] || '').trim();
+function updateTimestamp() {
+  var src = (window.__GG_DATA__ && window.__GG_DATA__.generatedAt) ? window.__GG_DATA__.generatedAt : null;
+  var now = src ? new Date(src) : new Date();
+  document.getElementById('last-updated').textContent =
+    'Updated ' + now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+    ' at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
 
-  // Competitor brands: comma-separated string → array
-  const compBrandsRaw = row['Competitor Brands'] || '';
-  const compBrands    = compBrandsRaw ? compBrandsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+function filterPeriod(val) {
+  if (!_ggAllData) return;
+  var cutoff = null;
+  if (val !== 'all') {
+    var days = parseInt(val, 10);
+    cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    cutoff.setHours(0, 0, 0, 0);
+  }
+  var filtered = Object.assign({}, _ggAllData);
+  if (cutoff) {
+    filtered.visits = _ggAllData.visits.filter(function(v) {
+      if (!v.visitDate) return false;
+      return new Date(v.visitDate) >= cutoff;
+    });
+  }
+  renderLiveData(filtered);
+  initCharts(filtered);
+  // Refresh map markers
+  if (_ggMap) {
+    populateChainFilter(filtered.visits || []);
+    _ggMap.eachLayer(function(layer) {
+      if (layer instanceof L.Marker) _ggMap.removeLayer(layer);
+    });
+    addMapMarkers(_ggMap, applyMapFilters(filtered.visits || []));
+  }
+}
 
-  // Shelf share: "25.3%" → 25.3
-  const shareRaw  = String(row['GG Shelf Share %'] || '0').replace('%','');
-  const shelfShare = parseFloat(shareRaw) || 0;
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-  // Promos: "Smucker's: 2 for $6 | Bonne Maman" → array of brand names
-  const promosRaw = row['Promos Detected'] || '';
-  const promos    = promosRaw
-    ? promosRaw.split('|').map(s => s.split(':')[0].trim()).filter(Boolean)
-    : [];
+// \u2500\u2500 Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function inferRetailer(storeName) {
+  if (!storeName) return 'Other';
+  var n = storeName.toLowerCase();
+  if (n.includes('whole foods') || n.includes('wfm')) return 'Whole Foods';
+  if (n.includes('heb') || n.includes('h-e-b')) return 'HEB / H-E-B';
+  if (n.includes('walmart')) return 'Walmart';
+  if (n.includes('costco')) return 'Costco';
+  if (n.includes('sprouts')) return 'Sprouts';
+  if (n.includes('hy-vee') || n.includes('hyvee')) return 'Hy-Vee';
+  if (n.includes('fareway')) return 'Fareway';
+  if (n.includes('fresh thyme')) return 'Fresh Thyme';
+  if (n.includes('target')) return 'Target';
+  if (n.includes('kroger')) return 'Kroger';
+  if (n.includes('b\u00F3nus') || n.includes('bonus')) return 'B\u00F3nus (IS)';
+  if (n.includes('kr\u00F3nan') || n.includes('kronan')) return 'Kr\u00F3nan (IS)';
+  if (n.includes('hagkaup')) return 'Hagkaup (IS)';
+  if (n.includes('nett\u00F3') || n.includes('netto')) return 'Nett\u00F3 (IS)';
+  return 'Independent / Other';
+}
 
-  // Stock level
-  const stockRaw = String(row['GG Stock Level'] || '').toLowerCase();
-  const stock     = stockRaw.includes('out') ? 'Out-of-stock'
-                  : stockRaw.includes('low') ? 'Low stock' : 'In-stock';
+function parseAiJson(v) {
+  if (!v || !v.aiJson) return null;
+  var aj = v.aiJson;
+  if (typeof aj === 'string') { try { aj = JSON.parse(aj); } catch(e) { return null; } }
+  // Handle case where aiJson.summary contains the full raw JSON string (truncated storage bug)
+  if (aj && typeof aj.summary === 'string' && aj.summary.trim().startsWith('{')) {
+    try { return JSON.parse(aj.summary); } catch(e) {}
+  }
+  return aj;
+}
 
-  // Issues
-  const issueText = (row['Issues'] || '').trim();
-  const hasIssue  = issueText.length > 0;
+function renderLiveData(data) {
+  if (!data || !data.visits) return;
+  var visits = data.visits;
+  var el = function(id) { return document.getElementById(id); };
 
-  // Price
-  const ggPrice = parseFloat(String(row['GG Price'] || '0').replace('$','')) || 0;
+  // \u2500\u2500 KPIs \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var storesSeen = {}, retailersSeen = {}, reps = {}, oosCount = 0, lowCount = 0, totalPhotos = 0, noPhotoVisits = 0;
+  visits.forEach(function(v) {
+    if (v.storeName) storesSeen[v.storeName] = true;
+    if (v.storeName) retailersSeen[inferRetailer(v.storeName)] = true;
+    if (v.repName)   reps[v.repName] = (reps[v.repName] || 0) + 1;
+    if (v.status === 'oos') oosCount++;
+    if (v.status === 'low') lowCount++;
+    var pc = parseInt(v.photoCount) || 0;
+    totalPhotos += pc;
+    if (pc === 0) noPhotoVisits++;
+  });
+  var numStores   = Object.keys(storesSeen).length;
+  var numReps     = Object.keys(reps).length;
+  var numRetailers= Object.keys(retailersSeen).length;
 
-  // SKUs
-  const skuRaw   = row['GG SKUs Visible'] || '';
-  const visibleSkus = skuRaw ? skuRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (el('kpi-visits'))      el('kpi-visits').textContent = visits.length;
+  if (el('kpi-visits-sub'))  el('kpi-visits-sub').textContent = numStores + ' unique stores \u00B7 ' + numRetailers + ' retailers';
+  if (el('kpi-visits-badge'))el('kpi-visits-badge').textContent = oosCount > 0 ? oosCount + ' OOS' : 'All reporting';
+  if (el('kpi-stores'))      el('kpi-stores').textContent = numStores;
+  if (el('kpi-stores-badge'))el('kpi-stores-badge').textContent = numRetailers + ' retailers';
+  if (el('kpi-oos'))         el('kpi-oos').textContent = oosCount + lowCount;
+  if (el('kpi-reps'))        el('kpi-reps').textContent = numReps;
+  if (el('kpi-photos-badge')) el('kpi-photos-badge').textContent = totalPhotos + ' photos';
 
-  // Position
-  const posRaw = String(row['GG Shelf Position'] || 'unknown').toLowerCase();
-  const position = posRaw.includes('eye') ? 'Eye-level'
-                 : posRaw.includes('mid') ? 'Mid-shelf'
-                 : posRaw.includes('top') ? 'Top shelf'
-                 : posRaw.includes('bot') ? 'Bottom shelf' : 'Mid-shelf';
+  // \u2500\u2500 Escalation Banner \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var oosVisits = visits.filter(function(v) { return v.status === 'oos'; });
+  var banner = el('escalate-sub');
+  if (banner && oosVisits.length > 0) {
+    var oosStores = oosVisits.map(function(v) { return v.storeName; }).join(', ');
+    banner.textContent = 'OOS confirmed at: ' + oosStores + '. Restock immediately \u2014 every day out of stock is lost revenue.';
+  } else if (banner && lowCount > 0) {
+    var lowVisits = visits.filter(function(v) { return v.status === 'low'; });
+    var lowStores = lowVisits.slice(0, 3).map(function(v) { return v.storeName; }).join(', ');
+    banner.textContent = 'Low stock at ' + lowCount + ' stores: ' + lowStores + '. Prioritize restocking before going OOS.';
+  } else if (banner) {
+    banner.textContent = visits.length + ' visits logged. ' + numStores + ' stores covered. ' + (oosCount + lowCount === 0 ? 'No OOS alerts \u2014 good coverage.' : '');
+  }
 
-  return {
-    id:         row['ID'] || '',
-    date:       dateObj,
-    dateStr,
-    rep:        row['Rep'] || 'Unknown',
-    store:      row['Store'] || 'Unknown',
-    city:       city || 'Unknown',
-    state:      state || '',
-    photos:     parseInt(row['Photo Count']) || 0,
-    facings:    parseInt(row['GG Facings']) || 0,
-    position,
-    stock,
-    posPresent: String(row['POS Present'] || '').toLowerCase() === 'yes',
-    hasIssue,
-    issueText,
-    summary:    row['AI Summary'] || '',
-    compBrands,
-    compCount:  parseInt(row['Competitor Count']) || compBrands.length,
-    shelfShare,
-    ggPrice,
-    competitorPrices: {},
-    promos,
-    visibleSkus,
+  // \u2500\u2500 Activity Feed \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  _feedVisits = visits.slice(0, 15);
+  var feed = el('feed-container');
+  if (feed) {
+    feed.innerHTML = '';
+    _feedVisits.forEach(function(v, fidx) {
+      var color = v.status === 'in-stock' ? 'var(--green)' : v.status === 'oos' ? 'var(--red)' : 'var(--amber)';
+      var detail = v.notes || v.outcome || 'Visit logged';
+      var photos = parseInt(v.photoCount) || 0;
+      var photoStr = photos > 0 ? photos + ' photo' + (photos !== 1 ? 's' : '') : 'no photos';
+      var hasGps = v.lat && v.lng && !isNaN(parseFloat(v.lat)) && !isNaN(parseFloat(v.lng));
+      var retailer = inferRetailer(v.storeName);
+      var hasPhotos = v.photoUrls && v.photoUrls.length > 0;
+
+      // Photo thumbnails (up to 3 in feed) \u2014 click opens lightbox
+      var photosHtml = '';
+      if (hasPhotos) {
+        photosHtml = '<div class="feed-photos">';
+        v.photoUrls.slice(0, 3).forEach(function(url, pidx) {
+          var fileId = (url.match(/[-\w]{25,}/) || [])[0];
+          if (fileId) {
+            var thumb = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w160';
+            photosHtml += '<img class="feed-photo" src="' + thumb + '" onerror="this.style.display=\'none\'" style="cursor:zoom-in" onclick="event.stopPropagation();openFeedLightbox(' + fidx + ',' + pidx + ')">';
+          }
+        });
+        photosHtml += '</div>';
+      }
+
+      var mapHint = hasGps
+        ? '<div class="feed-map-hint">\u{1F4CD} Click to see on map' + (hasPhotos ? ' &amp; photos' : '') + '</div>'
+        : '<div class="feed-no-gps">\u{1F4CD} No GPS</div>';
+
+      feed.innerHTML +=
+        '<div class="feed-item" onclick="openFeedVisit(' + fidx + ')">' +
+        '<div class="feed-dot" style="background:' + color + ';margin-top:6px"></div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div class="feed-store">' + escHtml(v.storeName) + '<span style="font-size:11px;color:var(--muted)"> \u00B7 ' + escHtml(retailer) + '</span></div>' +
+          '<div class="feed-meta">' + escHtml(v.repName) + ' \u00B7 ' + escHtml(v.visitDate) + ' \u00B7 ' + photoStr + '</div>' +
+          '<div class="feed-issue">' + escHtml(detail.substring(0, 140)) + '</div>' +
+          photosHtml + mapHint +
+        '</div></div>';
+    });
+  }
+
+  // \u2500\u2500 Rep Leaderboard \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var repList = el('rep-container');
+  if (repList) {
+    var repData = [];
+    visits.forEach(function(v) {
+      if (!v.repName) return;
+      var r = repData.find(function(x) { return x.name === v.repName; });
+      if (!r) { r = { name: v.repName, visits: 0, photos: 0 }; repData.push(r); }
+      r.visits++;
+      r.photos += (parseInt(v.photoCount) || 0);
+    });
+    repData.sort(function(a, b) { return b.visits - a.visits; });
+    var bgColors   = ['#e8f7f2','#e8f0ff','#fff0e8','#f0f1f5','#f0f1f5','#f5f6fa','#f5f6fa','#f5f6fa'];
+    var textColors = ['var(--green)','#5c6bc0','#e07b39','var(--muted)','var(--muted)','var(--muted)','var(--muted)','var(--muted)'];
+    repList.innerHTML = '';
+    repData.slice(0, 8).forEach(function(r, i) {
+      var initials = r.name.split(' ').map(function(n){ return n[0] || ''; }).join('').substring(0, 2).toUpperCase();
+      var safeRep = escHtml(r.name).replace(/'/g, '&#x27;');
+      repList.innerHTML +=
+        '<div class="rep-row" data-rep="' + safeRep + '" onclick="showRepDetail(\'' + safeRep + '\')">' +
+        '<div class="rep-rank">#' + (i + 1) + '</div>' +
+        '<div class="rep-avatar" style="background:' + bgColors[i] + ';color:' + textColors[i] + '">' + initials + '</div>' +
+        '<div style="flex:1"><div class="rep-name">' + escHtml(r.name) + '</div>' +
+        '<div style="font-size:11px;color:var(--muted)">' + r.visits + ' visit' + (r.visits !== 1 ? 's' : '') + ' \u00B7 ' + r.photos + ' photos</div></div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><div class="rep-count">' + r.visits + '</div>' +
+        '<div style="font-size:11px;color:var(--muted)">&#x276F;</div></div>' +
+        '</div>';
+    });
+    // Hint text below leaderboard
+    repList.innerHTML += '<div style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0 4px;opacity:0.7">Click a rep to see their submissions</div>';
+  }
+
+  // \u2500\u2500 Photo rate per visit \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var rateEl = el('rep-photo-rate');
+  if (rateEl && visits.length > 0) {
+    var avgPhotos = (totalPhotos / visits.length).toFixed(1);
+    var pct = Math.min(100, Math.round((avgPhotos / 3) * 100));
+    var rateColor = pct >= 100 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+    rateEl.innerHTML =
+      '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Photo Rate per Visit</div>' +
+      '<div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="flex:1;background:var(--bg);border-radius:4px;height:8px;overflow:hidden"><div style="width:' + pct + '%;height:100%;background:' + rateColor + ';border-radius:4px"></div></div>' +
+        '<span style="font-size:13px;font-weight:700;color:' + rateColor + '">' + avgPhotos + ' / visit</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-top:6px">Target: 3+ photos per visit for full AI coverage</div>' +
+      (noPhotoVisits > 0 ? '<div style="margin-top:10px;padding:10px 12px;background:var(--amber-light);border-radius:8px;border-left:3px solid var(--amber)"><div style="font-size:12px;font-weight:700;color:var(--amber)">\u26A0 ' + noPhotoVisits + ' visit' + (noPhotoVisits !== 1 ? 's' : '') + ' without photos</div><div style="font-size:12px;color:var(--text);margin-top:3px">AI analysis unavailable for those visits.</div></div>' : '');
+  }
+
+  // \u2500\u2500 Retailer Coverage \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var covEl = el('retailer-coverage');
+  if (covEl) {
+    var retailerMap = {};
+    visits.forEach(function(v) {
+      var r = inferRetailer(v.storeName);
+      if (!retailerMap[r]) retailerMap[r] = { visits: 0, stores: {} };
+      retailerMap[r].visits++;
+      if (v.storeName) retailerMap[r].stores[v.storeName] = true;
+    });
+    var retailers = Object.keys(retailerMap).sort(function(a, b) {
+      return retailerMap[b].visits - retailerMap[a].visits;
+    });
+    var maxVisits = Math.max.apply(null, retailers.map(function(r) { return retailerMap[r].visits; }));
+    var html = '';
+    retailers.forEach(function(r) {
+      var cnt = retailerMap[r].visits;
+      var stores = Object.keys(retailerMap[r].stores).length;
+      var pct = maxVisits > 0 ? Math.round((cnt / maxVisits) * 100) : 0;
+      var color = pct >= 80 ? 'var(--green)' : pct >= 40 ? 'var(--amber)' : 'var(--red)';
+      var barClass = pct >= 80 ? 'bar-green' : pct >= 40 ? 'bar-amber' : 'bar-red';
+      var safeR = escHtml(r).replace(/'/g, '&#x27;');
+      html += '<div class="retailer-bar" data-retailer="' + safeR + '" onclick="showRetailerDetail(\'' + safeR + '\')">' +
+        '<div class="retailer-name"><span>' + escHtml(r) + '</span><span style="color:' + color + '">' + cnt + ' visit' + (cnt !== 1 ? 's' : '') + ' \u00B7 ' + stores + ' store' + (stores !== 1 ? 's' : '') + '</span></div>' +
+        '<div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + Math.max(pct, 2) + '%"></div></div>' +
+        '</div>';
+    });
+    covEl.innerHTML = html || '<div style="color:var(--muted);font-size:12px">No retailer data</div>';
+  }
+
+  // \u2500\u2500 Competitor Intel \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var compEl = el('competitor-intel');
+  if (compEl) {
+    var compMap = {};
+    visits.forEach(function(v) {
+      var aj = parseAiJson(v);
+      if (!aj || !aj.competitors) return;
+      var comps = Array.isArray(aj.competitors) ? aj.competitors : [];
+      comps.forEach(function(c) {
+        if (!c) return;
+        var key = String(c).trim();
+        if (!compMap[key]) compMap[key] = { count: 0, stores: [] };
+        compMap[key].count++;
+        if (v.storeName && compMap[key].stores.indexOf(v.storeName) < 0) {
+          compMap[key].stores.push(v.storeName);
+        }
+      });
+    });
+    var comps = Object.keys(compMap).sort(function(a, b) { return compMap[b].count - compMap[a].count; });
+    if (comps.length === 0) {
+      compEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px">No competitor data available \u2014 AI analysis needed</div>';
+    } else {
+      var rows = comps.slice(0, 12).map(function(c) {
+        var cnt = compMap[c].count;
+        var stores = compMap[c].stores.slice(0, 3).map(function(s) { return s.split(' ')[0]; }).join(', ');
+        var threat = cnt >= 5 ? '<span class="pill pill-red">High</span>' : cnt >= 2 ? '<span class="pill pill-amber">Medium</span>' : '<span class="pill pill-grey">Low</span>';
+        return '<tr><td><strong>' + escHtml(c) + '</strong></td><td>' + cnt + '</td><td>' + escHtml(stores) + '</td><td>' + threat + '</td></tr>';
+      }).join('');
+      compEl.innerHTML = '<table><thead><tr><th>Brand</th><th>Sightings</th><th>Stores</th><th>Threat</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    }
+  }
+
+  // \u2500\u2500 Promo Compliance \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var promoEl = el('promo-compliance');
+  if (promoEl) {
+    var promosSeen = [];
+    visits.forEach(function(v) {
+      var aj = parseAiJson(v);
+      if (!aj || !aj.promos || !aj.promos.length) return;
+      aj.promos.forEach(function(p) {
+        if (!p) return;
+        promosSeen.push({ promo: String(p), store: v.storeName || '', date: v.visitDate });
+      });
+    });
+    if (promosSeen.length === 0) {
+      promoEl.innerHTML = '<div style="color:var(--muted);font-size:12px">No promo data from AI analysis yet</div>';
+    } else {
+      var promoHtml = '<div style="display:flex;flex-direction:column;gap:0">';
+      promosSeen.slice(0, 8).forEach(function(p) {
+        promoHtml += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f1f5">' +
+          '<span style="font-size:16px">\u2705</span>' +
+          '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + escHtml(p.promo) + '</div>' +
+          '<div style="font-size:12px;color:var(--muted)">' + escHtml(p.store) + ' \u00B7 ' + escHtml(p.date) + '</div></div>' +
+          '<span class="pill pill-green">Seen</span></div>';
+      });
+      promoHtml += '</div>';
+      promoEl.innerHTML = promoHtml;
+    }
+  }
+
+  // \u2500\u2500 Store Scorecards \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var scEl = el('store-scorecards');
+  if (scEl) {
+    // Most recent visit per store
+    var storeMap = {};
+    visits.forEach(function(v) {
+      if (!v.storeName) return;
+      if (!storeMap[v.storeName] || v.visitDate > storeMap[v.storeName].visitDate) {
+        storeMap[v.storeName] = v;
+      }
+    });
+    var stores = Object.keys(storeMap).sort(function(a, b) {
+      return (storeMap[b].visitDate || '').localeCompare(storeMap[a].visitDate || '');
+    }).slice(0, 12);
+
+    if (stores.length === 0) {
+      scEl.innerHTML = '<div style="color:var(--muted);font-size:12px">No store data</div>';
+    } else {
+      var scHtml = '';
+      stores.forEach(function(s) {
+        var v = storeMap[s];
+        var aj = parseAiJson(v);
+        var statusPill = v.status === 'in-stock' ? '<span class="pill pill-green">In-stock</span>' :
+                         v.status === 'oos'      ? '<span class="pill pill-red">OOS</span>' :
+                         v.status === 'low'      ? '<span class="pill pill-amber">Low stock</span>' :
+                                                   '<span class="pill pill-grey">Unknown</span>';
+        var facings = aj && aj.facings != null ? aj.facings : '\u2014';
+        var pos = aj && aj.shelfPosition ? aj.shelfPosition.replace('_shelf','').replace('_',' ') : '\u2014';
+        var pos = pos.charAt(0).toUpperCase() + pos.slice(1);
+        var pos2 = pos.length > 10 ? pos.substring(0, 8) + '\u2026' : pos;
+        var hasPos = aj && aj.posPresent != null;
+        var posIcon = hasPos ? (aj.posPresent ? '<span style="color:var(--green)">\u2713</span>' : '<span style="color:var(--muted)">\u2717</span>') : '\u2014';
+        var repShort = v.repName ? v.repName.split(' ').map(function(n,i){ return i===0?n:(n[0]+'.');}).join(' ') : '\u2014';
+        var borderStyle = v.status === 'oos' ? 'border-color:var(--red)' : v.photoCount == 0 ? 'border-color:var(--amber);background:var(--amber-light)' : '';
+        var retailer = inferRetailer(v.storeName);
+        scHtml +=
+          '<div class="scorecard"' + (borderStyle ? ' style="' + borderStyle + '"' : '') + '>' +
+          '<div class="sc-header"><div><div class="sc-store">' + escHtml(v.storeName) + '</div><div class="sc-retailer">' + escHtml(retailer) + '</div></div>' + statusPill + '</div>' +
+          '<div class="sc-metrics">' +
+            '<div class="sc-metric"><div class="sc-metric-val" style="color:' + (typeof facings==='number'&&facings>0?'var(--green)':'var(--muted)') + '">' + facings + '</div><div class="sc-metric-label">Facings</div></div>' +
+            '<div class="sc-metric"><div class="sc-metric-val" style="font-size:12px">' + escHtml(pos2) + '</div><div class="sc-metric-label">Shelf pos.</div></div>' +
+            '<div class="sc-metric"><div class="sc-metric-val">' + posIcon + '</div><div class="sc-metric-label">POS</div></div>' +
+          '</div>' +
+          '<div class="sc-footer"><span>Last: ' + escHtml(v.visitDate) + '</span><span>' + escHtml(repShort) + '</span></div>' +
+          '</div>';
+      });
+      scEl.innerHTML = scHtml;
+    }
+  }
+
+  // \u2500\u2500 Open Issues \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var issuesEl = el('open-issues-body');
+  var badgesEl = el('issues-badges');
+  if (issuesEl) {
+    var issues = [];
+    visits.forEach(function(v) {
+      // OOS = critical
+      if (v.status === 'oos') {
+        issues.push({ date: v.visitDate, store: v.storeName, issue: 'Out of stock \u2014 empty slot', cat: 'Availability', rep: v.repName, sev: 'critical' });
+      }
+      // No photos = monitor
+      if (!parseInt(v.photoCount)) {
+        issues.push({ date: v.visitDate, store: v.storeName, issue: 'Visit logged without photos \u2014 AI analysis unavailable', cat: 'Coverage', rep: v.repName, sev: 'monitor' });
+      }
+      // aiJson issues
+      var aj = parseAiJson(v);
+      if (aj && aj.issues && aj.issues.length) {
+        aj.issues.forEach(function(iss) {
+          if (!iss) return;
+          var issStr = String(iss);
+          var sev = issStr.toLowerCase().includes('out of stock') || issStr.toLowerCase().includes('oos') ? 'critical' : 'monitor';
+          issues.push({ date: v.visitDate, store: v.storeName, issue: issStr, cat: 'AI Flag', rep: v.repName, sev: sev });
+        });
+      }
+      // Low stock = monitor
+      if (v.status === 'low' && !issues.find(function(i){ return i.store===v.storeName&&i.sev==='monitor'&&i.cat==='Availability'; })) {
+        issues.push({ date: v.visitDate, store: v.storeName, issue: 'Low stock \u2014 replenishment needed', cat: 'Availability', rep: v.repName, sev: 'monitor' });
+      }
+    });
+
+    // Sort: critical first, then by date desc
+    issues.sort(function(a, b) {
+      if (a.sev !== b.sev) return a.sev === 'critical' ? -1 : 1;
+      return (b.date || '').localeCompare(a.date || '');
+    });
+
+    var critCount = issues.filter(function(i){ return i.sev==='critical'; }).length;
+    var monCount  = issues.filter(function(i){ return i.sev==='monitor'; }).length;
+    if (badgesEl) {
+      badgesEl.innerHTML =
+        (critCount > 0 ? '<span class="kpi-badge badge-red">' + critCount + ' critical</span>' : '') +
+        (monCount  > 0 ? '<span class="kpi-badge badge-amber">' + monCount + ' monitor</span>' : '') +
+        (issues.length === 0 ? '<span class="kpi-badge badge-green">All clear</span>' : '');
+    }
+
+    if (issues.length === 0) {
+      issuesEl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px">No open issues detected.</div>';
+    } else {
+      var rows2 = issues.slice(0, 20).map(function(iss) {
+        var sevPill = iss.sev === 'critical' ? '<span class="pill pill-red">Critical</span>' : '<span class="pill pill-amber">Monitor</span>';
+        var catPill = iss.cat === 'Availability' ? '<span class="pill pill-red">Availability</span>' :
+                      iss.cat === 'Coverage'     ? '<span class="pill pill-amber">Coverage</span>' :
+                      iss.cat === 'AI Flag'       ? '<span class="pill pill-grey">AI Flag</span>' : '<span class="pill pill-grey">' + escHtml(iss.cat) + '</span>';
+        var repShort = iss.rep ? iss.rep.split(' ')[0] : '\u2014';
+        return '<tr><td>' + escHtml(iss.date) + '</td><td><strong>' + escHtml(iss.store) + '</strong></td><td>' + escHtml(iss.issue.substring(0, 80)) + '</td><td>' + catPill + '</td><td>' + escHtml(repShort) + '</td><td>' + sevPill + '</td></tr>';
+      }).join('');
+      issuesEl.innerHTML = '<table><thead><tr><th>Date</th><th>Store</th><th>Issue</th><th>Category</th><th>Rep</th><th>Status</th></tr></thead><tbody>' + rows2 + '</tbody></table>';
+    }
+  }
+
+  // \u2500\u2500 Footer \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  var footer = el('dash-footer');
+  if (footer) {
+    var d = data.generatedAt ? new Date(data.generatedAt) : new Date();
+    var dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    footer.textContent = 'GOOD GOOD Shelf Intelligence \u00B7 ' + visits.length + ' visits \u00B7 ' + numReps + ' reps \u00B7 ' + numStores + ' stores \u00B7 ' + totalPhotos + ' photos \u00B7 Data as of ' + dateStr + ' \u00B7 Powered by Gemini AI';
+  }
+}
+
+function initCharts(data) {
+  const green = '#1D9E75', amber = '#EF9F27', red = '#E24B4A', grey = '#e0e2ea';
+  var visits = (data && data.visits && data.visits.length > 0) ? data.visits : null;
+
+  // \u2500\u2500 Stock Level Donut \u2500\u2500 derived from v.status (set by getDashboardData_ from outcome/AI)
+  var stockCounts;
+  if (visits) {
+    stockCounts = { instock: 0, oos: 0, low: 0, nodata: 0 };
+    visits.forEach(function(v) {
+      var s = (v.status || '').toLowerCase().replace(/[^a-z]/g, '');
+      if (s === 'instock' || s === 'instock') stockCounts.instock++;
+      else if (s === 'oos' || s === 'outofstock') stockCounts.oos++;
+      else if (s === 'low') stockCounts.low++;
+      else stockCounts.nodata++;
+    });
+  } else {
+    stockCounts = { instock: 3, oos: 2, low: 0, nodata: 1 };
+  }
+  if (_charts.stock) { _charts.stock.destroy(); _charts.stock = null; }
+  _charts.stock = new Chart(document.getElementById('stockChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['In-stock', 'OOS', 'Low / Unknown', 'No data'],
+      datasets: [{ data: [stockCounts.instock, stockCounts.oos, stockCounts.low, stockCounts.nodata],
+        backgroundColor: [green, red, amber, grey], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      cutout: '68%', plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, usePointStyle: true } } },
+      responsive: true, maintainAspectRatio: false
+    }
+  });
+
+  // \u2500\u2500 Facings Bar \u2500\u2500 most recent aiJson.facings per store
+  var storeNames, facingsData, facingColors;
+  if (visits) {
+    var storeLatest = {};
+    visits.forEach(function(v) {
+      var sn = v.storeName; if (!sn) return;
+      var ai = parseAiJson(v);
+      var cur = storeLatest[sn];
+      if (!cur || (v.visitDate && v.visitDate > cur.visitDate)) {
+        storeLatest[sn] = { visitDate: v.visitDate || '', facings: ai ? (ai.facings || null) : null, status: v.status || '' };
+      }
+    });
+    storeNames = []; facingsData = []; facingColors = [];
+    Object.keys(storeLatest).forEach(function(sn) {
+      var abbr = sn.replace(/\(.*?\)/g, '').trim().split(/\s+/).slice(0, 2).join(' ');
+      var st = storeLatest[sn];
+      storeNames.push(abbr);
+      facingsData.push(st.facings !== undefined ? st.facings : null);
+      var s = (st.status || '').toLowerCase().replace(/[^a-z]/g, '');
+      facingColors.push(s === 'oos' ? red : s === 'low' ? amber : st.facings ? green : grey);
+    });
+  } else {
+    storeNames = ['WFM', "Caraluzzi's", 'HEB', 'H-E-B', 'Kings', 'Royal Blue'];
+    facingsData = [null, null, null, 8, 6, null];
+    facingColors = [grey, grey, grey, green, green, grey];
+  }
+  var maxFacings = Math.max(12, Math.max.apply(null, facingsData.map(function(f) { return f || 0; })) + 2);
+  if (_charts.facings) { _charts.facings.destroy(); _charts.facings = null; }
+  _charts.facings = new Chart(document.getElementById('facingsChart'), {
+    type: 'bar',
+    data: {
+      labels: storeNames,
+      datasets: [{ label: 'Facings (AI)', data: facingsData, backgroundColor: facingColors, borderRadius: 5, borderSkipped: false }]
+    },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.raw == null ? 'No AI data' : ctx.raw + ' facings'; } } } },
+      scales: {
+        y: { beginAtZero: true, max: maxFacings, grid: { color: '#f0f1f5' }, ticks: { font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+      },
+      responsive: true, maintainAspectRatio: false
+    }
+  });
+
+  // \u2500\u2500 Shelf Position Donut \u2500\u2500 from aiJson.shelfPosition
+  var posCounts;
+  if (visits) {
+    posCounts = { mid: 0, upper: 0, unknown: 0 };
+    visits.forEach(function(v) {
+      var ai = parseAiJson(v);
+      if (ai && ai.shelfPosition) {
+        var pos = String(ai.shelfPosition).toLowerCase();
+        if (pos.includes('mid')) posCounts.mid++;
+        else if (pos.includes('upper') || pos.includes('eye') || pos.includes('top')) posCounts.upper++;
+        else posCounts.unknown++;
+      } else {
+        posCounts.unknown++;
+      }
+    });
+  } else {
+    posCounts = { mid: 2, upper: 2, unknown: 2 };
+  }
+  if (_charts.position) { _charts.position.destroy(); _charts.position = null; }
+  _charts.position = new Chart(document.getElementById('positionChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Mid shelf', 'Upper shelf', 'Unknown'],
+      datasets: [{ data: [posCounts.mid, posCounts.upper, posCounts.unknown],
+        backgroundColor: [green, amber, grey], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      cutout: '68%', plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, usePointStyle: true } } },
+      responsive: true, maintainAspectRatio: false
+    }
+  });
+}
+
+// \u2500\u2500 LEAFLET MAP \u2500\u2500
+// Called from unlock() after #app is visible \u2014 never on load (Leaflet needs a sized element)
+function buildStoreGroups(visits) {
+  var storeMap = {};
+  var noGpsMap = {};
+  visits.forEach(function(v) {
+    var lat = parseFloat(v.lat), lng = parseFloat(v.lng);
+    var key = v.storeName || '(unnamed)';
+    if (!v.storeName || isNaN(lat) || isNaN(lng)) {
+      // Track stores with missing GPS separately
+      if (v.storeName) {
+        if (!noGpsMap[key]) noGpsMap[key] = { name: v.storeName, location: v.location || '', visits: [] };
+        noGpsMap[key].visits.push(v);
+      }
+      return;
+    }
+    if (!storeMap[key]) {
+      storeMap[key] = { name: v.storeName, lat: lat, lng: lng, status: 'unknown', visits: [] };
+    }
+    storeMap[key].visits.push(v);
+    if (v.status && v.status !== 'unknown') storeMap[key].status = v.status;
+  });
+  return { withGps: Object.values(storeMap), noGps: Object.values(noGpsMap) };
+}
+
+function addMapMarkers(map, visits) {
+  var colors = { 'in-stock': '#1D9E75', 'oos': '#E24B4A', 'low': '#EF9F27', 'no-data': '#9ca3af', 'unknown': '#6b7280' };
+  var fallbackStores = [
+    { name: 'Whole Foods Market (Austin)', lat: 30.2707, lng: -97.7472, status: 'in-stock', visits: [] },
+    { name: "Caraluzzi's Georgetown CT",   lat: 41.3948, lng: -73.4540, status: 'oos',      visits: [] },
+    { name: 'HEB (Slaughter, Austin)',     lat: 30.2341, lng: -97.8333, status: 'oos',      visits: [] },
+    { name: 'H-E-B (North Loop, Austin)', lat: 30.2672, lng: -97.7431, status: 'in-stock', visits: [] },
+    { name: 'Kings (Hoboken NJ)',          lat: 40.7282, lng: -74.0776, status: 'in-stock', visits: [] },
+    { name: 'Royal Blue Grocery (Austin)', lat: 30.2683, lng: -97.7453, status: 'no-data',  visits: [] },
+  ];
+
+  var groups = buildStoreGroups(visits);
+  var liveStores = groups.withGps;
+  var noGpsStores = groups.noGps;
+  var stores = liveStores.length > 0 ? liveStores : fallbackStores;
+
+  // Render no-GPS notice
+  var noGpsEl = document.getElementById('map-no-gps');
+  if (noGpsEl) {
+    if (noGpsStores.length > 0) {
+      var noGpsHtml = '<div style="font-size:12px;color:#6b7280;margin-top:10px;padding:10px 12px;background:#f9fafb;border-radius:8px;border:1px solid #e8eaef">' +
+        '<strong style="color:#374151">\ud83d\udccd ' + noGpsStores.length + ' store' + (noGpsStores.length > 1 ? 's' : '') + ' with address only \u2014 not shown on map:</strong><br>' +
+        noGpsStores.map(function(s) {
+          var addrLine = s.location ? '<span style="color:#9ca3af;font-size:11px;margin-left:4px">' + escHtml(s.location) + '</span>' : '';
+          return '<span style="display:inline-block;margin-top:4px;margin-right:8px">\ud83c\udfe6 ' + escHtml(s.name) + ' (' + s.visits.length + ' visit' + (s.visits.length > 1 ? 's' : '') + ')' + addrLine + '</span>';
+        }).join('') + '</div>';
+      noGpsEl.innerHTML = noGpsHtml;
+    } else {
+      noGpsEl.innerHTML = '';
+    }
+  }
+
+  stores.forEach(function(s) {
+    var color = colors[s.status] || '#6b7280';
+    var count = s.visits ? s.visits.length : 0;
+    var icon = L.divIcon({
+      className: '',
+      html: '<div style="position:relative">' +
+            '<div style="width:18px;height:18px;border-radius:50%;background:' + color + ';border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>' +
+            (count > 1 ? '<div style="position:absolute;top:-6px;right:-6px;background:#1a1d27;color:#fff;border-radius:10px;font-size:9px;font-weight:700;padding:1px 4px;line-height:13px">' + count + '</div>' : '') +
+            '</div>',
+      iconSize: [18, 18], iconAnchor: [9, 9]
+    });
+
+    // Build popup content
+    var popupHtml = '<div style="min-width:220px;max-width:300px;font-family:-apple-system,sans-serif">' +
+      '<div style="font-weight:700;font-size:14px;margin-bottom:6px">' + escHtml(s.name) + '</div>';
+
+    if (s.visits && s.visits.length > 0) {
+      s.visits.forEach(function(v, i) {
+        if (i > 0) popupHtml += '<div style="border-top:1px solid #f0f1f5;margin-top:8px;padding-top:8px"></div>';
+        var photos = parseInt(v.photoCount) || 0;
+        popupHtml += '<div style="font-size:11px;color:#6b7280;margin-bottom:3px">' +
+          escHtml(v.visitDate || '') + ' \u00B7 ' + escHtml(v.repName || '') +
+          (photos > 0 ? ' \u00B7 \u{1F4F8} ' + photos : '') + '</div>';
+        if (v.notes) popupHtml += '<div style="font-size:12px;margin-bottom:4px">' + escHtml(v.notes.substring(0, 120)) + '</div>';
+        if (v.outcome) popupHtml += '<div style="font-size:11px;color:#1D9E75;font-weight:600">' + escHtml(v.outcome) + '</div>';
+
+        // Photo thumbnails \u2014 works when backend includes photoUrls array
+        if (v.photoUrls && v.photoUrls.length > 0) {
+          popupHtml += '<div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">';
+          v.photoUrls.slice(0, 6).forEach(function(url) {
+            var fileId = (url.match(/[-\w]{25,}/) || [])[0];
+            if (fileId) {
+              var thumb = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w160';
+              popupHtml += '<a href="' + escHtml(url) + '" target="_blank" style="display:block">' +
+                '<img src="' + thumb + '" style="width:80px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #e8eaef" ' +
+                'onerror="this.parentElement.style.display=\'none\'">' +
+                '</a>';
+            }
+          });
+          popupHtml += '</div>';
+        }
+      });
+    } else {
+      popupHtml += '<div style="font-size:12px;color:#6b7280">No visit data</div>';
+    }
+    popupHtml += '</div>';
+
+    L.marker([s.lat, s.lng], { icon })
+      .addTo(map)
+      .bindPopup(popupHtml, { maxWidth: 320 });
+  });
+
+  // Fit map bounds to all live markers
+  if (liveStores.length > 1) {
+    try {
+      map.fitBounds(liveStores.map(function(s) { return [s.lat, s.lng]; }), { padding: [40, 40] });
+    } catch(e) {}
+  }
+}
+
+// \u2500\u2500 MAP FILTER STATE \u2500\u2500
+var _mapFilters = { region: 'all', chain: 'all' };
+
+var _regionBounds = {
+  usa:     { lat: [15, 72],   lng: [-170, -50] },
+  iceland: { lat: [63, 67.5], lng: [-25, -12]  },
+  europe:  { lat: [34, 72],   lng: [-12, 45]   }
+};
+
+var _regionViews = {
+  usa:     { center: [39.5, -98.35], zoom: 4 },
+  iceland: { center: [65, -18.5],   zoom: 6 },
+  europe:  { center: [54, 15],      zoom: 4 }
+};
+
+function extractChain(storeName) {
+  if (!storeName) return '';
+  var c = storeName.replace(/\s*\(.*?\)\s*/g, '').replace(/,.*$/, '').trim();
+  c = c.replace(/\bH[-\s]?E[-\s]?B\b/gi, 'HEB');
+  c = c.replace(/#\d+\s*$/, '').trim();
+  return c;
+}
+
+function populateChainFilter(visits) {
+  var sel = document.getElementById('chain-filter');
+  if (!sel) return;
+  var chains = {};
+  visits.forEach(function(v) {
+    var ch = extractChain(v.storeName);
+    if (ch) chains[ch] = (chains[ch] || 0) + 1;
+  });
+  var sorted = Object.keys(chains).sort(function(a, b) { return chains[b] - chains[a]; });
+  var current = sel.value;
+  sel.innerHTML = '<option value="all">All stores</option>';
+  sorted.forEach(function(ch) {
+    var opt = document.createElement('option');
+    opt.value = ch;
+    opt.textContent = ch + ' (' + chains[ch] + ')';
+    sel.appendChild(opt);
+  });
+  if (current && chains[current]) sel.value = current;
+}
+
+function applyMapFilters(visits) {
+  var region = _mapFilters.region;
+  var chain  = _mapFilters.chain;
+  var filtered = visits;
+
+  // Region filter
+  if (region !== 'all' && _regionBounds[region]) {
+    var b = _regionBounds[region];
+    filtered = filtered.filter(function(v) {
+      var lat = parseFloat(v.lat), lng = parseFloat(v.lng);
+      if (isNaN(lat) || isNaN(lng)) return true; // keep no-GPS for the notice panel
+      return lat >= b.lat[0] && lat <= b.lat[1] && lng >= b.lng[0] && lng <= b.lng[1];
+    });
+  }
+
+  // Chain filter
+  if (chain !== 'all') {
+    filtered = filtered.filter(function(v) {
+      return extractChain(v.storeName) === chain;
+    });
+  }
+
+  return filtered;
+}
+
+function setRegion(region, btn) {
+  _mapFilters.region = region;
+  document.querySelectorAll('.region-pill').forEach(function(p) { p.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+
+  if (_ggMap) {
+    if (region !== 'all' && _regionViews[region]) {
+      _ggMap.setView(_regionViews[region].center, _regionViews[region].zoom, { animate: true });
+    }
+    refreshMapMarkers();
+  }
+}
+
+function setChain(chain) {
+  _mapFilters.chain = chain;
+  if (_ggMap) refreshMapMarkers();
+}
+
+function refreshMapMarkers() {
+  if (!_ggMap) return;
+  _ggMap.eachLayer(function(layer) {
+    if (layer instanceof L.Marker) _ggMap.removeLayer(layer);
+  });
+  var visits = (_ggAllData && _ggAllData.visits) ? _ggAllData.visits : [];
+  var filtered = applyMapFilters(visits);
+  addMapMarkers(_ggMap, filtered);
+}
+
+function initMap() {
+  if (_ggMap) return; // already initialized \u2014 use filterPeriod to update markers
+  var visits = (_ggAllData && _ggAllData.visits) ? _ggAllData.visits : [];
+  populateChainFilter(visits);
+  var groups = buildStoreGroups(visits);
+  var liveStores = groups.withGps;
+  // Default to USA view
+  var defaultCenter = [39.5, -98.35];
+  var defaultZoom = 4;
+  if (liveStores.length === 1) { defaultCenter = [liveStores[0].lat, liveStores[0].lng]; defaultZoom = 10; }
+  _ggMap = L.map('map', { zoomControl: true }).setView(defaultCenter, defaultZoom);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
+  }).addTo(_ggMap);
+  addMapMarkers(_ggMap, applyMapFilters(visits));
+}
+
+function toggleMap() {
+  var wrap = document.getElementById('map-wrap');
+  var btn  = document.getElementById('map-toggle');
+  var open = wrap.classList.toggle('open');
+  btn.textContent = open ? '\u25B2 Hide map' : '\u25BC Show map';
+  if (open) {
+    // Leaflet needs a size invalidation when revealed from display:none
+    setTimeout(function() { if (_ggMap) { _ggMap.invalidateSize(); } initMap(); }, 320);
+  }
+}
+
+// \u2500\u2500 FLY TO STORE \u2014 called when user clicks a feed item \u2500\u2500
+function flyToStore(lat, lng, storeName) {
+  if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+  // Scroll map into view first
+  var mapCard = document.getElementById('map');
+  if (mapCard) {
+    mapCard.closest('.card') ? mapCard.closest('.card').scrollIntoView({ behavior: 'smooth', block: 'center' }) : mapCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // On mobile, ensure map is expanded
+  var wrap = document.getElementById('map-wrap');
+  var btn  = document.getElementById('map-toggle');
+  var alreadyOpen = !wrap || wrap.classList.contains('open') || getComputedStyle(wrap).maxHeight !== '0px';
+
+  function doFly() {
+    if (!_ggMap) {
+      initMap();
+      setTimeout(function() { doFly(); }, 400);
+      return;
+    }
+    _ggMap.invalidateSize();
+    _ggMap.flyTo([lat, lng], 15, { animate: true, duration: 1.0 });
+    // After fly, open popup for the closest marker
+    setTimeout(function() {
+      var best = null, bestDist = Infinity;
+      _ggMap.eachLayer(function(layer) {
+        if (layer instanceof L.Marker) {
+          var pos = layer.getLatLng();
+          var d = Math.abs(pos.lat - lat) + Math.abs(pos.lng - lng);
+          if (d < bestDist) { bestDist = d; best = layer; }
+        }
+      });
+      if (best && bestDist < 0.05) best.openPopup();
+    }, 1100);
+  }
+
+  if (!alreadyOpen && wrap && btn) {
+    wrap.classList.add('open');
+    btn.textContent = '\u25B2 Hide map';
+    setTimeout(function() { if (_ggMap) _ggMap.invalidateSize(); doFly(); }, 350);
+  } else {
+    doFly();
+  }
+}
+
+// \u2500\u2500 FEED: open visit (fly to map + lightbox) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function openFeedVisit(idx) {
+  var v = _feedVisits[idx];
+  if (!v) return;
+  _openVisit(v);
+}
+
+function openFeedLightbox(fidx, photoIdx) {
+  var v = _feedVisits[fidx];
+  if (!v || !v.photoUrls || !v.photoUrls.length) return;
+  openLightbox(v.photoUrls, (v.storeName || '') + ' \u00B7 ' + (v.visitDate || ''), photoIdx || 0);
+}
+
+// \u2500\u2500 REP DETAIL PANEL \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function showRepDetail(repName) {
+  if (!_ggAllData || !_ggAllData.visits) return;
+  var panel = document.getElementById('rep-detail-panel');
+  if (!panel) return;
+
+  // Toggle off if same rep clicked
+  if (_activeRep === repName) {
+    _activeRep = null;
+    panel.classList.remove('open');
+    panel.innerHTML = '';
+    document.querySelectorAll('.rep-row').forEach(function(r) { r.classList.remove('active'); });
+    return;
+  }
+  _activeRep = repName;
+
+  // Highlight active rep row
+  document.querySelectorAll('.rep-row').forEach(function(r) {
+    r.classList.toggle('active', r.getAttribute('data-rep') === repName);
+  });
+
+  // Filter + sort this rep's visits
+  _repVisits = (_ggAllData.visits).filter(function(v) {
+    return v.repName === repName;
+  }).sort(function(a, b) {
+    return (b.visitDate || '').localeCompare(a.visitDate || '');
+  });
+
+  var totalPhotos = _repVisits.reduce(function(s, v) { return s + (parseInt(v.photoCount) || 0); }, 0);
+  var oosCount = _repVisits.filter(function(v) { return v.status === 'oos'; }).length;
+
+  var html = '<div class="rep-detail-header">' +
+    '<div>' +
+      '<div style="font-size:13px;font-weight:700;color:var(--green)">' + escHtml(repName) + '</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px">' +
+        _repVisits.length + ' visit' + (_repVisits.length !== 1 ? 's' : '') +
+        ' \u00B7 ' + totalPhotos + ' photos' +
+        (oosCount > 0 ? ' \u00B7 <span style="color:var(--red);font-weight:600">' + oosCount + ' OOS</span>' : '') +
+      '</div>' +
+    '</div>' +
+    '<button class="rep-detail-close" onclick="closeRepDetail()">&#x2715; Close</button>' +
+  '</div>';
+
+  if (_repVisits.length === 0) {
+    html += '<div style="font-size:12px;color:var(--muted);padding:8px 0">No submissions found.</div>';
+  } else {
+    _repVisits.forEach(function(v, idx) {
+      var color = v.status === 'in-stock' ? 'var(--green)' : v.status === 'oos' ? 'var(--red)' : 'var(--amber)';
+      var photos = parseInt(v.photoCount) || 0;
+      var retailer = inferRetailer(v.storeName);
+      var detail = v.notes || v.outcome || '';
+      var hasGps = v.lat && v.lng && !isNaN(parseFloat(v.lat)) && !isNaN(parseFloat(v.lng));
+      var hasPhotos = v.photoUrls && v.photoUrls.length > 0;
+
+      var photosHtml = '';
+      if (hasPhotos) {
+        photosHtml = '<div class="rep-sub-photos">';
+        v.photoUrls.slice(0, 4).forEach(function(url) {
+          var fileId = (url.match(/[-\w]{25,}/) || [])[0];
+          if (fileId) {
+            var thumb = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w160';
+            photosHtml += '<img class="rep-sub-photo" src="' + thumb + '" onerror="this.style.display=\'none\'">';
+          }
+        });
+        if (v.photoUrls.length > 4) {
+          photosHtml += '<div style="width:64px;height:48px;border-radius:4px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);font-weight:600">+' + (v.photoUrls.length - 4) + '</div>';
+        }
+        photosHtml += '</div>';
+      }
+
+      var statusPill = v.status === 'in-stock'
+        ? '<span class="pill pill-green">In-stock</span>'
+        : v.status === 'oos'
+          ? '<span class="pill pill-red">OOS</span>'
+          : v.status === 'low'
+            ? '<span class="pill pill-amber">Low</span>'
+            : '';
+
+      var hints = [];
+      if (hasGps) hints.push('\u{1F4CD} <span style="color:var(--green)">Map</span>');
+      if (hasPhotos) hints.push('\u{1F4F7} ' + photos + ' photo' + (photos !== 1 ? 's' : ''));
+
+      html += '<div class="rep-submission" onclick="openRepVisit(' + idx + ')">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">' +
+          '<div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">' +
+            '<div style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;margin-top:5px"></div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:13px;font-weight:600;color:var(--text)">' + escHtml(v.storeName) + '</div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + escHtml(retailer) + ' \u00B7 ' + escHtml(v.visitDate) + '</div>' +
+              (detail ? '<div style="font-size:12px;color:var(--text);margin-top:4px;font-style:italic">' + escHtml(detail.substring(0, 110)) + '</div>' : '') +
+              (hints.length ? '<div style="font-size:11px;margin-top:5px;color:var(--muted)">' + hints.join(' \u00B7 ') + '</div>' : '') +
+              photosHtml +
+            '</div>' +
+          '</div>' +
+          '<div style="flex-shrink:0">' + statusPill + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+
+  panel.innerHTML = html;
+  panel.classList.add('open');
+  // Scroll the panel into view
+  setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 80);
+}
+
+function closeRepDetail() {
+  _activeRep = null;
+  var panel = document.getElementById('rep-detail-panel');
+  if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+  document.querySelectorAll('.rep-row').forEach(function(r) { r.classList.remove('active'); });
+}
+
+function openRepVisit(idx) {
+  var v = _repVisits[idx];
+  if (!v) return;
+  _openVisit(v);
+}
+
+// \u2500\u2500 RETAILER DETAIL PANEL \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function showRetailerDetail(retailerName) {
+  if (!_ggAllData || !_ggAllData.visits) return;
+  var panel = document.getElementById('retailer-detail-panel');
+  if (!panel) return;
+
+  // Toggle off if same retailer clicked again
+  if (_activeRetailer === retailerName) {
+    closeRetailerDetail();
+    return;
+  }
+  _activeRetailer = retailerName;
+
+  // Highlight active retailer bar
+  document.querySelectorAll('.retailer-bar').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('data-retailer') === retailerName);
+  });
+
+  // Filter + sort this retailer's visits
+  _retailerVisits = (_ggAllData.visits).filter(function(v) {
+    return inferRetailer(v.storeName) === retailerName;
+  }).sort(function(a, b) {
+    return (b.visitDate || '').localeCompare(a.visitDate || '');
+  });
+
+  var totalPhotos = _retailerVisits.reduce(function(s, v) { return s + (parseInt(v.photoCount) || 0); }, 0);
+  var oosCount = _retailerVisits.filter(function(v) { return v.status === 'oos'; }).length;
+  var storeSet = {};
+  _retailerVisits.forEach(function(v) { if (v.storeName) storeSet[v.storeName] = true; });
+  var storeCount = Object.keys(storeSet).length;
+
+  var html = '<div class="rep-detail-header">' +
+    '<div>' +
+      '<div style="font-size:13px;font-weight:700;color:var(--green)">' + escHtml(retailerName) + '</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-top:2px">' +
+        _retailerVisits.length + ' visit' + (_retailerVisits.length !== 1 ? 's' : '') +
+        ' \u00B7 ' + storeCount + ' store' + (storeCount !== 1 ? 's' : '') +
+        ' \u00B7 ' + totalPhotos + ' photo' + (totalPhotos !== 1 ? 's' : '') +
+        (oosCount > 0 ? ' \u00B7 <span style="color:var(--red);font-weight:600">' + oosCount + ' OOS</span>' : '') +
+      '</div>' +
+    '</div>' +
+    '<button class="rep-detail-close" onclick="closeRetailerDetail()">&#x2715; Close</button>' +
+  '</div>';
+
+  if (_retailerVisits.length === 0) {
+    html += '<div style="font-size:12px;color:var(--muted);padding:8px 0">No submissions found.</div>';
+  } else {
+    _retailerVisits.forEach(function(v, idx) {
+      var color = v.status === 'in-stock' ? 'var(--green)' : v.status === 'oos' ? 'var(--red)' : 'var(--amber)';
+      var photos = parseInt(v.photoCount) || 0;
+      var detail = v.notes || v.outcome || '';
+      var hasGps = v.lat && v.lng && !isNaN(parseFloat(v.lat)) && !isNaN(parseFloat(v.lng));
+      var hasPhotos = v.photoUrls && v.photoUrls.length > 0;
+
+      var photosHtml = '';
+      if (hasPhotos) {
+        photosHtml = '<div class="rep-sub-photos">';
+        v.photoUrls.slice(0, 4).forEach(function(url) {
+          var fileId = (url.match(/[-\w]{25,}/) || [])[0];
+          if (fileId) {
+            var thumb = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w160';
+            photosHtml += '<img class="rep-sub-photo" src="' + thumb + '" onerror="this.style.display=\'none\'">';
+          }
+        });
+        if (v.photoUrls.length > 4) {
+          photosHtml += '<div style="width:64px;height:48px;border-radius:4px;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);font-weight:600">+' + (v.photoUrls.length - 4) + '</div>';
+        }
+        photosHtml += '</div>';
+      }
+
+      var statusPill = v.status === 'in-stock'
+        ? '<span class="pill pill-green">In-stock</span>'
+        : v.status === 'oos'
+          ? '<span class="pill pill-red">OOS</span>'
+          : v.status === 'low'
+            ? '<span class="pill pill-amber">Low</span>'
+            : '';
+
+      var hints = [];
+      if (hasGps) hints.push('\u{1F4CD} <span style="color:var(--green)">Map</span>');
+      if (hasPhotos) hints.push('\u{1F4F7} ' + photos + ' photo' + (photos !== 1 ? 's' : ''));
+
+      html += '<div class="rep-submission" onclick="openRetailerVisit(' + idx + ')">' +
+        '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">' +
+          '<div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">' +
+            '<div style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0;margin-top:5px"></div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:13px;font-weight:600;color:var(--text)">' + escHtml(v.storeName) + '</div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + escHtml(v.repName || '') + ' \u00B7 ' + escHtml(v.visitDate || '') + '</div>' +
+              (detail ? '<div style="font-size:12px;color:var(--text);margin-top:4px;font-style:italic">' + escHtml(detail.substring(0, 110)) + '</div>' : '') +
+              (hints.length ? '<div style="font-size:11px;margin-top:5px;color:var(--muted)">' + hints.join(' \u00B7 ') + '</div>' : '') +
+              photosHtml +
+            '</div>' +
+          '</div>' +
+          '<div style="flex-shrink:0">' + statusPill + '</div>' +
+        '</div>' +
+      '</div>';
+    });
+  }
+
+  panel.innerHTML = html;
+  panel.classList.add('open');
+  setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 80);
+}
+
+function closeRetailerDetail() {
+  _activeRetailer = null;
+  var panel = document.getElementById('retailer-detail-panel');
+  if (panel) { panel.classList.remove('open'); panel.innerHTML = ''; }
+  document.querySelectorAll('.retailer-bar').forEach(function(b) { b.classList.remove('active'); });
+}
+
+function openRetailerVisit(idx) {
+  var v = _retailerVisits[idx];
+  if (!v) return;
+  _openVisit(v);
+}
+
+// \u2500\u2500 SHARED: open a visit (fly map + lightbox) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function _openVisit(v) {
+  var hasGps = v.lat && v.lng && !isNaN(parseFloat(v.lat)) && !isNaN(parseFloat(v.lng));
+  var hasPhotos = v.photoUrls && v.photoUrls.length > 0;
+
+  if (hasGps) {
+    flyToStore(parseFloat(v.lat), parseFloat(v.lng), v.storeName);
+    // Scroll map into view
+    var mapWrap = document.getElementById('map-wrap');
+    if (mapWrap) {
+      // Make sure map is visible (mobile collapsed)
+      mapWrap.classList.add('open');
+      setTimeout(function() {
+        mapWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 120);
+    }
+  }
+
+  if (hasPhotos) {
+    var delay = hasGps ? 300 : 0;
+    setTimeout(function() {
+      openLightbox(v.photoUrls, (v.storeName || '') + ' \u00B7 ' + (v.visitDate || ''), 0);
+    }, delay);
+  }
+}
+
+// \u2500\u2500 PHOTO LIGHTBOX \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function openLightbox(urls, caption, startIdx) {
+  _lbUrls = (urls || []).filter(function(u) { return !!u; });
+  if (_lbUrls.length === 0) return;
+  _lbIdx = startIdx || 0;
+  _lbCaption = caption || '';
+  document.getElementById('photo-lightbox').classList.add('open');
+  _renderLightbox();
+  // Keyboard nav
+  document.onkeydown = function(e) {
+    if (!document.getElementById('photo-lightbox').classList.contains('open')) return;
+    if (e.key === 'ArrowLeft')  lbNav(-1);
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'Escape')     closeLightbox();
   };
 }
 
-async function loadLiveData() {
+function closeLightbox() {
+  document.getElementById('photo-lightbox').classList.remove('open');
+  document.onkeydown = null;
+}
+
+function lbNav(dir) {
+  if (_lbUrls.length === 0) return;
+  _lbIdx = (_lbIdx + dir + _lbUrls.length) % _lbUrls.length;
+  _renderLightbox();
+}
+
+function _renderLightbox() {
+  var url = _lbUrls[_lbIdx];
+  var fileId = (url.match(/[-\w]{25,}/) || [])[0];
+  var imgUrl = fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1200' : url;
+
+  var imgEl = document.getElementById('lb-img');
+  if (imgEl) imgEl.src = imgUrl;
+
+  var ctrEl = document.getElementById('lb-counter');
+  if (ctrEl) ctrEl.textContent = (_lbIdx + 1) + ' / ' + _lbUrls.length;
+
+  var capEl = document.getElementById('lb-caption');
+  if (capEl) capEl.textContent = _lbCaption;
+
+  var thumbsEl = document.getElementById('lb-thumbs');
+  if (thumbsEl) {
+    thumbsEl.innerHTML = '';
+    // Only show thumbs when there are multiple photos
+    if (_lbUrls.length > 1) {
+      _lbUrls.forEach(function(u, i) {
+        var fid = (u.match(/[-\w]{25,}/) || [])[0];
+        var tUrl = fid ? 'https://drive.google.com/thumbnail?id=' + fid + '&sz=w160' : u;
+        var img = document.createElement('img');
+        img.className = 'lb-thumb' + (i === _lbIdx ? ' active' : '');
+        img.src = tUrl;
+        img.onerror = function() { this.style.display = 'none'; };
+        (function(capturedIdx) {
+          img.onclick = function(e) { e.stopPropagation(); _lbIdx = capturedIdx; _renderLightbox(); };
+        })(i);
+        thumbsEl.appendChild(img);
+      });
+    }
+  }
+}
+
+// ── LOG VISIT MODAL ──────────────────────────────────────────────────────────
+var _vmPhotos = []; // {base64, type, name, dataUrl}
+
+function openVisitModal() {
+  var modal = document.getElementById('visit-modal');
+  modal.classList.add('open');
+  // Default date to today
+  var today = new Date().toISOString().slice(0, 10);
+  document.getElementById('vm-date').value = today;
+  // Clear toast
+  var toast = document.getElementById('vm-toast');
+  toast.className = 'vm-toast';
+  toast.textContent = '';
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVisitModal() {
+  document.getElementById('visit-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  resetVisitModal();
+}
+
+function resetVisitModal() {
+  document.getElementById('vm-rep').value = '';
+  document.getElementById('vm-store').value = '';
+  document.getElementById('vm-date').value = '';
+  document.getElementById('vm-type').value = '';
+  document.getElementById('vm-location').value = '';
+  document.getElementById('vm-notes').value = '';
+  document.querySelectorAll('[name="vm-outcome"]').forEach(function(c) { c.checked = false; });
+  document.getElementById('vm-file-input').value = '';
+  _vmPhotos = [];
+  renderVmPhotoGrid();
+  var btn = document.getElementById('vm-submit-btn');
+  btn.disabled = false;
+  btn.textContent = '';
+  var icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('style', 'width:15px;height:15px;fill:currentColor;');
+  var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z');
+  icon.appendChild(path);
+  btn.appendChild(icon);
+  btn.appendChild(document.createTextNode(' Submit Visit'));
+}
+
+function renderVmPhotoGrid() {
+  var grid = document.getElementById('vm-photo-grid');
+  grid.innerHTML = '';
+  _vmPhotos.forEach(function(p, i) {
+    var wrap = document.createElement('div');
+    wrap.className = 'vm-photo-thumb';
+    var img = document.createElement('img');
+    img.src = p.dataUrl;
+    var rm = document.createElement('button');
+    rm.className = 'vm-photo-remove';
+    rm.textContent = '\xD7';
+    rm.onclick = function(e) { e.stopPropagation(); _vmPhotos.splice(i, 1); renderVmPhotoGrid(); };
+    wrap.appendChild(img);
+    wrap.appendChild(rm);
+    grid.appendChild(wrap);
+  });
+}
+
+function showVmToast(msg, type) {
+  var t = document.getElementById('vm-toast');
+  t.textContent = msg;
+  t.className = 'vm-toast ' + type;
+  if (type === 'success') {
+    setTimeout(function() { t.className = 'vm-toast'; }, 4000);
+  }
+}
+
+// File input handler
+document.addEventListener('DOMContentLoaded', function() {
+  var fi = document.getElementById('vm-file-input');
+  if (fi) {
+    fi.addEventListener('change', function(e) {
+      handleVmFiles(Array.from(e.target.files));
+    });
+  }
+  // Drag-and-drop
+  var dz = document.getElementById('vm-drop-zone');
+  if (dz) {
+    dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+    dz.addEventListener('drop', function(e) {
+      e.preventDefault(); dz.classList.remove('dragover');
+      handleVmFiles(Array.from(e.dataTransfer.files).filter(function(f) { return f.type.startsWith('image/'); }));
+    });
+  }
+  // Close modal on backdrop click
+  var modal = document.getElementById('visit-modal');
+  if (modal) {
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeVisitModal(); });
+  }
+  // Escape key closes modal
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('visit-modal').classList.contains('open')) {
+      closeVisitModal();
+    }
+  });
+});
+
+function handleVmFiles(files) {
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      var dataUrl = ev.target.result;
+      // Extract base64 from data URL
+      var base64 = dataUrl.split(',')[1];
+      _vmPhotos.push({ base64: base64, type: file.type, name: file.name, dataUrl: dataUrl });
+      renderVmPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function submitVisitFromDashboard() {
+  var repName   = document.getElementById('vm-rep').value.trim();
+  var storeName = document.getElementById('vm-store').value.trim();
+  var visitDate = document.getElementById('vm-date').value || new Date().toISOString().slice(0, 10);
+  var storeType = document.getElementById('vm-type').value;
+  var location  = document.getElementById('vm-location').value.trim();
+  var notes     = document.getElementById('vm-notes').value.trim();
+  var outcome   = Array.from(document.querySelectorAll('[name="vm-outcome"]:checked')).map(function(c) { return c.value; }).join(', ');
+
+  if (!repName)   { showVmToast('Please enter the rep name.', 'error'); return; }
+  if (!storeName) { showVmToast('Please enter the store name.', 'error'); return; }
+
+  var btn = document.getElementById('vm-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting\u2026';
+
+  var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  var payload = {
+    id: id,
+    timestamp: new Date().toISOString(),
+    visitDate: visitDate,
+    repName: repName,
+    storeName: storeName,
+    storeType: storeType,
+    location: location,
+    notes: notes,
+    outcome: outcome,
+    photos: _vmPhotos.map(function(p) { return { base64: p.base64, type: p.type, name: p.name }; })
+  };
+
   try {
-    const resp = await fetch(SCRIPT_URL + '?action=getVisits', { mode: 'cors' });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const json = await resp.json();
-    if (!json.visits || !Array.isArray(json.visits)) throw new Error('No visits array');
-    const mapped = json.visits
-      .filter(r => r['ID'])
-      .map(mapSheetRowToVisit)
-      .filter(v => !isNaN(v.date));
-    if (mapped.length === 0) throw new Error('Zero valid rows');
-    DATA_SOURCE = 'live';
-    return mapped;
+    var resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var json = await resp.json();
+    if (json && json.success) {
+      var photoMsg = json.photoCount > 0 ? ' (' + json.photoCount + ' photo' + (json.photoCount > 1 ? 's' : '') + ' uploaded)' : '';
+      showVmToast('\u2705 Visit logged successfully!' + photoMsg, 'success');
+      setTimeout(function() {
+        closeVisitModal();
+        fetchLiveData(); // refresh dashboard data
+      }, 1800);
+    } else {
+      throw new Error(json && json.error ? json.error : 'Unexpected error');
+    }
   } catch (err) {
-    console.warn('Live data unavailable, using sample data:', err.message);
-    DATA_SOURCE = 'sample';
-    return generateData();
+    showVmToast('Error: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Retry Submit';
   }
 }
-
-let ALL_DATA = generateData(); // initial sample; replaced after live fetch
-
-// ═══════════════════════════════════════════════
-// FILTER STATE
-// ═══════════════════════════════════════════════
-let activeDays   = 30;
-let filteredData = [];
-let sortCol = 'date', sortDir = -1;
-
-function setRange(days) {
-  activeDays = days;
-  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('[data-days="' + days + '"]').classList.add('active');
-  applyFilter();
-}
-
-function applyFilter() {
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
-  if (activeDays === 0) {
-    filteredData = [...ALL_DATA];
-  } else {
-    const cutoff = new Date(today);
-    cutoff.setDate(cutoff.getDate() - (activeDays - 1));
-    cutoff.setHours(0, 0, 0, 0);
-    filteredData = ALL_DATA.filter(v => v.date >= cutoff);
-  }
-  render();
-}
-
-// ═══════════════════════════════════════════════
-// KPI HELPERS
-// ═══════════════════════════════════════════════
-function fmt(n, type) {
-  if (type === 'pct') return n.toFixed(1) + '%';
-  if (type === 'dec') return n.toFixed(1);
-  if (type === '$')   return '$' + n.toFixed(2);
-  return n.toLocaleString();
-}
-function delta(val, prev, type, inverse) {
-  if (!prev) return '<span class="kpi-delta flat">No prior period</span>';
-  const pct = ((val - prev) / prev) * 100;
-  const up  = pct >= 0;
-  const cls = inverse ? (up ? 'down' : 'up') : (up ? 'up' : 'down');
-  const sign = up ? '+' : '';
-  return '<span class="kpi-delta ' + cls + '">' + sign + pct.toFixed(1) + '% vs prior period</span>';
-}
-
-function priorData() {
-  if (activeDays === 0) return [];
-  const today = new Date(); today.setHours(23, 59, 59, 999);
-  const cut1  = new Date(today); cut1.setDate(cut1.getDate() - (activeDays - 1)); cut1.setHours(0, 0, 0, 0);
-  const cut2  = new Date(cut1);  cut2.setDate(cut2.getDate() - activeDays);
-  return ALL_DATA.filter(v => v.date >= cut2 && v.date < cut1);
-}
-
-function avg(arr, fn) {
-  if (!arr.length) return 0;
-  return arr.reduce((s, v) => s + fn(v), 0) / arr.length;
-}
-
-// ═══════════════════════════════════════════════
-// KPI RENDER
-// ═══════════════════════════════════════════════
-function renderKPIs() {
-  const d = filteredData;
-  const p = priorData();
-
-  const visits      = d.length;
-  const reps        = new Set(d.map(v => v.rep)).size;
-  const stores      = new Set(d.map(v => v.store + v.city)).size;
-  const photos      = d.reduce((s, v) => s + v.photos, 0);
-  const avgFacings  = avg(d, v => v.facings);
-  const instockPct  = d.length ? d.filter(v => v.stock === 'In-stock').length / d.length * 100 : 0;
-  const posPct      = d.length ? d.filter(v => v.posPresent).length / d.length * 100 : 0;
-  const issues      = d.filter(v => v.hasIssue).length;
-
-  // Competitive KPIs
-  const avgShare    = avg(d, v => v.shelfShare);
-  const avgComps    = avg(d, v => v.compCount);
-  const promoPct    = d.length ? d.filter(v => v.promos.length > 0).length / d.length * 100 : 0;
-  const uniqueComps = new Set(d.flatMap(v => v.compBrands)).size;
-  const avgGGPrice  = avg(d, v => v.ggPrice);
-
-  const pv = p.length;
-  const pVisits     = pv;
-  const pReps       = new Set(p.map(v => v.rep)).size;
-  const pStores     = new Set(p.map(v => v.store + v.city)).size;
-  const pPhotos     = p.reduce((s, v) => s + v.photos, 0);
-  const pFacings    = avg(p, v => v.facings);
-  const pInstock    = pv ? p.filter(v => v.stock === 'In-stock').length / pv * 100 : 0;
-  const pPos        = pv ? p.filter(v => v.posPresent).length / pv * 100 : 0;
-  const pIssues     = p.filter(v => v.hasIssue).length;
-  const pShare      = avg(p, v => v.shelfShare);
-  const pComps      = avg(p, v => v.compCount);
-  const pPromoPct   = pv ? p.filter(v => v.promos.length > 0).length / pv * 100 : 0;
-  const pUniqueComps = new Set(p.flatMap(v => v.compBrands)).size;
-
-  set('kpi-visits',   fmt(visits));
-  set('kpi-reps',     fmt(reps));
-  set('kpi-stores',   fmt(stores));
-  set('kpi-photos',   fmt(photos));
-  set('kpi-facings',  fmt(avgFacings, 'dec'));
-  set('kpi-instock',  fmt(instockPct, 'pct'));
-  set('kpi-pos',      fmt(posPct, 'pct'));
-  set('kpi-issues',   fmt(issues));
-
-  setHTML('kpi-visits-d',   delta(visits,     pVisits));
-  setHTML('kpi-reps-d',     delta(reps,       pReps));
-  setHTML('kpi-stores-d',   delta(stores,     pStores));
-  setHTML('kpi-photos-d',   delta(photos,     pPhotos));
-  setHTML('kpi-facings-d',  delta(avgFacings, pFacings, 'dec'));
-  setHTML('kpi-instock-d',  delta(instockPct, pInstock, 'pct'));
-  setHTML('kpi-pos-d',      delta(posPct,     pPos,     'pct'));
-  setHTML('kpi-issues-d',   delta(issues,     pIssues,  'n', true));
-
-  // Competitive KPIs
-  set('kpi-shelfshare',   fmt(avgShare, 'pct'));
-  set('kpi-compcount',    fmt(avgComps, 'dec'));
-  set('kpi-promo',        fmt(promoPct, 'pct'));
-  set('kpi-uniquecomps',  fmt(uniqueComps));
-
-  setHTML('kpi-shelfshare-d',   delta(avgShare,    pShare,        'pct'));
-  setHTML('kpi-compcount-d',    delta(avgComps,    pComps,        'dec', true));
-  setHTML('kpi-promo-d',        delta(promoPct,    pPromoPct,     'pct', true));
-  setHTML('kpi-uniquecomps-d',  delta(uniqueComps, pUniqueComps,  'n'));
-
-  // Insight strip
-  const eyeLevelPct = d.length ? d.filter(v => v.position === 'Eye-level').length / d.length * 100 : 0;
-  const ppv         = d.length ? photos / d.length : 0;
-  const issuePct    = d.length ? issues / d.length * 100 : 0;
-
-  set('ins-eyelevel',       fmt(eyeLevelPct, 'pct'));
-  set('ins-photospervisit', fmt(ppv, 'dec'));
-  set('ins-issuerate',      fmt(issuePct, 'pct'));
-  set('ins-ggprice',        fmt(avgGGPrice, '$'));
-
-  setStyle('ins-eyelevel-bar', 'width', Math.min(eyeLevelPct, 100) + '%');
-  setStyle('ins-ppv-bar',      'width', Math.min(ppv / 8 * 100, 100) + '%');
-  setStyle('ins-issue-bar',    'width', Math.min(issuePct, 100) + '%');
-  setStyle('ins-price-bar',    'width', Math.min((avgGGPrice / 8) * 100, 100) + '%');
-
-  // Header date range
-  if (activeDays === 0) {
-    set('data-range', 'All time — ' + ALL_DATA.length + ' visits total');
-  } else if (activeDays === 1) {
-    set('data-range', 'Today — ' + visits + ' visit' + (visits !== 1 ? 's' : ''));
-  } else {
-    const from = new Date(); from.setDate(from.getDate() - (activeDays - 1));
-    set('data-range', from.toLocaleDateString('en', {month:'short', day:'numeric'}) + ' – Today');
-  }
-}
-
-// ═══════════════════════════════════════════════
-// CHARTS
-// ═══════════════════════════════════════════════
-const PALETTE = ['#2d6a40','#4caf72','#f0c040','#e67e22','#e74c3c','#8172B3','#3498db','#1abc9c'];
-const COMP_COLORS = {
-  "Smucker's":       '#e74c3c',
-  "Bonne Maman":     '#e67e22',
-  "Welch's":         '#9b59b6',
-  "Crofter's":       '#3498db',
-  "Polaner":         '#1abc9c',
-  "Stonewall Kitchen": '#f39c12',
-  "Hero":            '#e84393',
-  "Rao's":           '#c0392b',
-};
-
-let charts = {};
-
-function destroyChart(id) {
-  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
-}
-
-// --- Visit Trend ---
-function renderTrendChart() {
-  destroyChart('trend');
-  const ctx = document.getElementById('chart-trend').getContext('2d');
-  const buckets = {};
-  filteredData.forEach(v => { buckets[v.dateStr] = (buckets[v.dateStr] || 0) + 1; });
-  const dates  = Object.keys(buckets).sort();
-  const values = dates.map(d => buckets[d]);
-  let labels = dates, data = values;
-  if (dates.length > 45) {
-    const weekly = {};
-    dates.forEach((d, i) => {
-      const date = new Date(d);
-      const week = 'W' + getWeekNum(date) + ' ' + date.getFullYear();
-      weekly[week] = (weekly[week] || 0) + values[i];
-    });
-    labels = Object.keys(weekly);
-    data   = Object.values(weekly);
-  } else {
-    labels = dates.map(d => {
-      const [,m,day] = d.split('-');
-      return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1] + ' ' + parseInt(day);
-    });
-  }
-  charts['trend'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Store Visits',
-        data,
-        backgroundColor: '#2d6a4088',
-        borderColor: '#2d6a40',
-        borderWidth: 1.5,
-        borderRadius: 4,
-      },{
-        label: '7-day avg',
-        data: rollingAvg(data, 7),
-        type: 'line',
-        borderColor: '#f0c040',
-        borderWidth: 2.5,
-        pointRadius: 0,
-        tension: 0.4,
-        fill: false,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { size: 12 } } },
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { maxTicksLimit: 12, font: { size: 11 } } },
-        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { stepSize: 1, font: { size: 11 } } }
-      }
-    }
-  });
-}
-
-// --- Shelf Position ---
-function renderPositionChart() {
-  destroyChart('pos');
-  const ctx = document.getElementById('chart-position').getContext('2d');
-  const counts = {};
-  POSITIONS.forEach(p => counts[p] = 0);
-  filteredData.forEach(v => counts[v.position] = (counts[v.position] || 0) + 1);
-  charts['pos'] = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: Object.keys(counts),
-      datasets: [{ data: Object.values(counts), backgroundColor: ['#2d6a40','#4caf72','#f0c040','#a8d5b5'], borderColor: '#fff', borderWidth: 2 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '58%',
-      plugins: {
-        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 12 } } },
-        tooltip: {
-          callbacks: {
-            label: ctx => {
-              const tot = ctx.dataset.data.reduce((a,b) => a+b, 0);
-              return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + (tot ? (ctx.parsed/tot*100).toFixed(0) : 0) + '%)';
-            }
-          }
-        }
-      }
-    }
-  });
-}
-
-// --- Visits by Rep ---
-function renderRepsChart() {
-  destroyChart('reps');
-  const ctx = document.getElementById('chart-reps').getContext('2d');
-  const counts = {};
-  filteredData.forEach(v => counts[v.rep] = (counts[v.rep] || 0) + 1);
-  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-  charts['reps'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: sorted.map(x => x[0]),
-      datasets: [{ label: 'Visits', data: sorted.map(x => x[1]),
-        backgroundColor: PALETTE.map(c => c + 'cc'),
-        borderColor: PALETTE, borderWidth: 1.5, borderRadius: 4 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      indexAxis: 'y',
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { stepSize: 1, font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { font: { size: 12 } } }
-      }
-    }
-  });
-}
-
-// --- Stock Levels ---
-function renderStockChart() {
-  destroyChart('stock');
-  const ctx = document.getElementById('chart-stock').getContext('2d');
-  const levels  = ['In-stock','Low stock','Out-of-stock'];
-  const colors  = ['#2d6a40cc','#f0c040cc','#e74c3ccc'];
-  const borders = ['#2d6a40','#e67e22','#e74c3c'];
-  const counts  = levels.map(l => filteredData.filter(v => v.stock === l).length);
-  charts['stock'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: levels,
-      datasets: [{ label: 'Visits', data: counts, backgroundColor: colors, borderColor: borders, borderWidth: 1.5, borderRadius: 6 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 12 } } },
-        y: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } }
-      }
-    }
-  });
-}
-
-// ── COMPETITIVE CHARTS ─────────────────────────
-
-// --- Competitor Brand Frequency (horizontal bar) ---
-function renderCompFreqChart() {
-  destroyChart('comp-freq');
-  const ctx = document.getElementById('chart-comp-freq').getContext('2d');
-  const freq = {};
-  filteredData.forEach(v => v.compBrands.forEach(b => freq[b] = (freq[b] || 0) + 1));
-  const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]);
-  const labels = sorted.map(x => x[0]);
-  const data   = sorted.map(x => x[1]);
-  const bgColors = labels.map(b => (COMP_COLORS[b] || '#8172B3') + 'cc');
-  const brColors = labels.map(b => (COMP_COLORS[b] || '#8172B3'));
-  charts['comp-freq'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Shelf appearances',
-        data,
-        backgroundColor: bgColors,
-        borderColor: brColors,
-        borderWidth: 1.5,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => ' ' + ctx.parsed.x + ' visits (' + (filteredData.length ? (ctx.parsed.x/filteredData.length*100).toFixed(0) : 0) + '% of shelf checks)'
-          }
-        }
-      },
-      scales: {
-        x: { beginAtZero: true, grid: { color: '#f0f0f0' }, ticks: { font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { font: { size: 12 } } }
-      }
-    }
-  });
-}
-
-// --- GG Shelf Share Over Time (line chart) ---
-function renderShelfShareChart() {
-  destroyChart('shelf-share');
-  const ctx = document.getElementById('chart-shelf-share').getContext('2d');
-
-  // Bucket by week
-  const weekly = {};
-  filteredData.forEach(v => {
-    const date = new Date(v.dateStr);
-    const week = v.dateStr.slice(0, 7) + '-W' + getWeekNum(date);
-    if (!weekly[week]) weekly[week] = { sum: 0, count: 0 };
-    weekly[week].sum   += v.shelfShare;
-    weekly[week].count += 1;
-  });
-  const weeks  = Object.keys(weekly).sort();
-  const shares = weeks.map(w => +(weekly[w].sum / weekly[w].count).toFixed(1));
-
-  // Simplified labels
-  const labels = weeks.map(w => {
-    const parts = w.split('-W');
-    return parts[0].slice(5) + '/W' + parts[1];
-  });
-
-  charts['shelf-share'] = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'GG Shelf Share %',
-        data: shares,
-        borderColor: '#2d6a40',
-        backgroundColor: '#2d6a4018',
-        borderWidth: 2.5,
-        pointRadius: 4,
-        pointBackgroundColor: '#2d6a40',
-        tension: 0.35,
-        fill: true,
-      },{
-        label: 'Target 25%',
-        data: Array(labels.length).fill(25),
-        borderColor: '#f0c040',
-        borderWidth: 1.5,
-        borderDash: [6, 3],
-        pointRadius: 0,
-        fill: false,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { usePointStyle: true, padding: 14, font: { size: 12 } } },
-        tooltip: { callbacks: { label: ctx => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '%' } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { maxTicksLimit: 10, font: { size: 11 } } },
-        y: {
-          beginAtZero: true,
-          max: 60,
-          grid: { color: '#f0f0f0' },
-          ticks: { font: { size: 11 }, callback: v => v + '%' }
-        }
-      }
-    }
-  });
-}
-
-// --- Pricing Comparison (grouped bar) ---
-function renderPricingChart() {
-  destroyChart('pricing');
-  const ctx = document.getElementById('chart-pricing').getContext('2d');
-
-  // GG avg price
-  const ggAvg = filteredData.length
-    ? +(filteredData.reduce((s, v) => s + v.ggPrice, 0) / filteredData.length).toFixed(2)
-    : 0;
-
-  // Competitor avg prices (only brands seen 3+ times)
-  const compTotals = {};
-  const compCounts = {};
-  filteredData.forEach(v => {
-    Object.entries(v.competitorPrices).forEach(([brand, price]) => {
-      compTotals[brand] = (compTotals[brand] || 0) + price;
-      compCounts[brand] = (compCounts[brand] || 0) + 1;
-    });
-  });
-  const compAvgs = Object.entries(compCounts)
-    .filter(([,c]) => c >= 3)
-    .map(([brand, count]) => ({ brand, avg: +(compTotals[brand] / count).toFixed(2) }))
-    .sort((a,b) => b.avg - a.avg);
-
-  const labels = ['GOOD GOOD', ...compAvgs.map(x => x.brand)];
-  const data   = [ggAvg, ...compAvgs.map(x => x.avg)];
-  const bgs    = ['#2d6a40cc', ...compAvgs.map(x => (COMP_COLORS[x.brand] || '#888') + 'cc')];
-  const brs    = ['#2d6a40',   ...compAvgs.map(x => (COMP_COLORS[x.brand] || '#888'))];
-
-  charts['pricing'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Avg Shelf Price ($)',
-        data,
-        backgroundColor: bgs,
-        borderColor: brs,
-        borderWidth: 1.5,
-        borderRadius: 5,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ' $' + ctx.parsed.y.toFixed(2) } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: {
-          beginAtZero: false,
-          min: 2,
-          grid: { color: '#f0f0f0' },
-          ticks: { font: { size: 11 }, callback: v => '$' + v }
-        }
-      }
-    }
-  });
-}
-
-// --- Competitor Promo Activity (bar) ---
-function renderPromosChart() {
-  destroyChart('promos');
-  const ctx = document.getElementById('chart-promos').getContext('2d');
-
-  const promoCounts = {};
-  const brandApps   = {};
-  filteredData.forEach(v => {
-    v.compBrands.forEach(b => brandApps[b] = (brandApps[b] || 0) + 1);
-    v.promos.forEach(b    => promoCounts[b] = (promoCounts[b] || 0) + 1);
-  });
-
-  // Rate: promos / appearances * 100
-  const brands = Object.keys(promoCounts)
-    .filter(b => brandApps[b] >= 3)
-    .map(b => ({ brand: b, rate: +(promoCounts[b] / brandApps[b] * 100).toFixed(1) }))
-    .sort((a,b) => b.rate - a.rate);
-
-  const labels = brands.map(x => x.brand);
-  const data   = brands.map(x => x.rate);
-  const bgs    = labels.map(b => (COMP_COLORS[b] || '#888') + 'cc');
-  const brs    = labels.map(b => (COMP_COLORS[b] || '#888'));
-
-  charts['promos'] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels.length ? labels : ['No promos detected'],
-      datasets: [{
-        label: 'Promo Rate %',
-        data: data.length ? data : [0],
-        backgroundColor: bgs.length ? bgs : ['#e2e8e4'],
-        borderColor: brs.length ? brs : ['#ccc'],
-        borderWidth: 1.5,
-        borderRadius: 5,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ' Promo rate: ' + ctx.parsed.y + '% of appearances' } }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-        y: {
-          beginAtZero: true,
-          max: 100,
-          grid: { color: '#f0f0f0' },
-          ticks: { font: { size: 11 }, callback: v => v + '%' }
-        }
-      }
-    }
-  });
-}
-
-// ═══════════════════════════════════════════════
-// TABLE
-// ═══════════════════════════════════════════════
-function stockBadge(s) {
-  if (s === 'In-stock')     return '<span class="badge badge-green">' + s + '</span>';
-  if (s === 'Low stock')    return '<span class="badge badge-yellow">' + s + '</span>';
-  if (s === 'Out-of-stock') return '<span class="badge badge-red">' + s + '</span>';
-  return '<span class="badge badge-gray">' + s + '</span>';
-}
-function posBadge(present) {
-  return present
-    ? '<span class="badge badge-green">Yes</span>'
-    : '<span class="badge badge-gray">No</span>';
-}
-function posDot(p) {
-  const map = { 'Eye-level':'#2d6a40', 'Mid-shelf':'#4caf72', 'Bottom shelf':'#f0c040', 'Top shelf':'#a8d5b5' };
-  return '<span class="pos-dot" style="background:' + (map[p] || '#ccc') + '"></span>' + p;
-}
-function sharePill(pct) {
-  const color = pct >= 25 ? '#2d6a40' : pct >= 15 ? '#e67e22' : '#e74c3c';
-  return '<span class="share-pill" style="background:' + color + '18;color:' + color + '">' + pct.toFixed(1) + '%</span>';
-}
-
-function renderTable() {
-  const sorted = [...filteredData].sort((a,b) => {
-    let av = a[sortCol], bv = b[sortCol];
-    if (av instanceof Date) { av = av.getTime(); bv = bv.getTime(); }
-    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
-    return sortDir * (av - bv);
-  });
-
-  set('table-count', sorted.length + ' visit' + (sorted.length !== 1 ? 's' : ''));
-
-  const shown = sorted.slice(0, 200);
-  const tbody = document.getElementById('visits-tbody');
-  if (!shown.length) {
-    tbody.innerHTML = '<tr><td colspan="15" class="empty">No visits in this period</td></tr>';
-    return;
-  }
-  tbody.innerHTML = shown.map(v => {
-    const promoText = v.promos.length
-      ? v.promos.map(b => '<span class="badge badge-orange" style="margin-right:2px">' + b + '</span>').join('')
-      : '<span style="color:var(--text-muted);font-size:12px">—</span>';
-    const compText = v.compBrands.length
-      ? '<div class="comp-brands">' + v.compBrands.join(', ') + '</div>'
-      : '<span style="color:var(--text-muted);font-size:12px">—</span>';
-    return '<tr>' +
-      '<td style="white-space:nowrap">' + v.date.toLocaleDateString('en', {month:'short',day:'numeric',year:'numeric'}) + '</td>' +
-      '<td style="white-space:nowrap;font-weight:500">' + v.rep + '</td>' +
-      '<td style="white-space:nowrap">' + v.store + '</td>' +
-      '<td style="white-space:nowrap;color:var(--text-muted)">' + v.city + ', ' + v.state + '</td>' +
-      '<td style="text-align:center">' + v.photos + '</td>' +
-      '<td style="text-align:center;font-weight:600;color:' + (v.facings >= 5 ? 'var(--green-mid)' : v.facings === 0 ? 'var(--danger)' : 'var(--warning)') + '">' + v.facings + '</td>' +
-      '<td style="white-space:nowrap">' + posDot(v.position) + '</td>' +
-      '<td>' + stockBadge(v.stock) + '</td>' +
-      '<td>' + posBadge(v.posPresent) + '</td>' +
-      '<td style="text-align:center">' + sharePill(v.shelfShare) + '</td>' +
-      '<td style="text-align:center;font-weight:600">$' + v.ggPrice.toFixed(2) + '</td>' +
-      '<td>' + compText + '</td>' +
-      '<td>' + promoText + '</td>' +
-      '<td>' + (v.hasIssue ? '<span class="badge badge-red" title="' + v.issueText + '">! ' + v.issueText + '</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>') + '</td>' +
-      '<td><div class="ai-summary">' + v.summary + '</div></td>' +
-      '</tr>';
-  }).join('');
-}
-
-function sortTable(col) {
-  if (sortCol === col) sortDir *= -1;
-  else { sortCol = col; sortDir = -1; }
-  renderTable();
-}
-
-// ═══════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════
-function set(id, val)          { const el = document.getElementById(id); if (el) el.textContent = val; }
-function setHTML(id, val)      { const el = document.getElementById(id); if (el) el.innerHTML = val; }
-function setStyle(id, prop, val) { const el = document.getElementById(id); if (el) el.style[prop] = val; }
-function rollingAvg(arr, w) {
-  return arr.map((_, i) => {
-    const sl = arr.slice(Math.max(0, i - w + 1), i + 1);
-    return +(sl.reduce((a,b) => a + b, 0) / sl.length).toFixed(1);
-  });
-}
-function getWeekNum(d) {
-  const s = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil(((d - s) / 86400000 + s.getDay() + 1) / 7);
-}
-
-// ═══════════════════════════════════════════════
-// MASTER RENDER
-// ═══════════════════════════════════════════════
-function render() {
-  renderKPIs();
-  renderTrendChart();
-  renderPositionChart();
-  renderRepsChart();
-  renderStockChart();
-  renderCompFreqChart();
-  renderShelfShareChart();
-  renderPricingChart();
-  renderPromosChart();
-  renderTable();
-}
-
-// ═══════════════════════════════════════════════
-// INIT — try live data, fall back to sample
-// ═══════════════════════════════════════════════
-function updateSourceBadge() {
-  const el = document.getElementById('data-source-badge');
-  if (!el) return;
-  if (DATA_SOURCE === 'live') {
-    el.innerHTML = '<span style="color:var(--green-mid);font-weight:700;">● Live Data</span> — ' + ALL_DATA.length + ' visits from Google Sheets';
-  } else {
-    el.innerHTML = '<span style="color:var(--warning);font-weight:700;">◌ Sample Data</span> — connect field reps to see real visits';
-  }
-}
-
-async function refreshData() {
-  const badge = document.getElementById('data-source-badge');
-  if (badge) badge.innerHTML = '<span style="color:var(--text-muted)">Loading…</span>';
-  ALL_DATA = await loadLiveData();
-  updateSourceBadge();
-  applyFilter();
-}
-
-document.getElementById('footer-date').textContent = new Date().toLocaleString();
-
-// Start with sample data immediately so the dashboard renders instantly
-applyFilter();
-
-// Then attempt live data in background
-refreshData();
 </script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
