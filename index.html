@@ -1534,8 +1534,21 @@ async function submitVisit() {
           }
         }
 
-        if (uploaded > 0 && document.getElementById('screen-success').classList.contains('active')) {
-          successSub.textContent = `${uploaded}/${photosSnapshot.length} photo${photosSnapshot.length > 1 ? 's' : ''} uploaded ✓`;
+        // Run Gemini analysis after all photos are uploaded
+        if (uploaded > 0) {
+          if (document.getElementById('screen-success').classList.contains('active')) {
+            successSub.textContent = 'Analysing shelf with AI…';
+          }
+          try {
+            await submitToGoogle({ action: 'analyzeVisit', visitId: id });
+            if (document.getElementById('screen-success').classList.contains('active')) {
+              successSub.textContent = `${uploaded}/${photosSnapshot.length} photo${photosSnapshot.length > 1 ? 's' : ''} saved & AI analysed ✓`;
+            }
+          } catch (e) { /* non-blocking — visit is saved regardless */
+            if (document.getElementById('screen-success').classList.contains('active')) {
+              successSub.textContent = `${uploaded}/${photosSnapshot.length} photo${photosSnapshot.length > 1 ? 's' : ''} uploaded ✓`;
+            }
+          }
         }
 
         // Toast in case the rep has already navigated away
