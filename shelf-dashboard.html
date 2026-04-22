@@ -1386,26 +1386,34 @@ function initCharts(data) {
 // \u2500\u2500 LEAFLET MAP \u2500\u2500
 // Called from unlock() after #app is visible \u2014 never on load (Leaflet needs a sized element)
 function buildStoreGroups(visits) {
-  var storeMap = {};
-  var noGpsMap = {};
+  // Pass 1: collect all visits per store name
+  var allStores = {};
   visits.forEach(function(v) {
-    var lat = parseFloat(v.lat), lng = parseFloat(v.lng);
-    var key = v.storeName || '(unnamed)';
-    if (!v.storeName || isNaN(lat) || isNaN(lng)) {
-      // Track stores with missing GPS separately
-      if (v.storeName) {
-        if (!noGpsMap[key]) noGpsMap[key] = { name: v.storeName, location: v.location || '', visits: [] };
-        noGpsMap[key].visits.push(v);
-      }
-      return;
-    }
-    if (!storeMap[key]) {
-      storeMap[key] = { name: v.storeName, lat: lat, lng: lng, status: 'unknown', visits: [] };
-    }
-    storeMap[key].visits.push(v);
-    if (v.status && v.status !== 'unknown') storeMap[key].status = v.status;
+    if (!v.storeName) return;
+    var key = v.storeName;
+    if (!allStores[key]) allStores[key] = { name: v.storeName, visits: [] };
+    allStores[key].visits.push(v);
   });
-  return { withGps: Object.values(storeMap), noGps: Object.values(noGpsMap) };
+
+  // Pass 2: decide group — any GPS visit puts it on the map
+  var withGps = [], noGps = [];
+  Object.values(allStores).forEach(function(store) {
+    var gpsVisit = null, bestLocation = '';
+    store.visits.forEach(function(v) {
+      var lat = parseFloat(v.lat), lng = parseFloat(v.lng);
+      if (!isNaN(lat) && !isNaN(lng) && !gpsVisit) gpsVisit = v; // first (newest) GPS visit
+      if (!bestLocation && v.location) bestLocation = v.location;  // newest non-empty address
+    });
+    if (gpsVisit) {
+      // Put on map — track best status across all visits
+      var status = 'unknown';
+      store.visits.forEach(function(v) { if (v.status && v.status !== 'unknown') status = v.status; });
+      withGps.push({ name: store.name, lat: parseFloat(gpsVisit.lat), lng: parseFloat(gpsVisit.lng), status: status, visits: store.visits });
+    } else {
+      noGps.push({ name: store.name, location: bestLocation, visits: store.visits });
+    }
+  });
+  return { withGps: withGps, noGps: noGps };
 }
 
 function addMapMarkers(map, visits) {
