@@ -114,8 +114,6 @@
     .action-icon.green { background: #d1fae5; }
     .action-icon.green svg { fill: var(--accent); }
     .action-text h3 { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
-    .action-icon.orange { background: #fed7aa; }
-    .action-icon.orange svg { fill: #ea580c; }
     .action-text p { font-size: 13px; color: var(--muted); }
     .action-arrow { margin-left: auto; color: var(--muted); font-size: 20px; }
 
@@ -198,16 +196,22 @@
       font-weight: 600; cursor: pointer; white-space: nowrap;
     }
 
-    .photo-area {
-      border: 2px dashed var(--border); border-radius: var(--radius);
-      padding: 20px; text-align: center; cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+    .photo-buttons-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;
     }
-    .photo-area:active { background: #f0f9ff; border-color: var(--primary); }
-    .photo-area svg { width: 36px; height: 36px; fill: var(--muted); margin-bottom: 8px; }
-    .photo-area p { font-size: 14px; color: var(--muted); }
-    .photo-area small { font-size: 12px; color: #94a3b8; }
-    #photo-input { display: none; }
+    .photo-btn {
+      border: 2px dashed var(--border); border-radius: var(--radius);
+      padding: 16px 10px; text-align: center; cursor: pointer;
+      background: var(--card); transition: border-color 0.2s, background 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .photo-btn:active { background: #f0f9ff; border-color: var(--primary); }
+    .photo-btn svg { width: 30px; height: 30px; fill: var(--muted); }
+    .photo-btn p { font-size: 13px; font-weight: 600; color: var(--text); margin: 0; }
+    .photo-btn small { font-size: 11px; color: #94a3b8; }
+    .photo-btn-camera { border-color: var(--primary); }
+    .photo-btn-camera svg { fill: var(--primary); }
+    #photo-input-camera, #photo-input-gallery { display: none; }
 
     .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
     .photo-thumb-wrap { position: relative; aspect-ratio: 1; }
@@ -456,12 +460,12 @@
         <span class="action-arrow">›</span>
       </div>
       <div class="action-card" id="btn-go-guide">
-        <div class="action-icon orange">
-          <svg viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.65 0-3 1.35-3 3s1.35 3 3 3 3-1.35 3-3-1.35-3-3-3z"/></svg>
+        <div class="action-icon" style="background:#fff3e0">
+          <svg viewBox="0 0 24 24" style="fill:#e67e22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M6.5 10.5A1.5 1.5 0 0 1 5 9V7.5A1.5 1.5 0 0 1 6.5 6H8v1.5H6.5V9H8v1.5H6.5zm11 0H16V9h1.5V7.5H16V6h1.5A1.5 1.5 0 0 1 19 7.5V9a1.5 1.5 0 0 1-1.5 1.5z"/><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/><circle cx="12" cy="12" r="3.2"/></svg>
         </div>
         <div class="action-text">
           <h3>Photo Guide</h3>
-          <p>View shelf photo standards &amp; examples</p>
+          <p>What shots to take on every visit</p>
         </div>
         <span class="action-arrow">›</span>
       </div>
@@ -552,12 +556,20 @@
 
     <div class="form-section">
       <h3>Photos</h3>
-      <div class="photo-area" id="photo-area" onclick="document.getElementById('photo-input').click()">
-        <svg viewBox="0 0 24 24"><path d="M12 15.2c-1.77 0-3.2-1.43-3.2-3.2S10.23 8.8 12 8.8 15.2 10.23 15.2 12 13.77 15.2 12 15.2zm7-11h-3l-2-2H10L8 4.2H5c-1.1 0-2 .9-2 2V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.2c0-1.1-.9-2-2-2z"/></svg>
-        <p>Tap to take or upload photos</p>
-        <small>Minimum 3 photos · up to 10 per visit</small>
+      <div class="photo-buttons-row">
+        <button class="photo-btn photo-btn-camera" type="button" id="btn-take-photo">
+          <svg viewBox="0 0 24 24"><path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4zm0 1.8a5 5 0 1 1 0-10 5 5 0 0 1 0 10zM9 2L7.17 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3.17L15 2H9z"/></svg>
+          <p>Take Photo</p>
+          <small>Saves to camera roll</small>
+        </button>
+        <button class="photo-btn" type="button" id="btn-choose-gallery">
+          <svg viewBox="0 0 24 24"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+          <p>From Gallery</p>
+          <small>Select multiple</small>
+        </button>
       </div>
-      <input type="file" id="photo-input" accept="image/*" multiple />
+      <input type="file" id="photo-input-camera" accept="image/*" capture="environment" />
+      <input type="file" id="photo-input-gallery" accept="image/*" multiple />
       <div class="photo-grid" id="photo-grid"></div>
       <p class="photo-count" id="photo-count"></p>
       <p style="font-size:12px;color:#94a3b8;text-align:center;margin-top:6px;">📸 Take at least 3 photos — <a href="#" onclick="showScreen('screen-guide');return false;" style="color:var(--primary);text-decoration:none;font-weight:600;">see Photo Guide</a></p>
@@ -608,7 +620,205 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     SCREEN 6 — VISIT DETAIL
+     SCREEN 6 — PHOTO GUIDE
+═══════════════════════════════════════════════════════════ -->
+<div id="screen-guide" class="screen">
+  <div class="app-header">
+    <button class="header-back" id="btn-back-guide">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+      Back
+    </button>
+    <div class="header-title">Photo Guide</div>
+    <div style="width:60px"></div>
+  </div>
+  <div style="padding:16px;overflow-y:auto;height:calc(100% - 56px);background:#f5f5f0;">
+
+    <div style="text-align:center;padding:12px 0 20px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#6aaa3a;margin-bottom:4px;">GOOD GOOD</div>
+      <div style="font-size:20px;font-weight:800;letter-spacing:-0.3px;margin-bottom:6px;">What to Photograph</div>
+      <div style="font-size:13px;color:#666;line-height:1.5;max-width:280px;margin:0 auto;">Take at least 3 photos per visit so Gemini AI can analyse your shelf accurately.</div>
+      <div style="display:inline-block;background:#6aaa3a;color:white;font-size:11px;font-weight:700;padding:4px 14px;border-radius:100px;margin-top:10px;letter-spacing:0.5px;">📸 Minimum 3 photos per visit</div>
+    </div>
+
+    <!-- Shot 1 -->
+    <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid #eee;border-top:4px solid #6aaa3a;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="padding:14px 16px 4px;display:flex;align-items:center;gap:10px;">
+        <div style="background:#e8f5e2;color:#4a8a20;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;">Required</div>
+        <div style="font-size:11px;color:#999;font-weight:700;">Shot 1 of 3</div>
+      </div>
+      <div style="padding:4px 16px 12px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:2px;">Full Shelf — Wide Shot</div>
+        <div style="font-size:12px;color:#888;margin-bottom:12px;">Step back 1–2 m · Landscape · Full section in frame</div>
+        <!-- Shelf diagram -->
+        <div style="background:#f9f9f6;border-radius:10px;padding:16px 12px;margin-bottom:12px;position:relative;">
+          <div style="font-size:8px;font-weight:700;color:#888;text-align:center;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">↔ FULL WIDTH OF SECTION ↔</div>
+          <!-- Shelf rows -->
+          <div style="display:flex;gap:3px;margin-bottom:4px;">
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+          </div>
+          <div style="height:4px;background:#b0a090;border-radius:2px;margin-bottom:6px;"></div>
+          <div style="display:flex;gap:3px;margin-bottom:4px;">
+            <div style="flex:1;height:32px;background:#e8b820;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:white;">GG</div>
+            <div style="flex:1;height:32px;background:#e8b820;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:white;">GG</div>
+            <div style="flex:1;height:32px;background:#cc2d55;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:white;">GG</div>
+            <div style="flex:1;height:32px;background:#cc2d55;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:white;">GG</div>
+            <div style="flex:1;height:32px;background:#2953d4;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:white;">GG</div>
+            <div style="flex:1;height:32px;background:#7d4318;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:900;color:white;">GG</div>
+          </div>
+          <div style="height:4px;background:#b0a090;border-radius:2px;margin-bottom:6px;"></div>
+          <div style="display:flex;gap:3px;margin-bottom:4px;">
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+            <div style="flex:1;height:28px;background:#ddd;border-radius:3px;"></div>
+          </div>
+          <div style="height:4px;background:#b0a090;border-radius:2px;"></div>
+          <!-- Camera frame overlay -->
+          <div style="position:absolute;inset:8px;border:2px dashed rgba(106,170,58,0.7);border-radius:8px;pointer-events:none;"></div>
+          <div style="text-align:center;margin-top:8px;font-size:9px;color:#6aaa3a;font-weight:700;">📷 Entire section fits in frame</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">↔️</span><span style="font-size:13px;color:#444;line-height:1.4;">Whole section — left edge to right edge in one shot</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">📍</span><span style="font-size:13px;color:#444;line-height:1.4;">Show shelf position: which row is GG (top / middle / bottom)</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🔆</span><span style="font-size:13px;color:#444;line-height:1.4;">No flash — use natural aisle lighting</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shot 2 -->
+    <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid #eee;border-top:4px solid #6aaa3a;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="padding:14px 16px 4px;display:flex;align-items:center;gap:10px;">
+        <div style="background:#e8f5e2;color:#4a8a20;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;">Required</div>
+        <div style="font-size:11px;color:#999;font-weight:700;">Shot 2 of 3</div>
+      </div>
+      <div style="padding:4px 16px 12px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:2px;">Close-Up — Facing Count</div>
+        <div style="font-size:12px;color:#888;margin-bottom:12px;">Step forward · Eye level · Fill frame with GG products</div>
+        <!-- Diagram -->
+        <div style="background:#f9f9f6;border-radius:10px;padding:16px 12px;margin-bottom:12px;">
+          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:6px;">
+            <div style="width:44px;height:56px;background:#e8b820;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;box-shadow:0 2px 4px rgba(0,0,0,0.15);">GG</div>
+            <div style="width:44px;height:56px;background:#e8b820;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;box-shadow:0 2px 4px rgba(0,0,0,0.15);">GG</div>
+            <div style="width:44px;height:56px;background:#cc2d55;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;box-shadow:0 2px 4px rgba(0,0,0,0.15);">GG</div>
+            <div style="width:44px;height:56px;background:#cc2d55;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:white;box-shadow:0 2px 4px rgba(0,0,0,0.15);">GG</div>
+          </div>
+          <div style="height:4px;background:#b0a090;border-radius:2px;margin-bottom:6px;"></div>
+          <div style="display:flex;align-items:center;">
+            <div style="flex:1;height:2px;background:#6aaa3a;"></div>
+            <div style="font-size:10px;font-weight:800;color:#6aaa3a;padding:2px 8px;white-space:nowrap;">← 4 facings →</div>
+            <div style="flex:1;height:2px;background:#6aaa3a;"></div>
+          </div>
+          <div style="text-align:center;margin-top:8px;font-size:9px;color:#6aaa3a;font-weight:700;">📷 Labels must be fully legible</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🔢</span><span style="font-size:13px;color:#444;line-height:1.4;">Facing count per SKU must be countable — Gemini reads this</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🏷️</span><span style="font-size:13px;color:#444;line-height:1.4;">Product labels fully legible, no tilt or blur</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">📦</span><span style="font-size:13px;color:#444;line-height:1.4;">Include all GOOD GOOD SKUs if they fit in one shot</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shot 3 -->
+    <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid #eee;border-top:4px solid #6aaa3a;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="padding:14px 16px 4px;display:flex;align-items:center;gap:10px;">
+        <div style="background:#e8f5e2;color:#4a8a20;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;">Required</div>
+        <div style="font-size:11px;color:#999;font-weight:700;">Shot 3 of 3</div>
+      </div>
+      <div style="padding:4px 16px 12px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:2px;">Price Tag / Shelf Label</div>
+        <div style="font-size:12px;color:#888;margin-bottom:12px;">Very close · Hold still · All text in focus</div>
+        <!-- Diagram -->
+        <div style="background:#f9f9f6;border-radius:10px;padding:16px 12px;margin-bottom:12px;display:flex;flex-direction:column;align-items:center;gap:10px;">
+          <div style="background:white;border:1.5px solid #ccc;border-radius:6px;padding:10px 16px;text-align:center;font-family:monospace;box-shadow:1px 1px 6px rgba(0,0,0,0.1);position:relative;min-width:160px;">
+            <div style="position:absolute;top:-10px;right:-10px;background:#e74c3c;color:white;font-size:8px;font-weight:800;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;">SALE</div>
+            <div style="font-size:8px;color:#999;margin-bottom:2px;">4893020-009</div>
+            <div style="font-size:9px;font-weight:700;color:#333;margin-bottom:4px;">GOOD GOOD RASP JAM 330g</div>
+            <div style="font-size:26px;font-weight:900;color:#222;line-height:1;">$4.99</div>
+            <div style="font-size:8px;color:#666;margin-top:2px;">REG $6.49 · SAVE $1.50</div>
+          </div>
+          <div style="font-size:10px;color:#2980b9;font-weight:700;">🔍 Fill the frame with the price tag</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">💲</span><span style="font-size:13px;color:#444;line-height:1.4;">Full price clearly readable — including any sale / promo price</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">📋</span><span style="font-size:13px;color:#444;line-height:1.4;">SKU / barcode and product name on the label</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">✅</span><span style="font-size:13px;color:#444;line-height:1.4;">One tag per SKU if prices differ by flavour</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bonus shots header -->
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin:20px 4px 10px;">Also take these when relevant</div>
+
+    <!-- OOS -->
+    <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid #eee;border-top:4px solid #e74c3c;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="padding:14px 16px 4px;display:flex;align-items:center;gap:10px;">
+        <div style="background:#fdecea;color:#c0392b;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;">If applicable</div>
+      </div>
+      <div style="padding:4px 16px 12px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:2px;">Out-of-Stock / Empty Gap</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">Capture empty space where product should be</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">❌</span><span style="font-size:13px;color:#444;line-height:1.4;">Empty shelf gap — include shelf tag if still there</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">📝</span><span style="font-size:13px;color:#444;line-height:1.4;">Note in the Notes field: which SKU missing and how many facings</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🔁</span><span style="font-size:13px;color:#444;line-height:1.4;">If you restocked: take an after photo too</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- End cap -->
+    <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:12px;border:1px solid #eee;border-top:4px solid #f0a500;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="padding:14px 16px 4px;display:flex;align-items:center;gap:10px;">
+        <div style="background:#fff4dc;color:#b07800;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;">Bonus</div>
+      </div>
+      <div style="padding:4px 16px 12px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:2px;">End Cap / Promo Display</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">If GOOD GOOD has a secondary placement</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🏪</span><span style="font-size:13px;color:#444;line-height:1.4;">Full display top to bottom — include promo signage above</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">💡</span><span style="font-size:13px;color:#444;line-height:1.4;">Secondary placement = extra shelf share for GOOD GOOD</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Competitor -->
+    <div style="background:white;border-radius:14px;overflow:hidden;margin-bottom:20px;border:1px solid #eee;border-top:4px solid #f0a500;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <div style="padding:14px 16px 4px;display:flex;align-items:center;gap:10px;">
+        <div style="background:#fff4dc;color:#b07800;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;">Bonus</div>
+      </div>
+      <div style="padding:4px 16px 12px;">
+        <div style="font-size:16px;font-weight:800;margin-bottom:2px;">Competitor Shelf</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">Same section — show GG vs competitors side by side</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🥊</span><span style="font-size:13px;color:#444;line-height:1.4;">Capture both competitor and GG products for shelf share comparison</span></div>
+          <div style="display:flex;gap:8px;"><span style="font-size:14px;">🏷️</span><span style="font-size:13px;color:#444;line-height:1.4;">Try to get competitor price tags in shot too</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What Gemini reads -->
+    <div style="background:#1a1a1a;border-radius:14px;padding:18px;margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#a8d5ff;margin-bottom:12px;">🤖 What Gemini AI reads from your photos</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:13px;color:#ddd;">✅ <strong style="color:white;">Facing count</strong> per SKU — needs clear close-up</div>
+        <div style="font-size:13px;color:#ddd;">✅ <strong style="color:white;">Shelf position</strong> — top / middle / bottom / eye-level</div>
+        <div style="font-size:13px;color:#ddd;">✅ <strong style="color:white;">Price</strong> — regular and promotional</div>
+        <div style="font-size:13px;color:#ddd;">✅ <strong style="color:white;">Stock level</strong> — full, low, or OOS gaps</div>
+        <div style="font-size:13px;color:#ddd;">✅ <strong style="color:white;">POS / signage</strong> — promo tags, shelf wobblers</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 7 — VISIT DETAIL
 ═══════════════════════════════════════════════════════════ -->
 <div id="screen-detail" class="screen">
   <div class="app-header">
@@ -691,52 +901,6 @@
   </div>
 </div>
 
-<div id="screen-guide" class="screen">
-  <div class="app-header">
-    <button class="header-back" id="btn-back-guide">
-      <svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-    </button>
-    <div class="header-title">Photo Guide</div>
-  </div>
-  <div style="padding:16px;overflow-y:auto;height:calc(100vh - 60px);">
-    <h2 style="font-size:18px;font-weight:700;margin-bottom:12px;">📸 Shelf Photo Standards</h2>
-    <div style="background:#fff7ed;border-radius:12px;padding:16px;margin-bottom:16px;">
-      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#ea580c;">✅ Every visit must include:</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.8;">
-        <li>Full shelf section showing GOOD GOOD facings</li>
-        <li>Close-up of price tag</li>
-        <li>Competitor products on adjacent shelf</li>
-        <li>Any promo or signage if present</li>
-      </ul>
-    </div>
-    <div style="background:#f0fdf4;border-radius:12px;padding:16px;margin-bottom:16px;">
-      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#059669;">📐 How to frame your shot:</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.8;">
-        <li>Stand 3–5 feet back for full shelf shot</li>
-        <li>Hold phone level — no tilting</li>
-        <li>Make sure product labels are readable</li>
-              </ul>
-    </div>
-    <div style="background:#eff6ff;border-radius:12px;padding:16px;margin-bottom:16px;">
-      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#2563eb;">⚠️ Common mistakes to avoid:</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.8;">
-        <li>Blurry or out-of-focus images</li>
-        <li>Photos from too far away (can't read labels)</li>
-        <li>Missing price tag in shot</li>
-        <li>Only shooting GOOD GOOD — always capture the full set</li>
-      </ul>
-    </div>
-    <div style="background:#faf5ff;border-radius:12px;padding:16px;">
-      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px;color:#7c3aed;">🏷️ OOS &amp; promo notes:</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.8;">
-        <li>If GOOD GOOD is OOS, photograph the empty shelf</li>
-        <li>Capture any sale tags, end-caps, or displays</li>
-        <li>Note competitor promos in your visit notes</li>
-      </ul>
-    </div>
-  </div>
-</div>
-
 <!-- Loading overlay -->
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
@@ -807,7 +971,7 @@ function toggleManualAddress() {
   wrap.style.display = visible ? 'none' : 'block';
   btn.textContent = visible ? 'Enter address manually' : 'Use GPS instead';
   if (!visible) {
-    // Switching to manual entry — clear GPS so typed address is used on submit
+    // Switching to manual entry — clear GPS so the typed address is used on submit
     gpsCoords = null;
     document.getElementById('location-text').textContent = 'Using manual address';
     document.getElementById('location-bar').className = 'location-bar';
@@ -945,17 +1109,63 @@ function renderPhotoGrid() {
   count.textContent = photoData.length > 0 ? `${photoData.length} photo${photoData.length > 1 ? 's' : ''} selected` : '';
 }
 
-async function handlePhotoInput(files) {
+// ── Save photos to device library (camera roll / Downloads) ─────
+async function savePhotosToDevice(photos) {
+  if (!photos || photos.length === 0) return;
+  try {
+    // Build File objects from the compressed dataUrls
+    const files = await Promise.all(photos.map(async (p, i) => {
+      const blob = await fetch(p.dataUrl).then(r => r.blob());
+      const ts   = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+      return new File([blob], `GOODGOOD_${ts}_${i+1}.jpg`, { type: 'image/jpeg' });
+    }));
+
+    // Web Share API — best path on iOS (share sheet → Save Image) & modern Android
+    if (navigator.canShare && navigator.canShare({ files })) {
+      await navigator.share({ files, title: 'GOOD GOOD Field Photos' });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // user cancelled share sheet — that's fine
+    // fall through to download
+  }
+
+  // Fallback: download link (works on Android → Downloads folder)
+  for (let i = 0; i < photos.length; i++) {
+    const a   = document.createElement('a');
+    const ts  = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    a.href     = photos[i].dataUrl;
+    a.download = `GOODGOOD_${ts}_${i+1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    if (photos.length > 1) await new Promise(r => setTimeout(r, 300));
+  }
+}
+
+async function handlePhotoInput(files, fromCamera = false) {
   const remaining = 10 - photoData.length;
   const toProcess = Array.from(files).slice(0, remaining);
   if (toProcess.length === 0) { showToast('Maximum 10 photos per visit', 'error'); return; }
   showOverlay('Processing photos…');
+  const newPhotos = [];
   for (const file of toProcess) {
     const compressed = await compressImage(file);
     photoData.push(compressed);
+    newPhotos.push(compressed);
   }
   hideOverlay();
   renderPhotoGrid();
+
+  // Save to device:
+  // • Camera capture: OS already saves original to camera roll — just confirm
+  // • Gallery: try share API / download so they have a local backup too
+  if (fromCamera) {
+    showToast(`📷 Photo saved to camera roll`, 'success');
+  } else {
+    // Small delay so the overlay is gone before the share sheet appears
+    setTimeout(() => savePhotosToDevice(newPhotos), 400);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1108,7 +1318,7 @@ function renderRecentVisits() {
         </div>
         <div class="visit-time">${time}</div>
       </div>`;
-    }).join('');
+  }).join('');
   el.querySelectorAll('.visit-item').forEach(item => {
     item.addEventListener('click', () => showVisitDetail(item.dataset.id));
   });
@@ -1176,7 +1386,6 @@ async function retrySubmission(id) {
         uploaded++;
       } catch (_) { /* best-effort */ }
     }
-
     updateHistoryEntry(id, { status: 'synced' });
     showToast('Synced to Google Sheets!', 'success');
   } catch (e) {
@@ -1227,7 +1436,6 @@ async function autoRetryFailed() {
           photoUploaded++;
         } catch (_) { /* best-effort */ }
       }
-
       updateHistoryEntry(visit.id, { status: 'synced' });
       synced++;
     } catch (_) { /* leave as failed, will retry next open */ }
@@ -1239,9 +1447,9 @@ async function autoRetryFailed() {
   }
 }
 
-// ══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // SUBMIT VISIT
-// ════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 async function submitVisit() {
   const repName   = document.getElementById('rep-name').value.trim();
   const storeName = document.getElementById('store-name').value.trim();
@@ -1285,43 +1493,55 @@ async function submitVisit() {
   }
 
   try {
-    // ── Step 1: submit visit metadata ──────────────────────────
+    // ── Step 1: submit visit metadata — rep waits only for this ──
     showOverlay('Submitting visit…');
     await submitToGoogle(visitPayload);
     historyEntry.status = 'synced';
-
-    // ── Step 2: upload each photo to Drive (fast — no AI yet) ────
-    let uploaded = 0;
-    for (let i = 0; i < photoData.length; i++) {
-      showOverlay(`Saving photo ${i + 1} of ${photoData.length} to Drive…`);
-      const p = photoData[i];
-      try {
-        await submitToGoogle({
-          action: 'addPhoto',
-          visitId: id,
-          base64: p.base64,
-          type:   p.type,
-          name:   p.name || `photo_${i + 1}.jpg`,
-          index:  i,
-        });
-        uploaded++;
-      } catch (e) { /* keep going even if one photo fails */ }
-    }
-
-    // ── Step 3: batch Gemini analysis (one call for all photos) ──
-    if (uploaded > 0) {
-      showOverlay('Analysing shelf with Gemini AI…');
-      try {
-      } catch (e) { /* non-blocking — visit is saved regardless */ }
-    }
-
     addToHistory(historyEntry);
     hideOverlay();
-    const photoMsg = uploaded > 0
-      ? ` ${uploaded}/${photoData.length} photo${photoData.length > 1 ? 's' : ''} saved + AI analysed.`
-      : '';
-    document.getElementById('success-sub').textContent = 'Visit saved to Google Sheets.' + photoMsg;
+
+    // ── Show success screen immediately ───────────────────────────
+    const photoCount  = historyEntry.photos.length;
+    const successSub  = document.getElementById('success-sub');
+    successSub.textContent = photoCount > 0
+      ? `Visit saved! Uploading ${photoCount} photo${photoCount > 1 ? 's' : ''} in the background…`
+      : 'Visit saved to Google Sheets.';
     showScreen('screen-success');
+
+    // ── Step 2 & 3: photos + AI run in background (non-blocking) ─
+    if (photoCount > 0) {
+      const photosSnapshot = historyEntry.photos.slice(); // snapshot before reset
+      (async () => {
+        let uploaded = 0;
+        for (let i = 0; i < photosSnapshot.length; i++) {
+          const p = photosSnapshot[i];
+          try {
+            await submitToGoogle({
+              action: 'addPhoto',
+              visitId: id,
+              base64:  p.base64,
+              type:    p.type,
+              name:    p.name || `photo_${i + 1}.jpg`,
+              index:   i,
+            });
+            uploaded++;
+          } catch (e) { /* keep going even if one photo fails */ }
+          // Update counter if rep is still on success screen
+          if (document.getElementById('screen-success').classList.contains('active')) {
+            successSub.textContent = uploaded < photosSnapshot.length
+              ? `Uploading photos… ${uploaded} of ${photosSnapshot.length} done`
+              : `All ${uploaded} photo${uploaded > 1 ? 's' : ''} uploaded ✓`;
+          }
+        }
+
+        if (uploaded > 0 && document.getElementById('screen-success').classList.contains('active')) {
+          successSub.textContent = `${uploaded}/${photosSnapshot.length} photo${photosSnapshot.length > 1 ? 's' : ''} uploaded ✓`;
+        }
+
+        // Toast in case the rep has already navigated away
+        showToast(`Photos done (${uploaded}/${photosSnapshot.length})`, 'success');
+      })();
+    }
 
   } catch (e) {
     historyEntry.status = 'failed';
@@ -1344,7 +1564,8 @@ function resetForm() {
   document.getElementById('btn-location').textContent = 'Refresh';
   document.getElementById('photo-grid').innerHTML = '';
   document.getElementById('photo-count').textContent = '';
-  document.getElementById('photo-input').value = '';
+  document.getElementById('photo-input-camera').value = '';
+  document.getElementById('photo-input-gallery').value = '';
   document.getElementById('manual-address').value = '';
   document.getElementById('manual-address-wrap').style.display = 'none';
   photoData = [];
@@ -1519,9 +1740,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-go-guide').addEventListener('click', () => {
     showScreen('screen-guide');
   });
-  document.getElementById('btn-back-guide').addEventListener('click', () => {
-    showScreen('screen-home');
-  });
   document.getElementById('btn-go-history-hdr').addEventListener('click', () => {
     renderHistory();
     showScreen('screen-history');
@@ -1533,8 +1751,20 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('screen-home');
   });
   document.getElementById('btn-location').addEventListener('click', getLocation);
-  document.getElementById('photo-input').addEventListener('change', (e) => {
-    if (e.target.files.length) handlePhotoInput(e.target.files);
+  // Camera button — capture="environment" so OS saves raw photo to camera roll automatically
+  document.getElementById('btn-take-photo').addEventListener('click', () => {
+    document.getElementById('photo-input-camera').click();
+  });
+  document.getElementById('photo-input-camera').addEventListener('change', (e) => {
+    if (e.target.files.length) { handlePhotoInput(e.target.files, true); e.target.value = ''; }
+  });
+
+  // Gallery button — multiple selection, save to device via share/download
+  document.getElementById('btn-choose-gallery').addEventListener('click', () => {
+    document.getElementById('photo-input-gallery').click();
+  });
+  document.getElementById('photo-input-gallery').addEventListener('change', (e) => {
+    if (e.target.files.length) { handlePhotoInput(e.target.files, false); e.target.value = ''; }
   });
   document.getElementById('btn-submit').addEventListener('click', submitVisit);
 
@@ -1543,6 +1773,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-go-history-success').addEventListener('click', () => {
     renderHistory();
     showScreen('screen-history');
+  });
+
+  // Photo Guide
+  document.getElementById('btn-back-guide').addEventListener('click', () => {
+    updateGreeting(); renderRecentVisits();
+    showScreen('screen-home');
   });
 
   // History
@@ -1576,5 +1812,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
-
