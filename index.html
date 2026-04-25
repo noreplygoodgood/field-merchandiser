@@ -459,6 +459,16 @@
         </div>
         <span class="action-arrow">›</span>
       </div>
+      <div class="action-card" id="btn-go-dashboard" onclick="window.open('shelf-dashboard.html', '_blank')">
+        <div class="action-icon" style="background:#e8f7f2">
+          <svg viewBox="0 0 24 24" style="fill:#1D9E75"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        </div>
+        <div class="action-text">
+          <h3>Shelf Dashboard</h3>
+          <p>Live intel across all stores & reps</p>
+        </div>
+        <span class="action-arrow">›</span>
+      </div>
       <div class="action-card" id="btn-go-guide">
         <div class="action-icon" style="background:#fff3e0">
           <svg viewBox="0 0 24 24" style="fill:#e67e22"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><path d="M6.5 10.5A1.5 1.5 0 0 1 5 9V7.5A1.5 1.5 0 0 1 6.5 6H8v1.5H6.5V9H8v1.5H6.5zm11 0H16V9h1.5V7.5H16V6h1.5A1.5 1.5 0 0 1 19 7.5V9a1.5 1.5 0 0 1-1.5 1.5z"/><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/><circle cx="12" cy="12" r="3.2"/></svg>
@@ -1352,10 +1362,17 @@ async function retrySubmission(id) {
   const visits = getHistory();
   const visit = visits.find(v => v.id === id);
   if (!visit) return;
-  showOverlay('Retrying sync…');
+  const photoCount = (visit.photos || []).length;
+  showOverlay(photoCount > 0 ? `Retrying sync (${photoCount} photo${photoCount > 1 ? 's' : ''})…` : 'Retrying sync…');
   try {
-    // Re-build payload from stored fields if payload slot is missing (legacy entries)
-    const payload = visit.payload || {
+    // Build single payload with photos embedded (v106+ architecture)
+    // addPhoto separate calls never reach server from mobile — use single POST
+    const photos = (visit.photos || []).map(p => ({
+      base64: p.base64,
+      type:   p.type   || 'image/jpeg',
+      name:   p.name   || 'photo.jpg',
+    }));
+    const basePayload = visit.payload || {
       action: 'submitVisit',
       id:         visit.id,
       timestamp:  visit.timestamp,
@@ -1367,25 +1384,9 @@ async function retrySubmission(id) {
       outcome:    visit.outcome  || '',
       photoCount: visit.photoCount || 0,
     };
-    await submitToGoogle(payload);
-
-    // Re-upload any stored photos (Drive save only)
-    const photos = visit.photos || [];
-    let uploaded = 0;
-    for (let i = 0; i < photos.length; i++) {
-      const p = photos[i];
-      try {
-        await submitToGoogle({
-          action: 'addPhoto',
-          visitId: visit.id,
-          base64: p.base64,
-          type:   p.type,
-          name:   p.name || `photo_${i + 1}.jpg`,
-          index:  i,
-        });
-        uploaded++;
-      } catch (_) { /* best-effort */ }
-    }
+    // Always embed photos, even if payload was stored without them (legacy entries)
+    const payload = { ...basePayload, photos, photoCount: photos.length };
+    await submitToGoogle(payload, 90000);
     updateHistoryEntry(id, { status: 'synced' });
     showToast('Synced to Google Sheets!', 'success');
   } catch (e) {
@@ -1406,7 +1407,14 @@ async function autoRetryFailed() {
   let synced = 0;
   for (const visit of toRetry) {
     try {
-      const payload = visit.payload || {
+      // Single-payload architecture: embed photos directly (v106+ fix)
+      // addPhoto separate calls never reach server from mobile browsers
+      const photos = (visit.photos || []).map(p => ({
+        base64: p.base64,
+        type:   p.type   || 'image/jpeg',
+        name:   p.name   || 'photo.jpg',
+      }));
+      const basePayload = visit.payload || {
         action: 'submitVisit',
         id:         visit.id,
         timestamp:  visit.timestamp,
@@ -1418,24 +1426,8 @@ async function autoRetryFailed() {
         outcome:    visit.outcome  || '',
         photoCount: visit.photoCount || 0,
       };
-      await submitToGoogle(payload);
-
-      const photos = visit.photos || [];
-      let photoUploaded = 0;
-      for (let i = 0; i < photos.length; i++) {
-        const p = photos[i];
-        try {
-          await submitToGoogle({
-            action: 'addPhoto',
-            visitId: visit.id,
-            base64: p.base64,
-            type:   p.type,
-            name:   p.name || `photo_${i + 1}.jpg`,
-            index:  i,
-          });
-          photoUploaded++;
-        } catch (_) { /* best-effort */ }
-      }
+      const payload = { ...basePayload, photos, photoCount: photos.length };
+      await submitToGoogle(payload, 90000);
       updateHistoryEntry(visit.id, { status: 'synced' });
       synced++;
     } catch (_) { /* leave as failed, will retry next open */ }
@@ -1468,21 +1460,28 @@ async function submitVisit() {
     ? `${gpsCoords.lat}, ${gpsCoords.lng}`
     : (document.getElementById('manual-address')?.value.trim() || '');
 
-  // Build the full payload now so it can be stored and retried later
+  // ── Build single payload WITH photos embedded (v106+ architecture) ──
+  // Photos go in the same POST — no separate addPhoto calls needed.
+  // Separate addPhoto calls from mobile never reach the server (diagnosed v105).
+  const photosPayload = photoData.map(p => ({
+    base64: p.base64,
+    type:   p.type   || 'image/jpeg',
+    name:   p.name   || 'photo.jpg',
+  }));
+
   const visitPayload = {
     action: 'submitVisit',
     id, timestamp, visitDate, repName, storeName, location, notes, outcome,
-    photoCount: photoData.length,
+    photoCount: photosPayload.length,
+    photos:     photosPayload,   // embedded — server processes inline
   };
 
   const historyEntry = {
     id, timestamp, visitDate, repName, storeName, notes, outcome,
-    photoCount: photoData.length,
+    photoCount: photosPayload.length,
     status: CONFIGURED ? 'pending' : 'local',
-    payload: visitPayload,                  // store payload so retry works
-    photos: photoData.map(p => ({           // store photos for retry too
-      base64: p.base64, type: p.type, name: p.name,
-    })),
+    payload: visitPayload,                  // store full payload (with photos) for retry
+    photos: photosPayload,                  // separate copy for detail view
   };
 
   if (!CONFIGURED) {
@@ -1493,66 +1492,32 @@ async function submitVisit() {
   }
 
   try {
-    // ── Step 1: submit visit metadata — rep waits only for this ──
-    showOverlay('Submitting visit…');
-    await submitToGoogle(visitPayload);
+    // ── Single POST: metadata + photos in one request ──
+    const photoCount = photosPayload.length;
+    showOverlay(photoCount > 0
+      ? `Uploading visit & ${photoCount} photo${photoCount > 1 ? 's' : ''}…`
+      : 'Submitting visit…');
+    await submitToGoogle(visitPayload, 90000); // 90s — photos add server-side Drive time
     historyEntry.status = 'synced';
     addToHistory(historyEntry);
     hideOverlay();
 
-    // ── Show success screen immediately ───────────────────────────
-    const photoCount  = historyEntry.photos.length;
-    const successSub  = document.getElementById('success-sub');
+    // ── Show success ──────────────────────────────────────────────
+    const successSub = document.getElementById('success-sub');
     successSub.textContent = photoCount > 0
-      ? `Visit saved! Uploading ${photoCount} photo${photoCount > 1 ? 's' : ''} in the background…`
+      ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
       : 'Visit saved to Google Sheets.';
     showScreen('screen-success');
 
-    // ── Step 2 & 3: photos + AI run in background (non-blocking) ─
+    // ── Trigger AI analysis in background (non-blocking) ─────────
     if (photoCount > 0) {
-      const photosSnapshot = historyEntry.photos.slice(); // snapshot before reset
       (async () => {
-        let uploaded = 0;
-        for (let i = 0; i < photosSnapshot.length; i++) {
-          const p = photosSnapshot[i];
-          try {
-            await submitToGoogle({
-              action: 'addPhoto',
-              visitId: id,
-              base64:  p.base64,
-              type:    p.type,
-              name:    p.name || `photo_${i + 1}.jpg`,
-              index:   i,
-            });
-            uploaded++;
-          } catch (e) { /* keep going even if one photo fails */ }
-          // Update counter if rep is still on success screen
+        try {
+          await submitToGoogle({ action: 'analyzeVisit', visitId: id }, 120000);
           if (document.getElementById('screen-success').classList.contains('active')) {
-            successSub.textContent = uploaded < photosSnapshot.length
-              ? `Uploading photos… ${uploaded} of ${photosSnapshot.length} done`
-              : `All ${uploaded} photo${uploaded > 1 ? 's' : ''} uploaded ✓`;
+            successSub.textContent = `${photoCount} photo${photoCount > 1 ? 's' : ''} saved & AI analysed ✓`;
           }
-        }
-
-        // Run Gemini analysis after all photos are uploaded
-        if (uploaded > 0) {
-          if (document.getElementById('screen-success').classList.contains('active')) {
-            successSub.textContent = 'Analysing shelf with AI…';
-          }
-          try {
-            await submitToGoogle({ action: 'analyzeVisit', visitId: id });
-            if (document.getElementById('screen-success').classList.contains('active')) {
-              successSub.textContent = `${uploaded}/${photosSnapshot.length} photo${photosSnapshot.length > 1 ? 's' : ''} saved & AI analysed ✓`;
-            }
-          } catch (e) { /* non-blocking — visit is saved regardless */
-            if (document.getElementById('screen-success').classList.contains('active')) {
-              successSub.textContent = `${uploaded}/${photosSnapshot.length} photo${photosSnapshot.length > 1 ? 's' : ''} uploaded ✓`;
-            }
-          }
-        }
-
-        // Toast in case the rep has already navigated away
-        showToast(`Photos done (${uploaded}/${photosSnapshot.length})`, 'success');
+        } catch (e) { /* non-blocking — visit is fully saved regardless */ }
       })();
     }
 

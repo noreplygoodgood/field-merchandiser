@@ -1,7 +1,7 @@
 // Field Merchandiser — Service Worker
 // Caches the app shell for offline access
 
-const CACHE_NAME = "field-merchandiser-v4";
+const CACHE_NAME = "field-merchandiser-v5";
 const SHELL = [
   "./index.html",
   "./manifest.json"
