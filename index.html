@@ -1398,7 +1398,7 @@ async function retrySubmission(id) {
       for (let i = 0; i < photos.length; i++) {
         updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 0.5) / photoCount) * 100));
         try {
-          await submitToGoogle({ action: 'addPhoto', visitId: id, photo: photos[i] }, 45000);
+          await submitToGoogle({ action: 'addPhoto', visitId: id, base64: photos[i].base64, type: photos[i].type || 'image/jpeg', name: photos[i].name || 'photo.jpg', index: i }, 45000);
         } catch (_) { /* best-effort */ }
         updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 1) / photoCount) * 100));
       }
@@ -1447,7 +1447,7 @@ async function autoRetryFailed() {
       if (photoCount > 2) {
         for (let i = 0; i < photos.length; i++) {
           try {
-            await submitToGoogle({ action: 'addPhoto', visitId: visit.id, photo: photos[i] }, 45000);
+            await submitToGoogle({ action: 'addPhoto', visitId: visit.id, base64: photos[i].base64, type: photos[i].type || 'image/jpeg', name: photos[i].name || 'photo.jpg', index: i }, 45000);
           } catch (_) { /* best-effort */ }
         }
       }
@@ -1533,7 +1533,10 @@ async function submitVisit() {
           await submitToGoogle({
             action: 'addPhoto',
             visitId: id,
-            photo: photosPayload[i],
+            base64: photosPayload[i].base64,
+            type:   photosPayload[i].type || 'image/jpeg',
+            name:   photosPayload[i].name || 'photo.jpg',
+            index:  i,
           }, 45000);
         } catch (photoErr) {
           photosFailed++;
