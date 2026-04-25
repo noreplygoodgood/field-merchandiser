@@ -478,6 +478,44 @@
   }
   .vm-toast.success { background: var(--green-light); color: #166534; display: block; }
   .vm-toast.error { background: var(--red-light); color: #991b1b; display: block; }
+
+  /* AI CHAT PANEL */
+  #ai-btn {
+    position:fixed; bottom:80px; right:28px; z-index:1000;
+    width:52px; height:52px; border-radius:50%;
+    background:var(--green); border:none; cursor:pointer;
+    box-shadow:0 4px 20px rgba(0,0,0,0.25);
+    display:none; align-items:center; justify-content:center;
+    font-size:22px; transition:transform 0.2s,box-shadow 0.2s;
+  }
+  #ai-btn:hover { transform:scale(1.08); box-shadow:0 6px 28px rgba(0,0,0,0.3); }
+  #ai-panel {
+    position:fixed; bottom:142px; right:28px; z-index:999;
+    width:420px; max-height:620px; border-radius:16px;
+    background:var(--card); border:1px solid var(--border);
+    box-shadow:0 12px 48px rgba(0,0,0,0.2);
+    display:none; flex-direction:column; overflow:hidden;
+  }
+  #ai-panel.open { display:flex; }
+  .ai-header { background:var(--green); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .ai-header-title { font-weight:700; font-size:15px; }
+  .ai-header-sub { font-size:11px; opacity:0.8; margin-top:2px; }
+  #ai-close { background:none; border:none; color:#fff; cursor:pointer; font-size:20px; padding:0; line-height:1; }
+  .ai-body { flex:1; overflow-y:auto; padding:16px; min-height:100px; }
+  #ai-response { font-size:13px; line-height:1.7; color:var(--text); white-space:pre-wrap; word-break:break-word; }
+  #ai-response.loading { color:var(--muted); font-style:italic; }
+  .ai-suggestions { padding:0 16px 12px; display:flex; flex-wrap:wrap; gap:6px; }
+  .ai-chip { font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid var(--border); cursor:pointer; background:var(--bg); color:var(--text); transition:background 0.15s; }
+  .ai-chip:hover { background:var(--green-light); border-color:var(--green); }
+  .ai-input-row { padding:12px 14px; border-top:1px solid var(--border); display:flex; gap:8px; align-items:flex-end; }
+  #ai-input { flex:1; border:1.5px solid var(--border); border-radius:8px; padding:9px 12px; font-size:13px; resize:none; font-family:inherit; background:var(--bg); color:var(--text); outline:none; min-height:40px; max-height:120px; }
+  #ai-input:focus { border-color:var(--green); }
+  #ai-ask { background:var(--green); color:#fff; border:none; border-radius:8px; padding:9px 18px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  #ai-ask:disabled { opacity:0.45; cursor:not-allowed; }
+  @media (max-width: 480px) {
+    #ai-panel { width: calc(100% - 20px); right: 10px; bottom: 120px; max-height: 70vh; }
+    #ai-btn { bottom: 60px; right: 16px; width: 46px; height: 46px; font-size: 20px; }
+  }
 </style>
 </head>
 <body>
@@ -2202,8 +2240,92 @@ async function submitVisitFromDashboard() {
     btn.textContent = 'Retry Submit';
   }
 }
+// AI CHAT
+var _aiLastResponse = '';
+var _aiLastQuestion = '';
+var AI_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyg_TcS1Um7CjTf0kspTXesH77rCV3xB_qr2KnXNZR7eJb8zKCajB6Z-RLFTfUyUixVhw/exec';
+
+function toggleAiPanel() {
+  document.getElementById('ai-panel').classList.toggle('open');
+}
+function useChip(el) {
+  document.getElementById('ai-input').value = el.textContent;
+  document.getElementById('ai-input').focus();
+}
+function askGemini() {
+  var input = document.getElementById('ai-input');
+  var q = input.value.trim();
+  if (!q) return;
+  var askBtn = document.getElementById('ai-ask');
+  var responseEl = document.getElementById('ai-response');
+  _aiLastQuestion = q;
+  _aiLastResponse = '';
+  input.value = '';
+  askBtn.disabled = true;
+  responseEl.className = 'loading';
+  responseEl.textContent = 'Thinking\u2026 (analyzing your full dataset)';
+  var ctx = 'No data loaded yet';
+  if (_ggAllData && _ggAllData.visits) {
+    var cleanVisits = _ggAllData.visits.map(function(v) {
+      var c = {};
+      Object.keys(v).forEach(function(k) {
+        if (k !== 'photoUrls' && k !== 'photos') c[k] = v[k];
+      });
+      return c;
+    });
+    ctx = JSON.stringify({ visits: cleanVisits, total: cleanVisits.length });
+  }
+  fetch(AI_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'geminiChat', message: q, dataJson: ctx }),
+    redirect: 'follow'
+  })
+  .then(function(resp) { return resp.text(); })
+  .then(function(text) {
+    askBtn.disabled = false;
+    responseEl.className = '';
+    try {
+      var result = JSON.parse(text);
+      if (result.error) { responseEl.textContent = 'Error: ' + result.error; }
+      else { _aiLastResponse = result.text; responseEl.textContent = result.text; }
+    } catch(e) { responseEl.textContent = 'Error parsing response: ' + e.message; }
+  })
+  .catch(function(err) {
+    askBtn.disabled = false;
+    responseEl.className = '';
+    responseEl.textContent = 'Network error: ' + err.message;
+  });
+}
+var _aiReadyInterval = setInterval(function() {
+  if (_ggAllData) { document.getElementById('ai-btn').style.display = 'flex'; clearInterval(_aiReadyInterval); }
+}, 1000);
+
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<button id="ai-btn" onclick="toggleAiPanel()" title="Ask AI">&#x2728;</button>
+<div id="ai-panel">
+  <div class="ai-header">
+    <div>
+      <div class="ai-header-title">&#x2728; GOOD GOOD Intelligence</div>
+      <div class="ai-header-sub">Powered by Gemini &#xB7; Full dataset loaded</div>
+    </div>
+    <button id="ai-close" onclick="toggleAiPanel()" title="Close">&#xD7;</button>
+  </div>
+  <div class="ai-suggestions" id="ai-chips">
+    <span class="ai-chip" onclick="useChip(this)">Rep performance summary</span>
+    <span class="ai-chip" onclick="useChip(this)">Which stores are OOS most?</span>
+    <span class="ai-chip" onclick="useChip(this)">Generate monthly field report</span>
+    <span class="ai-chip" onclick="useChip(this)">Coverage gaps by retailer</span>
+  </div>
+  <div class="ai-body">
+    <div id="ai-response">Ask me anything about your shelf data. I can analyze visits, identify trends, flag issues, and generate reports.</div>
+  </div>
+  <div class="ai-input-row">
+    <textarea id="ai-input" rows="1" placeholder="Ask about your shelf data..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();askGemini();}"></textarea>
+    <button id="ai-ask" onclick="askGemini()">Ask</button>
+  </div>
+</div>
 </body>
 </html>
