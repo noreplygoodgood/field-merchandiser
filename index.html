@@ -334,6 +334,9 @@
       animation: spin 0.8s linear infinite;
     }
     .overlay p { color: var(--muted); font-size: 15px; font-weight: 500; }
+    .progress-bar { width: 200px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 4px; transition: width 0.3s ease; }
+    .progress-pct { font-size: 13px; color: var(--muted); margin-top: -8px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ─── Setup Screen ─────────────────────────────────────────── */
@@ -915,6 +918,10 @@
 <div class="overlay" id="overlay">
   <div class="spinner"></div>
   <p id="overlay-text">Submitting visit...</p>
+  <div class="progress-bar" id="overlay-progress" style="display:none">
+    <div class="progress-fill"></div>
+  </div>
+  <p class="progress-pct" id="overlay-pct"></p>
 </div>
 
 <!-- Toast -->
@@ -965,7 +972,17 @@ function showToast(msg, type = '') {
 // ═══════════════════════════════════════════════════════════════
 function showOverlay(msg = 'Submitting...') {
   document.getElementById('overlay-text').textContent = msg;
+  document.getElementById('overlay-progress').style.display = 'none';
   document.getElementById('overlay').classList.add('show');
+}
+function updateOverlay(msg, progress) {
+  document.getElementById('overlay-text').textContent = msg;
+  if (typeof progress === 'number') {
+    const bar = document.getElementById('overlay-progress');
+    bar.style.display = 'block';
+    bar.querySelector('.progress-fill').style.width = Math.round(progress) + '%';
+    document.getElementById('overlay-pct').textContent = Math.round(progress) + '%';
+  }
 }
 function hideOverlay() {
   document.getElementById('overlay').classList.remove('show');
@@ -1157,25 +1174,15 @@ async function handlePhotoInput(files, fromCamera = false) {
   const remaining = 10 - photoData.length;
   const toProcess = Array.from(files).slice(0, remaining);
   if (toProcess.length === 0) { showToast('Maximum 10 photos per visit', 'error'); return; }
-  showOverlay('Processing photos…');
-  const newPhotos = [];
-  for (const file of toProcess) {
-    const compressed = await compressImage(file);
+  showOverlay(toProcess.length > 1 ? `Processing ${toProcess.length} photos…` : 'Processing photo…');
+  for (let i = 0; i < toProcess.length; i++) {
+    if (toProcess.length > 1) updateOverlay(`Processing photo ${i + 1} of ${toProcess.length}…`);
+    const compressed = await compressImage(toProcess[i]);
     photoData.push(compressed);
-    newPhotos.push(compressed);
   }
   hideOverlay();
   renderPhotoGrid();
-
-  // Save to device:
-  // • Camera capture: OS already saves original to camera roll — just confirm
-  // • Gallery: try share API / download so they have a local backup too
-  if (fromCamera) {
-    showToast(`📷 Photo saved to camera roll`, 'success');
-  } else {
-    // Small delay so the overlay is gone before the share sheet appears
-    setTimeout(() => savePhotosToDevice(newPhotos), 400);
-  }
+  showToast(`${toProcess.length} photo${toProcess.length > 1 ? 's' : ''} added`, 'success');
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1362,16 +1369,14 @@ async function retrySubmission(id) {
   const visits = getHistory();
   const visit = visits.find(v => v.id === id);
   if (!visit) return;
-  const photoCount = (visit.photos || []).length;
+  const photos = (visit.photos || []).map(p => ({
+    base64: p.base64,
+    type:   p.type   || 'image/jpeg',
+    name:   p.name   || 'photo.jpg',
+  }));
+  const photoCount = photos.length;
   showOverlay(photoCount > 0 ? `Retrying sync (${photoCount} photo${photoCount > 1 ? 's' : ''})…` : 'Retrying sync…');
   try {
-    // Build single payload with photos embedded (v106+ architecture)
-    // addPhoto separate calls never reach server from mobile — use single POST
-    const photos = (visit.photos || []).map(p => ({
-      base64: p.base64,
-      type:   p.type   || 'image/jpeg',
-      name:   p.name   || 'photo.jpg',
-    }));
     const basePayload = visit.payload || {
       action: 'submitVisit',
       id:         visit.id,
@@ -1382,11 +1387,23 @@ async function retrySubmission(id) {
       location:   visit.location || '',
       notes:      visit.notes    || '',
       outcome:    visit.outcome  || '',
-      photoCount: visit.photoCount || 0,
+      photoCount: photoCount,
     };
-    // Always embed photos, even if payload was stored without them (legacy entries)
-    const payload = { ...basePayload, photos, photoCount: photos.length };
-    await submitToGoogle(payload, 90000);
+    // If <= 2 photos, embed them; otherwise upload individually
+    const visitPayload = { ...basePayload, photos: photoCount <= 2 ? photos : [], photoCount };
+    if (photoCount > 2) updateOverlay('Submitting visit data…', 0);
+    await submitToGoogle(visitPayload, photoCount > 2 ? 30000 : 90000);
+
+    if (photoCount > 2) {
+      for (let i = 0; i < photos.length; i++) {
+        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 0.5) / photoCount) * 100));
+        try {
+          await submitToGoogle({ action: 'addPhoto', visitId: id, photo: photos[i] }, 45000);
+        } catch (_) { /* best-effort */ }
+        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 1) / photoCount) * 100));
+      }
+    }
+
     updateHistoryEntry(id, { status: 'synced' });
     showToast('Synced to Google Sheets!', 'success');
   } catch (e) {
@@ -1407,13 +1424,12 @@ async function autoRetryFailed() {
   let synced = 0;
   for (const visit of toRetry) {
     try {
-      // Single-payload architecture: embed photos directly (v106+ fix)
-      // addPhoto separate calls never reach server from mobile browsers
       const photos = (visit.photos || []).map(p => ({
         base64: p.base64,
         type:   p.type   || 'image/jpeg',
         name:   p.name   || 'photo.jpg',
       }));
+      const photoCount = photos.length;
       const basePayload = visit.payload || {
         action: 'submitVisit',
         id:         visit.id,
@@ -1424,10 +1440,17 @@ async function autoRetryFailed() {
         location:   visit.location || '',
         notes:      visit.notes    || '',
         outcome:    visit.outcome  || '',
-        photoCount: visit.photoCount || 0,
+        photoCount: photoCount,
       };
-      const payload = { ...basePayload, photos, photoCount: photos.length };
-      await submitToGoogle(payload, 90000);
+      const visitPayload = { ...basePayload, photos: photoCount <= 2 ? photos : [], photoCount };
+      await submitToGoogle(visitPayload, photoCount > 2 ? 30000 : 90000);
+      if (photoCount > 2) {
+        for (let i = 0; i < photos.length; i++) {
+          try {
+            await submitToGoogle({ action: 'addPhoto', visitId: visit.id, photo: photos[i] }, 45000);
+          } catch (_) { /* best-effort */ }
+        }
+      }
       updateHistoryEntry(visit.id, { status: 'synced' });
       synced++;
     } catch (_) { /* leave as failed, will retry next open */ }
@@ -1460,28 +1483,28 @@ async function submitVisit() {
     ? `${gpsCoords.lat}, ${gpsCoords.lng}`
     : (document.getElementById('manual-address')?.value.trim() || '');
 
-  // ── Build single payload WITH photos embedded (v106+ architecture) ──
-  // Photos go in the same POST — no separate addPhoto calls needed.
-  // Separate addPhoto calls from mobile never reach the server (diagnosed v105).
+  // ── Build photo data ──
   const photosPayload = photoData.map(p => ({
     base64: p.base64,
     type:   p.type   || 'image/jpeg',
     name:   p.name   || 'photo.jpg',
   }));
+  const photoCount = photosPayload.length;
 
+  // ── Visit payload (metadata only — photos uploaded individually for progress) ──
   const visitPayload = {
     action: 'submitVisit',
     id, timestamp, visitDate, repName, storeName, location, notes, outcome,
-    photoCount: photosPayload.length,
-    photos:     photosPayload,   // embedded — server processes inline
+    photoCount: photoCount,
+    photos:     photoCount <= 2 ? photosPayload : [],  // inline only if 1-2 photos
   };
 
   const historyEntry = {
     id, timestamp, visitDate, repName, storeName, notes, outcome,
-    photoCount: photosPayload.length,
+    photoCount: photoCount,
     status: CONFIGURED ? 'pending' : 'local',
-    payload: visitPayload,                  // store full payload (with photos) for retry
-    photos: photosPayload,                  // separate copy for detail view
+    payload: visitPayload,
+    photos: photosPayload,
   };
 
   if (!CONFIGURED) {
@@ -1492,25 +1515,51 @@ async function submitVisit() {
   }
 
   try {
-    // ── Single POST: metadata + photos in one request ──
-    const photoCount = photosPayload.length;
+    // ── Phase 1: Submit visit (with photos if <= 2, without if more) ──
     showOverlay(photoCount > 0
       ? `Uploading visit & ${photoCount} photo${photoCount > 1 ? 's' : ''}…`
       : 'Submitting visit…');
-    await submitToGoogle(visitPayload, 90000); // 90s — photos add server-side Drive time
+    if (photoCount > 2) updateOverlay('Submitting visit data…', 0);
+
+    await submitToGoogle(visitPayload, photoCount > 2 ? 30000 : 90000);
+
+    // ── Phase 2: Upload photos one-by-one if > 2 ──
+    let photosFailed = 0;
+    if (photoCount > 2) {
+      for (let i = 0; i < photosPayload.length; i++) {
+        const pct = Math.round(((i + 0.5) / photoCount) * 100);
+        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, pct);
+        try {
+          await submitToGoogle({
+            action: 'addPhoto',
+            visitId: id,
+            photo: photosPayload[i],
+          }, 45000);
+        } catch (photoErr) {
+          photosFailed++;
+          console.warn(`Photo ${i + 1} failed:`, photoErr);
+        }
+        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 1) / photoCount) * 100));
+      }
+    }
+
     historyEntry.status = 'synced';
     addToHistory(historyEntry);
     hideOverlay();
 
     // ── Show success ──────────────────────────────────────────────
     const successSub = document.getElementById('success-sub');
-    successSub.textContent = photoCount > 0
-      ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
-      : 'Visit saved to Google Sheets.';
+    if (photosFailed > 0) {
+      successSub.textContent = `Visit saved! ${photoCount - photosFailed} of ${photoCount} photos uploaded.`;
+    } else {
+      successSub.textContent = photoCount > 0
+        ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
+        : 'Visit saved to Google Sheets.';
+    }
     showScreen('screen-success');
 
     // ── Trigger AI analysis in background (non-blocking) ─────────
-    if (photoCount > 0) {
+    if (photoCount > 0 && photosFailed === 0) {
       (async () => {
         try {
           await submitToGoogle({ action: 'analyzeVisit', visitId: id }, 120000);
