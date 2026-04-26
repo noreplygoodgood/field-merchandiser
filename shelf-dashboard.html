@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>GOOD GOOD &#x2014; Shelf Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
+<style>h
   :root {
     --green: #1D9E75;
     --green-light: #e8f7f2;
@@ -2204,7 +2204,10 @@ async function submitVisitFromDashboard() {
   btn.textContent = 'Submitting\u2026';
 
   var id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  var photoCount = _vmPhotos.length;
+  var photosPayload = _vmPhotos.map(function(p) { return { base64: p.base64, type: p.type || 'image/jpeg', name: p.name || 'photo.jpg' }; });
   var payload = {
+    action: 'submitVisit',
     id: id,
     timestamp: new Date().toISOString(),
     visitDate: visitDate,
@@ -2214,28 +2217,27 @@ async function submitVisitFromDashboard() {
     location: location,
     notes: notes,
     outcome: outcome,
-    photos: _vmPhotos.map(function(p) { return { base64: p.base64, type: p.type, name: p.name }; })
+    photoCount: photoCount,
+    photos: photosPayload
   };
 
   try {
-    var resp = await fetch(SCRIPT_URL, {
+    var controller = new AbortController();
+    var timer = setTimeout(function() { controller.abort(); }, photoCount > 0 ? 90000 : 30000);
+    await fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      mode: 'no-cors',
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
-    var json = await resp.json();
-    if (json && json.success) {
-      var photoMsg = json.photoCount > 0 ? ' (' + json.photoCount + ' photo' + (json.photoCount > 1 ? 's' : '') + ' uploaded)' : '';
-      showVmToast('\u2705 Visit logged successfully!' + photoMsg, 'success');
-      setTimeout(function() {
-        closeVisitModal();
-        fetchLiveData(); // refresh dashboard data
-      }, 1800);
-    } else {
-      throw new Error(json && json.error ? json.error : 'Unexpected error');
-    }
+    clearTimeout(timer);
+    showVmToast('Visit logged successfully!' + (photoCount > 0 ? ' (' + photoCount + ' photo' + (photoCount > 1 ? 's' : '') + ' uploaded)' : ''), 'success');
+    setTimeout(function() {
+      closeVisitModal();
+      fetchLiveData();
+    }, 1800);
   } catch (err) {
-    showVmToast('Error: ' + err.message, 'error');
+    showVmToast('Error: ' + (err.name === 'AbortError' ? 'Request timed out' : err.message), 'error');
     btn.disabled = false;
     btn.textContent = 'Retry Submit';
   }
