@@ -1432,21 +1432,9 @@ async function retrySubmission(id) {
       outcome:    visit.outcome  || '',
       photoCount: photoCount,
     };
-    // If <= 2 photos, embed them; otherwise upload individually
-    const visitPayload = { ...basePayload, photos: photoCount <= 2 ? photos : [], photoCount };
-    if (photoCount > 2) updateOverlay('Submitting visit data…', 0);
-    await submitToGoogle(visitPayload, photoCount > 2 ? 30000 : 90000);
-
-    if (photoCount > 2) {
-      for (let i = 0; i < photos.length; i++) {
-        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 0.5) / photoCount) * 100));
-        try {
-          await submitToGoogle({ action: 'addPhoto', visitId: id, base64: photos[i].base64, type: photos[i].type || 'image/jpeg', name: photos[i].name || 'photo.jpg', index: i }, 45000);
-        } catch (_) { /* best-effort */ }
-        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 1) / photoCount) * 100));
-      }
-    }
-
+    const visitPayload = { ...basePayload, photos, photoCount };
+    const timeoutMs = Math.max(90000, 30000 + photoCount * 15000);
+    await submitToGoogle(visitPayload, timeoutMs);
     updateHistoryEntry(id, { status: 'synced' });
     showToast('Synced to Google Sheets!', 'success');
   } catch (e) {
@@ -1485,15 +1473,9 @@ async function autoRetryFailed() {
         outcome:    visit.outcome  || '',
         photoCount: photoCount,
       };
-      const visitPayload = { ...basePayload, photos: photoCount <= 2 ? photos : [], photoCount };
-      await submitToGoogle(visitPayload, photoCount > 2 ? 30000 : 90000);
-      if (photoCount > 2) {
-        for (let i = 0; i < photos.length; i++) {
-          try {
-            await submitToGoogle({ action: 'addPhoto', visitId: visit.id, base64: photos[i].base64, type: photos[i].type || 'image/jpeg', name: photos[i].name || 'photo.jpg', index: i }, 45000);
-          } catch (_) { /* best-effort */ }
-        }
-      }
+      const visitPayload = { ...basePayload, photos, photoCount };
+      const timeoutMs = Math.max(90000, 30000 + photoCount * 15000);
+      await submitToGoogle(visitPayload, timeoutMs);
       updateHistoryEntry(visit.id, { status: 'synced' });
       synced++;
     } catch (_) { /* leave as failed, will retry next open */ }
@@ -1534,12 +1516,12 @@ async function submitVisit() {
   }));
   const photoCount = photosPayload.length;
 
-  // ── Visit payload (metadata only — photos uploaded individually for progress) ──
+  // ── Visit payload (all photos inline in single POST) ──
   const visitPayload = {
     action: 'submitVisit',
     id, timestamp, visitDate, repName, storeName, location, notes, outcome,
     photoCount: photoCount,
-    photos:     photoCount <= 2 ? photosPayload : [],  // inline only if 1-2 photos
+    photos:     photosPayload,
   };
 
   const historyEntry = {
@@ -1558,54 +1540,27 @@ async function submitVisit() {
   }
 
   try {
-    // ── Phase 1: Submit visit (with photos if <= 2, without if more) ──
+    // ── Single POST with all photos inline ──
     showOverlay(photoCount > 0
       ? `Uploading visit & ${photoCount} photo${photoCount > 1 ? 's' : ''}…`
       : 'Submitting visit…');
-    if (photoCount > 2) updateOverlay('Submitting visit data…', 0);
 
-    await submitToGoogle(visitPayload, photoCount > 2 ? 30000 : 90000);
-
-    // ── Phase 2: Upload photos one-by-one if > 2 ──
-    let photosFailed = 0;
-    if (photoCount > 2) {
-      for (let i = 0; i < photosPayload.length; i++) {
-        const pct = Math.round(((i + 0.5) / photoCount) * 100);
-        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, pct);
-        try {
-          await submitToGoogle({
-            action: 'addPhoto',
-            visitId: id,
-            base64: photosPayload[i].base64,
-            type:   photosPayload[i].type || 'image/jpeg',
-            name:   photosPayload[i].name || 'photo.jpg',
-            index:  i,
-          }, 45000);
-        } catch (photoErr) {
-          photosFailed++;
-          console.warn(`Photo ${i + 1} failed:`, photoErr);
-        }
-        updateOverlay(`Uploading photo ${i + 1} of ${photoCount}…`, Math.round(((i + 1) / photoCount) * 100));
-      }
-    }
+    const timeoutMs = Math.max(90000, 30000 + photoCount * 15000);
+    await submitToGoogle(visitPayload, timeoutMs);
 
     historyEntry.status = 'synced';
     addToHistory(historyEntry);
     hideOverlay();
 
-    // ── Show success ──────────────────────────────────────────────
+    // ── Show success ──────────────────────────────────────────────────────
     const successSub = document.getElementById('success-sub');
-    if (photosFailed > 0) {
-      successSub.textContent = `Visit saved! ${photoCount - photosFailed} of ${photoCount} photos uploaded.`;
-    } else {
-      successSub.textContent = photoCount > 0
-        ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
-        : 'Visit saved to Google Sheets.';
-    }
+    successSub.textContent = photoCount > 0
+      ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
+      : 'Visit saved to Google Sheets.';
     showScreen('screen-success');
 
     // ── Trigger AI analysis in background (non-blocking) ─────────
-    if (photoCount > 0 && photosFailed === 0) {
+    if (photoCount > 0) {
       (async () => {
         try {
           await submitToGoogle({ action: 'analyzeVisit', visitId: id }, 120000);
