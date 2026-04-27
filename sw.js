@@ -2,7 +2,7 @@
 // Caches the app shell for offline access
 
 
-const CACHE_NAME = "field-merchandiser-v11";
+const CACHE_NAME = "field-merchandiser-v12";
 const SHELL = [
   "./index.html",
   "./manifest.json"
