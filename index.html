@@ -1041,46 +1041,72 @@ function getLocation() {
   );
 }
 
-const MAPS_KEY = 'AIzaSyDiHjiJudiURXg4Ek7EA54tcd-DX0zln6c';
-
 async function suggestStoreName(lat, lng) {
   const txt = document.getElementById('location-text');
+  const nameField = document.getElementById('store-name');
   const coordLine = `${lat}, ${lng}`;
 
-  try {
-    // Google Places Nearby Search — finds actual store names
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=store&key=${MAPS_KEY}`
-    );
-    const data = await res.json();
-    const top = data.results?.[0];
-    if (top) {
-      txt.textContent = (top.vicinity || coordLine) + ' · ' + coordLine;
-      const nameField = document.getElementById('store-name');
-      if (!nameField.value.trim()) {
-        nameField.value = top.name;
-      }
-      return;
-    }
-  } catch(e) { /* fall through to Nominatim */ }
+  // Run Overpass (store names) and Nominatim (address) in parallel
+  const [storeResult, addrResult] = await Promise.allSettled([
+    // Overpass API — finds actual store/shop names from OpenStreetMap
+    (async () => {
+      const query = `[out:json][timeout:5];(`
+        + `node["shop"](around:150,${lat},${lng});`
+        + `node["amenity"~"pharmacy|fuel|bank|cafe|supermarket"](around:150,${lat},${lng});`
+        + `way["shop"](around:150,${lat},${lng});`
+        + `);out tags 3;`;
+      const res = await fetch('https://overpass-api.de/api/interpreter', {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(query),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+      const data = await res.json();
+      return (data.elements || [])
+        .filter(el => el.tags?.name)
+        .map(el => ({ name: el.tags.name, type: el.tags.shop || el.tags.amenity || '' }));
+    })(),
+    // Nominatim — reverse geocode for address display
+    (async () => {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en', 'User-Agent': 'GoodGood-FieldMerchandiser/1.0' } }
+      );
+      return await res.json();
+    })(),
+  ]);
 
-  try {
-    // Nominatim fallback
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=18&addressdetails=1`,
-      { headers: { 'Accept-Language': 'en', 'User-Agent': 'GoodGood-FieldMerchandiser/1.0' } }
-    );
-    const data = await res.json();
+  // Apply address from Nominatim
+  if (addrResult.status === 'fulfilled') {
+    const data = addrResult.value;
     const addr = data.address || {};
     const road = addr.road || addr.pedestrian || addr.retail || '';
     const city = addr.city || addr.town || addr.village || addr.suburb || '';
     if (road || city) txt.textContent = [road, city].filter(Boolean).join(', ') + ' · ' + coordLine;
-    if (data.name?.trim()) {
-      const nameField = document.getElementById('store-name');
-      if (!nameField.value.trim()) nameField.value = data.name.trim();
+    // If Nominatim returns a POI name and no Overpass result, use it
+    if (data.name?.trim() && !nameField.value.trim() &&
+        storeResult.status !== 'fulfilled') {
+      nameField.value = data.name.trim();
     }
-  } catch(e) { /* silent fail */ }
+  }
+
+  // Apply store name from Overpass (takes priority)
+  if (storeResult.status === 'fulfilled' && storeResult.value.length > 0) {
+    const topStore = storeResult.value[0];
+    if (!nameField.value.trim()) {
+      nameField.value = topStore.name;
+    }
+    // Update location text with store vicinity
+    if (addrResult.status === 'fulfilled') {
+      const addr = addrResult.value.address || {};
+      const road = addr.road || addr.pedestrian || '';
+      txt.textContent = (road ? road + ' · ' : '') + coordLine;
+    }
+  } else if (addrResult.status === 'fulfilled' && addrResult.value.name?.trim()) {
+    // Nominatim POI name fallback
+    if (!nameField.value.trim()) nameField.value = addrResult.value.name.trim();
+  }
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 // PHOTO HANDLING
