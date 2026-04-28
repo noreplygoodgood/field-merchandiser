@@ -1219,7 +1219,18 @@ function getHistory() {
 }
 
 function saveHistory(visits) {
-  localStorage.setItem('fm_visits', JSON.stringify(visits));
+  try {
+    localStorage.setItem('fm_visits', JSON.stringify(visits));
+  } catch (e) {
+    // QuotaExceededError — strip photo base64 from older entries and retry
+    console.warn('localStorage quota hit, stripping old photo data…', e);
+    for (let i = visits.length - 1; i >= 0; i--) {
+      if (visits[i].photos) visits[i].photos = visits[i].photos.map(p => ({ name: p.name, type: p.type }));
+      if (visits[i].payload?.photos) visits[i].payload.photos = [];
+    }
+    try { localStorage.setItem('fm_visits', JSON.stringify(visits)); }
+    catch (_) { /* last resort — at least don't crash */ }
+  }
 }
 
 function addToHistory(entry) {
@@ -1228,6 +1239,26 @@ function addToHistory(entry) {
   if (visits.length > 100) visits.pop();
   saveHistory(visits);
 }
+
+
+// ── FIX 4: Purge stale base64 photo data from localStorage on load ──
+(function purgeOldPhotoBlobs() {
+  try {
+    const visits = loadHistory();
+    let changed = false;
+    visits.forEach(v => {
+      if (v.photos && v.photos.some(p => p.base64)) {
+        v.photos = v.photos.map(p => ({ name: p.name, type: p.type }));
+        changed = true;
+      }
+      if (v.payload && v.payload.photos && v.payload.photos.some(p => p.base64)) {
+        v.payload.photos = [];
+        changed = true;
+      }
+    });
+    if (changed) saveHistory(visits);
+  } catch (e) { console.warn('purgeOldPhotoBlobs failed:', e); }
+})();
 
 function updateHistoryEntry(id, updates) {
   const visits = getHistory();
@@ -1575,8 +1606,12 @@ async function submitVisit() {
     await submitToGoogle(visitPayload, timeoutMs);
 
     historyEntry.status = 'synced';
+
+    // ── FIX 3: Strip base64 from history to avoid localStorage quota ──
+    historyEntry.photos = (historyEntry.photos || []).map(p => ({ name: p.name, type: p.type }));
+    if (historyEntry.payload && historyEntry.payload.photos) { historyEntry.payload.photos = []; }
+
     addToHistory(historyEntry);
-    hideOverlay();
 
     // ── Show success ──────────────────────────────────────────────────────
     const successSub = document.getElementById('success-sub');
@@ -1598,11 +1633,17 @@ async function submitVisit() {
     }
 
   } catch (e) {
+    // ── FIX 3b: Also strip base64 from failed entries ──
+    historyEntry.photos = (historyEntry.photos || []).map(p => ({ name: p.name, type: p.type }));
+    if (historyEntry.payload && historyEntry.payload.photos) { historyEntry.payload.photos = []; }
+
     historyEntry.status = 'failed';
     addToHistory(historyEntry);
-    hideOverlay();
     document.getElementById('success-sub').textContent = 'Saved locally — will retry when connected.';
     showScreen('screen-success');
+  } finally {
+    // ── FIX 2: ALWAYS clear the overlay, even if addToHistory throws ──
+    hideOverlay();
   }
 }
 
