@@ -1905,5 +1905,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(autoRetryFailed, 1500);
 });
 </script>
+<script>
+  // Register service worker for offline app shell
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    });
+  }
+</script>
 </body>
 </html>
