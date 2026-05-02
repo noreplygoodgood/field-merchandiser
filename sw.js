@@ -2,10 +2,13 @@
 // Caches the app shell for offline access
 
 
-const CACHE_NAME = "field-merchandiser-v13";
+const CACHE_NAME = "field-merchandiser-v14";
 const SHELL = [
+  "./",
   "./index.html",
-  "./manifest.json"
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 
@@ -31,11 +34,23 @@ self.addEventListener("activate", event => {
 
 // Fetch: serve from cache, fall back to network
 self.addEventListener("fetch", event => {
-  // Don't intercept Microsoft Graph / MSAL requests
-  if (event.request.url.includes("login.microsoftonline.com") ||
-      event.request.url.includes("graph.microsoft.com") ||
-      event.request.url.includes("cdnjs.cloudflare.com")) {
+  // Only handle GET requests — never cache POSTs to Apps Script
+  if (event.request.method !== "GET") return;
+
+  // Don't intercept these external services — pass straight to network
+  const url = event.request.url;
+  if (url.includes("login.microsoftonline.com") ||
+      url.includes("graph.microsoft.com") ||
+      url.includes("cdnjs.cloudflare.com") ||
+      url.includes("script.google.com") ||
+      url.includes("googleusercontent.com") ||
+      url.includes("overpass-api.de") ||
+      url.includes("nominatim.openstreetmap.org")) {
     return;
   }
 
-
+  // Cache-first for app shell, fall back to network
+  event.respondWith(
+    caches.match(event.request).then(cached => cached || fetch(event.request))
+  );
+});
