@@ -2133,12 +2133,11 @@ function renderVmPhotoGrid() {
   });
 }
 
-function showVmToast(msg, type) {
+function showVmToast(msg, type, fid) {
   var t = document.getElementById('vm-toast');
   t.textContent = msg;
   t.className = 'vm-toast ' + type;
-  if (type === 'success') {
-    setTimeout(function() { t.className = 'vm-toast'; }, 4000);
+  setTimeout(function() { t.className = 'vm-toast'; t.textContent = ''; }, type === 'success' ? 4000 : 6000); if (fid) { var f = document.getElementById(fid); if (f) { f.style.borderColor = 'var(--red)'; f.addEventListener('input', function oh() { f.style.borderColor = ''; t.className = 'vm-toast'; t.textContent = ''; f.removeEventListener('input', oh); }, false); } }, 4000);
   }
 }
 
