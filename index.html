@@ -285,6 +285,7 @@
     .badge.pending { background: #fef3c7; color: #92400e; }
     .badge.failed { background: #fee2e2; color: #991b1b; }
     .history-meta { font-size: 13px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .history-address { font-size: 12px; color: var(--muted); margin: 1px 0 4px; }
     .history-notes { font-size: 13px; color: var(--text); margin-top: 8px;
       padding-top: 8px; border-top: 1px solid var(--border); }
     .retry-btn {
@@ -945,6 +946,7 @@ const CONFIGURED = SCRIPT_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
 // ═══════════════════════════════════════════════════════════════
 let photoData = []; // Array of { dataUrl, base64, type, name }
 let gpsCoords = null;
+let currentAddress = null;
 
 // ═══════════════════════════════════════════════════════════════
 // SCREEN ROUTING
@@ -999,6 +1001,7 @@ function toggleManualAddress() {
   btn.textContent = visible ? 'Enter address manually' : 'Use GPS instead';
   if (!visible) {
     // Switching to manual entry — clear GPS so the typed address is used on submit
+    currentAddress = null;
     gpsCoords = null;
     document.getElementById('location-text').textContent = 'Using manual address';
     document.getElementById('location-bar').className = 'location-bar';
@@ -1033,6 +1036,7 @@ function getLocation() {
       txt.textContent = 'GPS blocked — use manual entry below';
       bar.className = 'location-bar error';
       gpsCoords = null;
+      currentAddress = null;
       document.getElementById('manual-address-wrap').style.display = 'block';
       document.getElementById('btn-manual-toggle').textContent = 'Use GPS instead';
       document.getElementById('manual-address').focus();
@@ -1104,6 +1108,14 @@ async function suggestStoreName(lat, lng) {
   } else if (addrResult.status === 'fulfilled' && addrResult.value.name?.trim()) {
     // Nominatim POI name fallback
     if (!nameField.value.trim()) nameField.value = addrResult.value.name.trim();
+  }
+
+  // Save human-readable address for display in history cards
+  if (addrResult.status === 'fulfilled') {
+    const addr = addrResult.value.address || {};
+    const road = addr.road || addr.pedestrian || addr.retail || '';
+    const city = addr.city || addr.town || addr.village || addr.suburb || '';
+    currentAddress = [road, city].filter(Boolean).join(', ') || null;
   }
 }
 
@@ -1311,6 +1323,7 @@ function renderHistory() {
       <div class="history-item" data-id="${v.id}">
         <div class="history-item-header">
           <h3>${v.storeName || 'Unknown Store'}</h3>
+          ${v.storeAddress ? `<div class="history-address">${v.storeAddress}</div>` : ''}
           <span class="badge ${badgeClass}">${badgeLabel}</span>
         </div>
         <div class="history-meta">
@@ -1581,8 +1594,11 @@ async function submitVisit() {
     photos:     photosPayload,
   };
 
+  const storeAddress = gpsCoords ? (currentAddress || '') : (location || '');
+
   const historyEntry = {
     id, timestamp, visitDate, repName, storeName, notes, outcome,
+    storeAddress,
     photoCount: photoCount,
     status: CONFIGURED ? 'pending' : 'local',
     payload: visitPayload,
@@ -1654,6 +1670,8 @@ function resetForm() {
   document.getElementById('store-name').value = '';
   document.getElementById('visit-notes').value = '';
   document.querySelectorAll('#visit-outcome-group input').forEach(c => c.checked = false);
+  gpsCoords = null;
+  currentAddress = null;
   document.getElementById('location-bar').className = 'location-bar loading';
   document.getElementById('location-text').textContent = 'Detecting location…';
   document.getElementById('btn-location').textContent = 'Refresh';
