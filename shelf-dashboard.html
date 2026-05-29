@@ -1894,8 +1894,8 @@ function showRetailerDetail(retailerName) {
     var _pts = (_retailerVisits || []).filter(function(v){ return v.lat && v.lng && !isNaN(parseFloat(v.lat)) && !isNaN(parseFloat(v.lng)); }).map(function(v){ return [parseFloat(v.lat), parseFloat(v.lng)]; });
     if (window._ggMap && _pts.length) {
       window._ggMap.invalidateSize();
-      if (_pts.length === 1) window._ggMap.setView(_pts[0], 12);
-      else window._ggMap.fitBounds(_pts, { padding: [40, 40], maxZoom: 12 });
+      if (_pts.length === 1) window._ggMap.setView(_pts[0], 12, { animate: false });
+      else window._ggMap.fitBounds(_pts, { padding: [40, 40], maxZoom: 12, animate: false });
     }
   } catch (e) {} }, 90);
   var totalPhotos = _retailerVisits.reduce(function(s, v) { return s + (parseInt(v.photoCount) || 0); }, 0);
