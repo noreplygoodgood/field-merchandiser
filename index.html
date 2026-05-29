@@ -1272,6 +1272,34 @@ function addToHistory(entry) {
   } catch (e) { console.warn('purgeOldPhotoBlobs failed:', e); }
 })();
 
+// Backfill storeAddress for existing history entries that don't have one
+(async function backfillStoreAddresses() {
+  try {
+    const visits = loadHistory();
+    const missing = visits.filter(v => !v.storeAddress && v.payload?.location);
+    if (missing.length === 0) return;
+    const GPS_RE = /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/;
+    for (const v of missing) {
+      const loc = v.payload.location.trim();
+      const gpsMatch = loc.match(GPS_RE);
+      if (gpsMatch) {
+        try {
+          const lat = gpsMatch[1], lng = gpsMatch[2];
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`, { headers: { 'Accept-Language': 'en' } });
+          const data = await res.json();
+          const addr = data.address || {};
+          const road = addr.road || addr.pedestrian || addr.retail || '';
+          const city = addr.city || addr.town || addr.village || addr.suburb || '';
+          v.storeAddress = [road, city].filter(Boolean).join(', ') || null;
+        } catch (_) { /* skip on error */ }
+      } else {
+        v.storeAddress = loc;
+      }
+    }
+    saveHistory(visits);
+  } catch (e) { console.warn('backfillStoreAddresses failed:', e); }
+})();
+
 function updateHistoryEntry(id, updates) {
   const visits = getHistory();
   const idx = visits.findIndex(v => v.id === id);
