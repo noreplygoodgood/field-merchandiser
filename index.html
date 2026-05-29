@@ -1323,9 +1323,9 @@ function renderHistory() {
       <div class="history-item" data-id="${v.id}">
         <div class="history-item-header">
           <h3>${v.storeName || 'Unknown Store'}</h3>
-          ${v.storeAddress ? `<div class="history-address">${v.storeAddress}</div>` : ''}
           <span class="badge ${badgeClass}">${badgeLabel}</span>
         </div>
+        ${v.storeAddress ? `<div class="history-address">${v.storeAddress}</div>` : ''}
         <div class="history-meta">
           <span>${v.repName || ''}</span>
           <span>${date} ${time}</span>
