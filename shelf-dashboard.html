@@ -90,7 +90,7 @@
 
   /* -- MAP + COVERAGE ROW -- */
   .map-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 20px; align-items: start; }
-  .map-row > .card:first-child { display: flex; flex-direction: column; }
+  .map-row > .card:first-child { position: sticky; top: 64px; align-self: start; display: flex; flex-direction: column; }
   .card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
   .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
