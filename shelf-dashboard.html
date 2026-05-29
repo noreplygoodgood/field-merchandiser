@@ -89,13 +89,13 @@
   .badge-red { background: var(--red-light); color: var(--red); }
 
   /* -- MAP + COVERAGE ROW -- */
-  .map-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 20px; align-items: stretch; }
+  .map-row { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 20px; align-items: start; }
   .map-row > .card:first-child { display: flex; flex-direction: column; }
   .card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
   .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
   .card-body { padding: 16px 18px; }
-  #map { flex: 1; min-height: 240px; position: relative; border-radius: 0 0 10px 10px; overflow: hidden; }
+  #map { flex: 1; min-height: 460px; position: relative; border-radius: 0 0 10px 10px; overflow: hidden; }
 
   /* Coverage bars */
   .retailer-bar { margin-bottom: 8px; cursor: pointer; transition: background 0.15s; border-radius: 8px; padding: 5px 7px; margin-left: -7px; margin-right: -7px; }
@@ -1889,6 +1889,15 @@ function showRetailerDetail(retailerName) {
     return (b.visitDate || '').localeCompare(a.visitDate || '');
   });
 
+  // Pan/zoom the map to this retailer's stores (fires after panel render)
+  setTimeout(function() { try {
+    var _pts = (_retailerVisits || []).filter(function(v){ return v.lat && v.lng && !isNaN(parseFloat(v.lat)) && !isNaN(parseFloat(v.lng)); }).map(function(v){ return [parseFloat(v.lat), parseFloat(v.lng)]; });
+    if (window._ggMap && _pts.length) {
+      window._ggMap.invalidateSize();
+      if (_pts.length === 1) window._ggMap.setView(_pts[0], 12);
+      else window._ggMap.fitBounds(_pts, { padding: [40, 40], maxZoom: 12 });
+    }
+  } catch (e) {} }, 90);
   var totalPhotos = _retailerVisits.reduce(function(s, v) { return s + (parseInt(v.photoCount) || 0); }, 0);
   var oosCount = _retailerVisits.filter(function(v) { return v.status === 'oos'; }).length;
   var storeSet = {};
