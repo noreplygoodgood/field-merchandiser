@@ -1062,6 +1062,7 @@ function renderLiveData(data) {
         '<div style="flex:1;min-width:0">' +
           '<div class="feed-store">' + escHtml(v.storeName) + '<span style="font-size:11px;color:var(--muted)"> \u00B7 ' + escHtml(retailer) + '</span></div>' +
           '<div class="feed-meta">' + escHtml(v.repName) + ' \u00B7 ' + escHtml(v.visitDate) + ' \u00B7 ' + photoStr + '</div>' +
+          (v.address ? '<div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.3">' + escHtml(v.address) + '</div>' : '') +
           '<div class="feed-issue">' + escHtml(detail.substring(0, 140)) + '</div>' +
           photosHtml + mapHint +
         '</div></div>';
