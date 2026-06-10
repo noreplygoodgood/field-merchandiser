@@ -1256,7 +1256,7 @@ function addToHistory(entry) {
 // ── FIX 4: Purge stale base64 photo data from localStorage on load ──
 (function purgeOldPhotoBlobs() {
   try {
-    const visits = loadHistory();
+    const visits = getHistory();
     let changed = false;
     visits.forEach(v => {
       if (v.photos && v.photos.some(p => p.base64)) {
@@ -1275,7 +1275,7 @@ function addToHistory(entry) {
 // Backfill storeAddress for existing history entries that don't have one
 (async function backfillStoreAddresses() {
   try {
-    const visits = loadHistory();
+    const visits = getHistory();
     const missing = visits.filter(v => !v.storeAddress && v.payload?.location);
     if (missing.length === 0) return;
     const GPS_RE = /^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/;
