@@ -1212,10 +1212,18 @@ function renderLiveData(data) {
   if (scEl) {
     // Most recent visit per store
     var storeMap = {};
+    var storeAiMap = {};
+    var storeStatusMap = {};
     visits.forEach(function(v) {
       if (!v.storeName) return;
       if (!storeMap[v.storeName] || v.visitDate > storeMap[v.storeName].visitDate) {
         storeMap[v.storeName] = v;
+      }
+      if (parseAiJson(v) && (!storeAiMap[v.storeName] || v.visitDate > storeAiMap[v.storeName].visitDate)) {
+        storeAiMap[v.storeName] = v;
+      }
+      if ((v.status === 'in-stock' || v.status === 'oos' || v.status === 'low') && (!storeStatusMap[v.storeName] || v.visitDate > storeStatusMap[v.storeName].visitDate)) {
+        storeStatusMap[v.storeName] = v;
       }
     });
     var stores = Object.keys(storeMap).sort(function(a, b) {
@@ -1228,10 +1236,11 @@ function renderLiveData(data) {
       var scHtml = '';
       stores.forEach(function(s) {
         var v = storeMap[s];
-        var aj = parseAiJson(v);
-        var statusPill = v.status === 'in-stock' ? '<span class="pill pill-green">In-stock</span>' :
-                         v.status === 'oos'      ? '<span class="pill pill-red">OOS</span>' :
-                         v.status === 'low'      ? '<span class="pill pill-amber">Low stock</span>' :
+        var sv = storeStatusMap[s] || v;
+        var aj = parseAiJson(storeAiMap[s] || v);
+        var statusPill = sv.status === 'in-stock' ? '<span class="pill pill-green">In-stock</span>' :
+                         sv.status === 'oos'      ? '<span class="pill pill-red">OOS</span>' :
+                         sv.status === 'low'      ? '<span class="pill pill-amber">Low stock</span>' :
                                                    '<span class="pill pill-grey">Unknown</span>';
         var facings = aj && aj.facings != null ? aj.facings : '\u2014';
         var pos = aj && aj.shelfPosition ? aj.shelfPosition.replace('_shelf','').replace('_',' ') : '\u2014';
