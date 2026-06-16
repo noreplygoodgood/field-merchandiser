@@ -876,7 +876,7 @@ function fetchLiveData() {
     if (el) el.innerHTML = loadingMsg;
   });
 
-  var url = SCRIPT_URL + '?action=getDashboardData';
+  var url = SCRIPT_URL + '?action=getDashboardData&_=' + Date.now();
   fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(json) {
