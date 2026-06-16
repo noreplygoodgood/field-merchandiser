@@ -949,6 +949,7 @@ function escHtml(str) {
 }
 
 // \u2500\u2500 Helpers \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function ggAccount(v){ if(!v) return true; var lat=parseFloat(v.lat); if(!isNaN(lat)&&lat>50) return true; var n=(v.storeName||'').toLowerCase(); if(/b.nus|nett|kr.nan|kramb|kj.rb|bakar|island|iceland/.test(n)) return true; return /h-?e-?b|whole foods|sprouts|walmart|costco|dicks|dick's/.test(n); }
 function inferRetailer(storeName) {
   if (!storeName) return 'Other';
   var n = storeName.toLowerCase();
@@ -1251,6 +1252,7 @@ function renderLiveData(data) {
         var repShort = v.repName ? v.repName.split(' ').map(function(n,i){ return i===0?n:(n[0]+'.');}).join(' ') : '\u2014';
         var borderStyle = v.status === 'oos' ? 'border-color:var(--red)' : v.photoCount == 0 ? 'border-color:var(--amber);background:var(--amber-light)' : '';
         var retailer = inferRetailer(v.storeName);
+        if(!ggAccount(v)){ facings='—'; pos2='—'; posIcon='—'; statusPill='<span class="pill pill-grey">Not carried</span>'; }
         scHtml +=
           '<div class="scorecard"' + (borderStyle ? ' style="' + borderStyle + '"' : '') + '>' +
           '<div class="sc-header"><div><div class="sc-store">' + escHtml(v.storeName) + '</div><div class="sc-retailer">' + escHtml(retailer) + '</div></div>' + statusPill + '</div>' +
