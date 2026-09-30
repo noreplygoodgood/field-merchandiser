@@ -2,7 +2,7 @@
 // Caches the app shell for offline access
 
 
-const CACHE_NAME = "field-merchandiser-v15";
+const CACHE_NAME = "field-merchandiser-v16";
 const SHELL = [
   "./",
   "./index.html",
