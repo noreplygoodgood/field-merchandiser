@@ -159,6 +159,14 @@
 
     /* Multi-select outcome chips */
     .outcome-checks { display: flex; flex-direction: column; gap: 8px; }
+    .store-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .store-chip {
+      border: 1.5px solid var(--border); background: #fff; color: var(--text);
+      border-radius: 999px; padding: 8px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .store-chip.known { border-color: var(--primary); color: var(--primary); }
+    .store-chip.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .store-chip small { font-weight: 400; opacity: .75; margin-left: 4px; }
     .outcome-chip {
       display: flex; align-items: center; gap: 12px; cursor: pointer;
       padding: 13px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0;
@@ -543,6 +551,7 @@
       <div class="form-group">
         <label for="store-name">Store Name *</label>
         <input type="text" id="store-name" placeholder="e.g. Walmart – Main St" autocomplete="off" />
+        <div class="store-chips" id="store-chips"></div>
       </div>
       <div class="form-group">
         <label for="visit-date">Visit Date</label>
@@ -1026,7 +1035,7 @@ async function _syncVisit(basePayload, photos) {
   const id = basePayload.id;
   const expected = photos.length;
   const payload = { ...basePayload, photos, photoCount: Math.max(expected, basePayload.photoCount || 0) };
-  const timeoutMs = Math.max(90000, 30000 + expected * 15000);
+  const timeoutMs = Math.max(120000, 60000 + expected * 15000);   // server also runs AI on submit
   let sent = true, reply = null;
   try { reply = await postJson(payload, timeoutMs); } catch (_) { sent = false; }
   // Fast path: the server told us directly
@@ -1143,6 +1152,67 @@ function toggleManualAddress() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// STORE PICKER: stores the team has visited before, nearest first
+// ═══════════════════════════════════════════════════════════════
+function getKnownStores() {
+  try { return (JSON.parse(localStorage.getItem('fm_store_list') || '{}').stores) || []; } catch (_) { return []; }
+}
+async function refreshStoreList(force = false) {
+  if (!CONFIGURED) return;
+  try {
+    const cur = JSON.parse(localStorage.getItem('fm_store_list') || '{}');
+    if (!force && cur.ts && Date.now() - cur.ts < 12 * 3600 * 1000) return;
+    const res = await fetch(`${SCRIPT_URL}?action=storeList&_=${Date.now()}`, { cache: 'no-store' });
+    const j = await res.json();
+    if (j && j.ok && Array.isArray(j.stores)) {
+      localStorage.setItem('fm_store_list', JSON.stringify({ ts: Date.now(), stores: j.stores }));
+    }
+  } catch (_) { /* offline: keep the cached list */ }
+}
+function distanceM(lat1, lng1, lat2, lng2) {
+  const R = 6371000, toR = x => x * Math.PI / 180;
+  const dLat = toR(lat2 - lat1), dLng = toR(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toR(lat1)) * Math.cos(toR(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function fmtDist(m) { return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`; }
+let _chipState = { known: [], osm: [] };
+function renderStoreChips() {
+  const box = document.getElementById('store-chips');
+  if (!box) return;
+  const current = document.getElementById('store-name').value.trim().toLowerCase();
+  const seen = new Set();
+  const chips = [];
+  for (const k of _chipState.known) {
+    const key = k.name.toLowerCase(); if (seen.has(key)) continue; seen.add(key);
+    chips.push(`<button type="button" class="store-chip known${key === current ? ' selected' : ''}" data-name="${escAttr(k.name)}">${escHtmlLite(k.name)}<small>${fmtDist(k.dist)}</small></button>`);
+  }
+  for (const o of _chipState.osm) {
+    const key = o.toLowerCase(); if (seen.has(key) || chips.length >= 5) continue; seen.add(key);
+    chips.push(`<button type="button" class="store-chip${key === current ? ' selected' : ''}" data-name="${escAttr(o)}">${escHtmlLite(o)}</button>`);
+  }
+  box.innerHTML = chips.join('');
+  box.querySelectorAll('.store-chip').forEach(b => b.addEventListener('click', () => {
+    document.getElementById('store-name').value = b.dataset.name;
+    renderStoreChips();
+  }));
+}
+function escHtmlLite(t) { return String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
+function escAttr(t) { return escHtmlLite(t).replace(/"/g, '&quot;'); }
+// Show stores within 1 km; auto-fill the nearest one if it's within 150 m and the field is empty
+function suggestKnownStores(lat, lng) {
+  const near = getKnownStores()
+    .map(st => ({ ...st, dist: distanceM(+lat, +lng, st.lat, st.lng) }))
+    .filter(st => st.dist <= 1000)
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 3);
+  _chipState.known = near;
+  const nameField = document.getElementById('store-name');
+  if (near.length && near[0].dist <= 150 && !nameField.value.trim()) nameField.value = near[0].name;
+  renderStoreChips();
+}
+
 function getLocation() {
   const bar = document.getElementById('location-bar');
   const txt = document.getElementById('location-text');
@@ -1164,6 +1234,7 @@ function getLocation() {
       txt.textContent = `${gpsCoords.lat}, ${gpsCoords.lng}`;
       bar.className = 'location-bar';
       document.getElementById('btn-location').textContent = 'Refresh';
+      suggestKnownStores(gpsCoords.lat, gpsCoords.lng);
       await suggestStoreName(gpsCoords.lat, gpsCoords.lng);
     },
     (err) => {
@@ -1225,6 +1296,11 @@ async function suggestStoreName(lat, lng) {
         storeResult.status !== 'fulfilled') {
       nameField.value = data.name.trim();
     }
+  }
+
+  if (storeResult.status === 'fulfilled') {
+    _chipState.osm = storeResult.value.map(x => x.name).slice(0, 4);
+    renderStoreChips();
   }
 
   // Apply store name from Overpass (takes priority)
@@ -1642,6 +1718,24 @@ async function submitToGoogle(payload, timeoutMs = 30000) {
   // If aborted (timeout), throws AbortError — callers handle this gracefully.
 }
 
+// Upload one just-submitted visit without blocking the rep. Server also runs AI analysis on it.
+async function backgroundSync(id, basePayload, photos, photoCount) {
+  let status = 'failed';
+  try { status = await syncVisit(basePayload, photos); } catch (_) {}
+  if (status === 'pending') return;                  // another sync already owns it
+  updateHistoryEntry(id, { status });
+  const successScreen = document.getElementById('screen-success');
+  const successSub = document.getElementById('success-sub');
+  if (status === 'synced') {
+    const msg = photoCount > 0 ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} uploaded ✓` : 'Visit uploaded ✓';
+    if (successScreen.classList.contains('active')) successSub.textContent = msg; else showToast(msg, 'success');
+  } else {
+    const msg = 'No connection. Saved on this phone, will upload automatically.';
+    if (successScreen.classList.contains('active')) successSub.textContent = msg; else showToast(msg, '');
+  }
+  try { renderRecentVisits(); renderHistory(); } catch (_) {}
+}
+
 async function retrySubmission(id) {
   const visit = getHistory().find(v => v.id === id);
   if (!visit) return;
@@ -1723,9 +1817,7 @@ async function submitVisit() {
   };
 
   const successSub = document.getElementById('success-sub');
-  showOverlay(photoCount > 0
-    ? `Uploading visit & ${photoCount} photo${photoCount > 1 ? 's' : ''}…`
-    : 'Submitting visit…');
+  showOverlay('Saving…');
   try {
     // 1. Put photos somewhere safe BEFORE any network call
     if (photoCount > 0) {
@@ -1740,29 +1832,13 @@ async function submitVisit() {
       return;
     }
 
-    // 2. Send + confirm on the server
-    const status = await syncVisit(payloadNoPhotos, photosPayload);
-    updateHistoryEntry(id, { status });
-
-    if (status === 'synced') {
-      successSub.textContent = photoCount > 0
-        ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
-        : 'Visit saved to Google Sheets.';
-      // AI analysis in background (non-blocking)
-      if (photoCount > 0) {
-        (async () => {
-          try {
-            await submitToGoogle({ action: 'analyzeVisit', visitId: id }, 120000);
-            if (document.getElementById('screen-success').classList.contains('active')) {
-              successSub.textContent = `${photoCount} photo${photoCount > 1 ? 's' : ''} saved & AI analysed ✓`;
-            }
-          } catch (e) { /* visit is saved regardless */ }
-        })();
-      }
-    } else {
-      successSub.textContent = 'Saved on this phone. It will upload automatically when you have signal.';
-    }
+    // 2. Done for the rep: show success now, upload in the background
+    successSub.textContent = photoCount > 0
+      ? `Saved on this phone ✓ Uploading ${photoCount} photo${photoCount > 1 ? 's' : ''} in the background…`
+      : 'Saved on this phone ✓ Uploading in the background…';
     showScreen('screen-success');
+    hideOverlay();
+    backgroundSync(id, payloadNoPhotos, photosPayload, photoCount);
   } catch (e) {
     console.error('submitVisit error', e);
     updateHistoryEntry(id, { status: 'failed' });
@@ -1778,6 +1854,8 @@ async function submitVisit() {
 // ═══════════════════════════════════════════════════════════════
 function resetForm() {
   document.getElementById('store-name').value = '';
+  _chipState = { known: [], osm: [] };
+  renderStoreChips();
   document.getElementById('visit-notes').value = '';
   document.querySelectorAll('#visit-outcome-group input').forEach(c => c.checked = false);
   gpsCoords = null;
@@ -2032,6 +2110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auto-retry any failed/pending submissions silently on load
   setTimeout(autoRetryFailed, 1500);
+  setTimeout(() => refreshStoreList(), 800);
 });
 </script>
 <script>
