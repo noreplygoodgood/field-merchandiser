@@ -949,6 +949,140 @@ let gpsCoords = null;
 let currentAddress = null;
 
 // ═══════════════════════════════════════════════════════════════
+// PHOTO VAULT (IndexedDB)
+// Photos for a visit stay on the phone until the server confirms it has them.
+// localStorage is too small for photos (5MB), IndexedDB holds hundreds of MB.
+// ═══════════════════════════════════════════════════════════════
+const PhotoVault = (() => {
+  let dbp = null;
+  function db() {
+    if (!dbp) dbp = new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) return reject(new Error('no indexedDB'));
+      const req = indexedDB.open('fm_photo_vault', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('photos');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return dbp;
+  }
+  async function tx(mode, fn) {
+    const d = await db();
+    return new Promise((resolve, reject) => {
+      const t = d.transaction('photos', mode);
+      const r = fn(t.objectStore('photos'));
+      t.oncomplete = () => resolve(r && r.result);
+      t.onerror = () => reject(t.error);
+      t.onabort = () => reject(t.error);
+    });
+  }
+  return {
+    put: (id, photos) => tx('readwrite', st => st.put(photos, id)),
+    get: async id => { try { return (await tx('readonly', st => st.get(id))) || null; } catch (_) { return null; } },
+    del: async id => { try { await tx('readwrite', st => st.delete(id)); } catch (_) {} },
+  };
+})();
+
+// Ask the server whether visit <id> landed and how many photos it stored.
+// Returns {exists, photosSaved} or null if the server can't answer (old backend / offline).
+async function fetchVisitStatus(id) {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=visitStatus&id=${encodeURIComponent(id)}&_=${Date.now()}`, { cache: 'no-store' });
+    const j = await res.json();
+    return (j && j.ok) ? j : null;
+  } catch (_) { return null; }
+}
+
+// POST and read the server's JSON reply (text/plain avoids a CORS preflight).
+// Returns parsed JSON, or null if the reply couldn't be read. Throws only on timeout/offline.
+async function postJson(payload, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    try { return await res.json(); } catch (_) { return null; }
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw e;
+    if (!navigator.onLine) throw e;
+    return null;   // request went out but the reply was unreadable; caller confirms via visitStatus
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Send a visit (with photos) and confirm it on the server.
+// Resolves to 'synced' only when the server has the row AND every photo; otherwise 'failed'.
+async function syncVisit(basePayload, photos) {
+  const id = basePayload.id;
+  if (_inflight.has(id)) return 'pending';
+  _inflight.add(id);
+  try { return await _syncVisit(basePayload, photos); } finally { _inflight.delete(id); }
+}
+async function _syncVisit(basePayload, photos) {
+  const id = basePayload.id;
+  const expected = photos.length;
+  const payload = { ...basePayload, photos, photoCount: Math.max(expected, basePayload.photoCount || 0) };
+  const timeoutMs = Math.max(90000, 30000 + expected * 15000);
+  let sent = true, reply = null;
+  try { reply = await postJson(payload, timeoutMs); } catch (_) { sent = false; }
+  // Fast path: the server told us directly
+  if (reply && reply.success && reply.visitId === id && (reply.photosSaved || 0) >= expected) {
+    await PhotoVault.del(id);
+    return 'synced';
+  }
+
+  // Confirm. The server can still be finishing after a timeout, so check a few times.
+  const waits = [0, 3000, 8000];
+  let st = null, answered = false;
+  for (const w of waits) {
+    if (w) await new Promise(r => setTimeout(r, w));
+    st = await fetchVisitStatus(id);
+    if (st) answered = true;
+    if (st && st.exists && st.photosSaved >= expected) {
+      await PhotoVault.del(id);
+      return 'synced';
+    }
+    if (!navigator.onLine) break;
+  }
+  // Backend without visitStatus: fall back to trusting a completed POST, but keep photos.
+  if (!answered && sent) return 'synced';
+  return 'failed';
+}
+
+let _retryRunning = false;
+const _inflight = new Set();   // visit ids currently being sent, so retries never double-send
+async function retryVisit(visit) {
+  let photos = await PhotoVault.get(visit.id);
+  if (!photos) {
+    // Legacy entries kept base64 in localStorage
+    const legacy = (visit.payload?.photos?.length ? visit.payload.photos : visit.photos) || [];
+    photos = legacy.filter(p => p && p.base64).map(p => ({ base64: p.base64, type: p.type || 'image/jpeg', name: p.name || 'photo.jpg' }));
+  }
+  const basePayload = { ...(visit.payload || {
+    action: 'submitVisit', id: visit.id, timestamp: visit.timestamp, visitDate: visit.visitDate,
+    repName: visit.repName, storeName: visit.storeName, location: visit.location || '',
+    notes: visit.notes || '', outcome: visit.outcome || '', photoCount: visit.photoCount || 0,
+  }) };
+  delete basePayload.photos;
+  basePayload.action = 'submitVisit';
+  const status = await syncVisit(basePayload, photos);
+  if (status === 'pending') return status;   // already being sent elsewhere
+  if (status === 'synced' && visit.editPending) {
+    try {
+      await postJson({ action: 'editVisit', id: visit.id, storeName: visit.storeName, repName: visit.repName,
+        notes: visit.notes, outcome: visit.outcome, visitDate: visit.visitDate });
+      updateHistoryEntry(visit.id, { editPending: false });
+    } catch (_) {}
+  }
+  updateHistoryEntry(visit.id, { status });
+  return status;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SCREEN ROUTING
 // ═══════════════════════════════════════════════════════════════
 function showScreen(id) {
@@ -1254,20 +1388,21 @@ function addToHistory(entry) {
 
 
 // ── FIX 4: Purge stale base64 photo data from localStorage on load ──
-(function purgeOldPhotoBlobs() {
+(async function purgeOldPhotoBlobs() {
   try {
     const visits = getHistory();
     let changed = false;
-    visits.forEach(v => {
-      if (v.photos && v.photos.some(p => p.base64)) {
-        v.photos = v.photos.map(p => ({ name: p.name, type: p.type }));
-        changed = true;
+    for (const v of visits) {
+      const legacy = (v.payload?.photos?.length ? v.payload.photos : v.photos) || [];
+      if (!legacy.some(p => p && p.base64)) continue;
+      if (v.status !== 'synced') {
+        // Unconfirmed visit: move photos into the vault first, only strip if that worked
+        try { await PhotoVault.put(v.id, legacy.filter(p => p && p.base64)); } catch (_) { continue; }
       }
-      if (v.payload && v.payload.photos && v.payload.photos.some(p => p.base64)) {
-        v.payload.photos = [];
-        changed = true;
-      }
-    });
+      if (v.photos) v.photos = v.photos.map(p => ({ name: p.name, type: p.type }));
+      if (v.payload && v.payload.photos) v.payload.photos = [];
+      changed = true;
+    }
     if (changed) saveHistory(visits);
   } catch (e) { console.warn('purgeOldPhotoBlobs failed:', e); }
 })();
@@ -1320,6 +1455,7 @@ async function deleteVisit(id) {
   if (!confirm(`Delete "${storeName}"?\n\nThis will remove it from this device and from Google Sheets. This cannot be undone.`)) return;
 
   removeFromHistory(id);
+  PhotoVault.del(id);
 
   // Fire delete to server (best-effort, no-cors)
   if (CONFIGURED) {
@@ -1346,7 +1482,7 @@ function renderHistory() {
     const time = new Date(v.timestamp).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
     const badgeClass = v.status === 'synced' ? 'synced' : v.status === 'failed' ? 'failed' : 'pending';
     const badgeLabel = v.status === 'synced' ? '✓ Synced' : v.status === 'failed' ? 'Failed' : 'Pending';
-    const retryBtn = v.status === 'failed' ? `<button class="retry-btn" data-id="${v.id}">Retry sync →</button>` : '';
+    const retryBtn = (v.status === 'failed' || v.status === 'pending') ? `<button class="retry-btn" data-id="${v.id}">Retry sync →</button>` : '';
     return `
       <div class="history-item" data-id="${v.id}">
         <div class="history-item-header">
@@ -1507,83 +1643,34 @@ async function submitToGoogle(payload, timeoutMs = 30000) {
 }
 
 async function retrySubmission(id) {
-  const visits = getHistory();
-  const visit = visits.find(v => v.id === id);
+  const visit = getHistory().find(v => v.id === id);
   if (!visit) return;
-  const photos = (visit.photos || []).map(p => ({
-    base64: p.base64,
-    type:   p.type   || 'image/jpeg',
-    name:   p.name   || 'photo.jpg',
-  }));
-  const photoCount = photos.length;
-  showOverlay(photoCount > 0 ? `Retrying sync (${photoCount} photo${photoCount > 1 ? 's' : ''})…` : 'Retrying sync…');
-  try {
-    const basePayload = visit.payload || {
-      action: 'submitVisit',
-      id:         visit.id,
-      timestamp:  visit.timestamp,
-      visitDate:  visit.visitDate,
-      repName:    visit.repName,
-      storeName:  visit.storeName,
-      location:   visit.location || '',
-      notes:      visit.notes    || '',
-      outcome:    visit.outcome  || '',
-      photoCount: photoCount,
-    };
-    const visitPayload = { ...basePayload, photos, photoCount };
-    const timeoutMs = Math.max(90000, 30000 + photoCount * 15000);
-    await submitToGoogle(visitPayload, timeoutMs);
-    updateHistoryEntry(id, { status: 'synced' });
-    showToast('Synced to Google Sheets!', 'success');
-  } catch (e) {
-    updateHistoryEntry(id, { status: 'failed' });
-    showToast('Still failed — check connection', 'error');
-  }
-  hideOverlay();
+  showOverlay(visit.photoCount > 0 ? `Retrying sync (${visit.photoCount} photo${visit.photoCount > 1 ? 's' : ''})…` : 'Retrying sync…');
+  let status = 'failed';
+  try { status = await retryVisit(visit); } finally { hideOverlay(); }
+  showToast(status === 'synced' ? 'Synced to Google Sheets!' : 'Still not through. Saved on this phone, will retry.', status === 'synced' ? 'success' : 'error');
   renderHistory();
+  renderRecentVisits();
 }
 
-// Silently retry all failed/pending submissions on app load
+// Silently retry every visit the server hasn't confirmed (on load and when signal returns)
 async function autoRetryFailed() {
-  if (!CONFIGURED) return;
-  const visits = getHistory();
-  const toRetry = visits.filter(v => v.status === 'failed' || v.status === 'pending');
-  if (toRetry.length === 0) return;
-  console.log(`Auto-retrying ${toRetry.length} failed submission(s)…`);
-  let synced = 0;
-  for (const visit of toRetry) {
-    try {
-      const photos = (visit.photos || []).map(p => ({
-        base64: p.base64,
-        type:   p.type   || 'image/jpeg',
-        name:   p.name   || 'photo.jpg',
-      }));
-      const photoCount = photos.length;
-      const basePayload = visit.payload || {
-        action: 'submitVisit',
-        id:         visit.id,
-        timestamp:  visit.timestamp,
-        visitDate:  visit.visitDate,
-        repName:    visit.repName,
-        storeName:  visit.storeName,
-        location:   visit.location || '',
-        notes:      visit.notes    || '',
-        outcome:    visit.outcome  || '',
-        photoCount: photoCount,
-      };
-      const visitPayload = { ...basePayload, photos, photoCount };
-      const timeoutMs = Math.max(90000, 30000 + photoCount * 15000);
-      await submitToGoogle(visitPayload, timeoutMs);
-      updateHistoryEntry(visit.id, { status: 'synced' });
-      synced++;
-    } catch (_) { /* leave as failed, will retry next open */ }
-  }
-  if (synced > 0) {
-    showToast(`${synced} saved visit${synced > 1 ? 's' : ''} synced to Google Sheets!`, 'success');
-    renderHistory();
-    renderRecentVisits();
-  }
+  if (!CONFIGURED || _retryRunning || !navigator.onLine) return;
+  _retryRunning = true;
+  try {
+    const toRetry = getHistory().filter(v => !_inflight.has(v.id) && (v.status === 'failed' || v.status === 'pending' || v.editPending));
+    let synced = 0;
+    for (const visit of toRetry) {
+      try { if (await retryVisit(visit) === 'synced') synced++; } catch (_) {}
+    }
+    if (synced > 0) {
+      showToast(`${synced} saved visit${synced > 1 ? 's' : ''} synced to Google Sheets!`, 'success');
+      renderHistory();
+      renderRecentVisits();
+    }
+  } finally { _retryRunning = false; }
 }
+window.addEventListener('online', () => setTimeout(autoRetryFailed, 2000));
 
 // ═══════════════════════════════════════════════════════════════
 // SUBMIT VISIT
@@ -1624,69 +1711,64 @@ async function submitVisit() {
 
   const storeAddress = gpsCoords ? (currentAddress || '') : (location || '');
 
+  // History never holds photo bytes (localStorage is tiny). Photos live in the PhotoVault.
+  const { photos: _omit, ...payloadNoPhotos } = visitPayload;
   const historyEntry = {
     id, timestamp, visitDate, repName, storeName, notes, outcome,
     storeAddress,
     photoCount: photoCount,
     status: CONFIGURED ? 'pending' : 'local',
-    payload: visitPayload,
-    photos: photosPayload,
+    payload: payloadNoPhotos,
+    photos: photosPayload.map(p => ({ name: p.name, type: p.type })),
   };
 
-  if (!CONFIGURED) {
-    addToHistory(historyEntry);
-    document.getElementById('success-sub').textContent = 'Saved on this device.';
-    showScreen('screen-success');
-    return;
-  }
-
+  const successSub = document.getElementById('success-sub');
+  showOverlay(photoCount > 0
+    ? `Uploading visit & ${photoCount} photo${photoCount > 1 ? 's' : ''}…`
+    : 'Submitting visit…');
   try {
-    // ── Single POST with all photos inline ──
-    showOverlay(photoCount > 0
-      ? `Uploading visit & ${photoCount} photo${photoCount > 1 ? 's' : ''}…`
-      : 'Submitting visit…');
-
-    const timeoutMs = Math.max(90000, 30000 + photoCount * 15000);
-    await submitToGoogle(visitPayload, timeoutMs);
-
-    historyEntry.status = 'synced';
-
-    // ── FIX 3: Strip base64 from history to avoid localStorage quota ──
-    historyEntry.photos = (historyEntry.photos || []).map(p => ({ name: p.name, type: p.type }));
-    if (historyEntry.payload && historyEntry.payload.photos) { historyEntry.payload.photos = []; }
-
+    // 1. Put photos somewhere safe BEFORE any network call
+    if (photoCount > 0) {
+      try { await PhotoVault.put(id, photosPayload); }
+      catch (e) { console.warn('PhotoVault unavailable, photos only in memory for this attempt', e); }
+    }
     addToHistory(historyEntry);
 
-    // ── Show success ──────────────────────────────────────────────────────
-    const successSub = document.getElementById('success-sub');
-    successSub.textContent = photoCount > 0
-      ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
-      : 'Visit saved to Google Sheets.';
-    showScreen('screen-success');
-
-    // ── Trigger AI analysis in background (non-blocking) ─────────
-    if (photoCount > 0) {
-      (async () => {
-        try {
-          await submitToGoogle({ action: 'analyzeVisit', visitId: id }, 120000);
-          if (document.getElementById('screen-success').classList.contains('active')) {
-            successSub.textContent = `${photoCount} photo${photoCount > 1 ? 's' : ''} saved & AI analysed ✓`;
-          }
-        } catch (e) { /* non-blocking — visit is fully saved regardless */ }
-      })();
+    if (!CONFIGURED) {
+      successSub.textContent = 'Saved on this device.';
+      showScreen('screen-success');
+      return;
     }
 
-  } catch (e) {
-    // ── FIX 3b: Also strip base64 from failed entries ──
-    historyEntry.photos = (historyEntry.photos || []).map(p => ({ name: p.name, type: p.type }));
-    if (historyEntry.payload && historyEntry.payload.photos) { historyEntry.payload.photos = []; }
+    // 2. Send + confirm on the server
+    const status = await syncVisit(payloadNoPhotos, photosPayload);
+    updateHistoryEntry(id, { status });
 
-    historyEntry.status = 'failed';
-    addToHistory(historyEntry);
-    document.getElementById('success-sub').textContent = 'Saved locally — will retry when connected.';
+    if (status === 'synced') {
+      successSub.textContent = photoCount > 0
+        ? `Visit & ${photoCount} photo${photoCount > 1 ? 's' : ''} saved!`
+        : 'Visit saved to Google Sheets.';
+      // AI analysis in background (non-blocking)
+      if (photoCount > 0) {
+        (async () => {
+          try {
+            await submitToGoogle({ action: 'analyzeVisit', visitId: id }, 120000);
+            if (document.getElementById('screen-success').classList.contains('active')) {
+              successSub.textContent = `${photoCount} photo${photoCount > 1 ? 's' : ''} saved & AI analysed ✓`;
+            }
+          } catch (e) { /* visit is saved regardless */ }
+        })();
+      }
+    } else {
+      successSub.textContent = 'Saved on this phone. It will upload automatically when you have signal.';
+    }
+    showScreen('screen-success');
+  } catch (e) {
+    console.error('submitVisit error', e);
+    updateHistoryEntry(id, { status: 'failed' });
+    successSub.textContent = 'Saved on this phone. It will upload automatically when you have signal.';
     showScreen('screen-success');
   } finally {
-    // ── FIX 2: ALWAYS clear the overlay, even if addToHistory throws ──
     hideOverlay();
   }
 }
@@ -1802,7 +1884,7 @@ async function saveEdit() {
   }
 
   // Update localStorage entry
-  const updates = { storeName, repName, notes, outcome, visitDate, status: 'pending' };
+  const updates = { storeName, repName, notes, outcome, visitDate, editPending: true };
 
   // Also patch the nested payload so retries use updated data
   const visits = getHistory();
@@ -1817,7 +1899,7 @@ async function saveEdit() {
   if (CONFIGURED) {
     showOverlay('Saving changes…');
     try {
-      await submitToGoogle({
+      const reply = await postJson({
         action: 'editVisit',
         id,
         storeName,
@@ -1826,7 +1908,8 @@ async function saveEdit() {
         outcome,
         visitDate,
       });
-      updateHistoryEntry(id, { status: 'synced' });
+      if (reply && reply.success === false && !/not found/i.test(reply.error || '')) throw new Error(reply.error);
+      updateHistoryEntry(id, { status: v && v.status === 'synced' ? 'synced' : (v ? v.status : 'pending'), editPending: false });
       showToast('Changes saved!', 'success');
     } catch (e) {
       // Keep as pending — autoRetryFailed will pick it up
